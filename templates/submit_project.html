@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRK Agency - Submit Project</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; }
+        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
+        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
+        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; }
+        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
+        label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; margin-top: 15px; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #DDD; border-radius: 5px; font-size: 14px; }
+        textarea { height: 100px; resize: vertical; }
+        .btn { width: 100%; background: #000; color: white; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>MRK AGENCY</h1>
+        <div><a href="/dashboard">Dashboard</a><a href="/logout">Logout</a></div>
+    </nav>
+    <div class="container">
+        <h2>Submit a Project</h2>
+        <p class="sub">Tell us about your project and we will get started</p>
+        <form method="POST" action="/submit-project">
+            <label>Project Title</label>
+            <input type="text" name="title" placeholder="e.g. E-commerce Website" required>
+            <label>Project Description</label>
+            <textarea name="description" placeholder="Describe what you need..." required></textarea>
+            <label>Website Type</label>
+            <select name="website_type">
+                <option>E-commerce</option>
+                <option>Portfolio</option>
+                <option>Business Website</option>
+                <option>Blog</option>
+                <option>Custom</option>
+            </select>
+            <label>Budget (USD)</label>
+            <input type="number" name="budget" placeholder="e.g. 1500" required>
+            <label>Deadline</label>
+            <input type="date" name="deadline" required>
+            <label>Package</label>
+            <select name="package">
+                <option>Bronze - $999</option>
+                <option>Consular - $1499</option>
+                <option>Gold - $2499</option>
+                <option>Diamond - $4499</option>
+                <option>Custom Executive - $5000+</option>
+            </select>
+            <button type="submit" class="btn">Submit Project</button>
+        </form>
+    </div>
+</body>
+      </html>
