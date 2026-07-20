@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRK Agency - Register</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; }
+        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
+        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
+        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .container { max-width: 400px; margin: 60px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; }
+        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
+        .error { background: #ffe0e0; color: #c00; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #DDD; border-radius: 5px; font-size: 14px; }
+        .btn { width: 100%; background: #000; color: white; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .link { text-align: center; margin-top: 20px; font-size: 14px; color: #666; }
+        .link a { color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>MRK AGENCY</h1>
+        <div><a href="/">Home</a><a href="/login">Login</a></div>
+    </nav>
+    <div class="container">
+        <h2>Create Account</h2>
+        <p class="sub">Join MRK Agency as a client</p>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
