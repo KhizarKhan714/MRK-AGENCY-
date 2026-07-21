@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRK Agency - Submit Project</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; }
+        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
+        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
+        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; }
+        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
+        label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; margin-top: 15px; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #DDD; border-radius: 5px; font-size: 14px; }
+        textarea { height: 100px; resize: vertical; }
+        .pkg-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .pkg { border: 2px solid #DDD; padding: 15px; border-radius: 8px; cursor: pointer; }
+        .pkg input[type=radio] { margin-right: 10px; }
+        .pkg h4 { display: inline; font-size: 15px; }
+        .pkg p { font-size: 13px; color: #666; margin-top: 8px; padding-left: 25px; }
+        .pkg .price { font-weight: 800; color: #000; font-size: 16px; }
+        .pkg .delivery { color: #888; font-size: 12px; }
+        .budget-box { display: none; margin-top: 15px; }
+        .coming-soon { background: #f5f5f5; border: 1px dashed #aaa; padding: 12px; border-radius: 5px; color: #aaa; font-size: 13px; text-align: center; margin-top: 5px; }
+        .btn { width: 100%; background: #000; color: white; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>MRK AGENCY</h1>
+        <div><a href="/dashboard">Dashboard</a><a href="/logout">Logout</a></div>
+    </nav>
+    <div class="container">
+        <h2>Submit a Project</h2>
+        <p class="sub">Tell us what you need and we will build it for you</p>
+        <form method="POST" action="/submit-project">
+            <label>Project Title</label>
+            <input type="text" name="title" placeholder="e.g. Business Website for My Company" required>
+
+            <label>Project Description</label>
+            <textarea name="description" placeholder="Describe your project in detail..." required></textarea>
+
+            <label>Service Type</label>
+            <select name="website_type">
+                <option>Web Development</option>
+                <option>Web Design</option>
+                <option>UI/UX Design</option>
+                <option>Graphic Design</option>
+                <option>SEO</option>
+                <option>Software Engineering</option>
+            </select>
+
+            <label>AI Integration</label>
+            <div class="coming-soon">🚀 AI Integration — Coming Soon</div>
+
+            <label>Select Package</label>
+            <div class="pkg-grid">
+                <label class="pkg">
+                    <input type="radio" name="package" value="Bronze - $999" required>
+                    <h4>Bronze</h4> <span class="price">$999</span>
+                    <p>Up to 5 pages · Web Design + Development · Mobile Responsive · Basic SEO</p>
+                    <p class="delivery">⏱ Delivery: 2 weeks</p>
+                </label>
+                <label class="pkg">
+                    <input type="radio" name="package" value="Consular - $1499">
+                    <h4>Consular</h4> <span class="price">$1,499</span>
+                    <p>Up to 10 pages · Web Design + Development · Mobile Responsive · Full SEO · Contact Form</p>
+                    <p class="delivery">⏱ Delivery: 3 weeks</p>
+                </label>
+                <label class="pkg">
+                    <input type="radio" name="package" value="Gold - $2499">
+                    <h4>Gold</h4> <span class="price">$2,499</span>
+                    <p>Up to 20 pages · Premium Design + Development · Mobile Responsive · Full SEO + Analytics · Contact Form + Live Chat · Graphic Design</p>
+                    <p class="delivery">⏱ Delivery: 5 weeks</p>
+                </label>
+                <label class="pkg">
+                    <input type="radio" name="package" value="Diamond - $4499">
+                    <h4>Diamond</h4> <span class="price">$4,499</span>
+                    <p>Unlimited pages · Custom UI/UX + Development · All Integrations · Graphic Design + Branding · Software Features · Speed Optimization</p>
+                    <p class="delivery">⏱ Delivery: 8 weeks</p>
+                </label>
+                <label class="pkg">
+                    <input type="radio" name="package" value="Custom Executive - $5000+" id="custom-pkg">
+                    <h4>Custom Executive</h4> <span class="price">$5,000+</span>
+                    <p>Everything in Diamond · Custom Software Development · Dedicated Point of Contact · AI Integration (Coming Soon)</p>
+                    <p class="delivery">⏱ Delivery: Discussed per project</p>
+                </label>
+            </div>
+
+            <div class="budget-box" id="budget-box">
+                <label>Your Budget (Minimum $5,000)</label>
+                <input type="number" name="budget" placeholder="Enter your budget e.g. 7000" min="5000">
+            </div>
+
+            <label>Deadline</label>
+            <input type="date" name="deadline" required>
+
+            <button type="submit" class="btn">Submit Project</button>
+        </form>
+    </div>
+    <script>
+        document.querySelectorAll('input[name=package]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var budgetBox = document.getElementById('budget-box');
+                if (this.id === 'custom-pkg') {
+                    budgetBox.style.display = 'block';
+                } else {
+                    budgetBox.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+      </html>
