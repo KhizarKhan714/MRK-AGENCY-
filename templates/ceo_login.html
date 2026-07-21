@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRK Agency - CEO Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #0D1B2A; color: white; }
+        nav { background: #112236; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #FFD700; }
+        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; color: #FFD700; }
+        nav a { color: #aaa; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .container { max-width: 400px; margin: 80px auto; background: #112236; padding: 40px; border-radius: 8px; border: 1px solid #FFD700; }
+        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; color: #FFD700; }
+        .sub { color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .error { background: #3a0000; color: #ff6666; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; }
+        label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; margin-top: 15px; color: #aaa; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #FFD700; border-radius: 5px; font-size: 14px; background: #0D1B2A; color: white; }
+        .btn { width: 100%; background: #FFD700; color: black; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>MRK AGENCY</h1>
+        <div><a href="/">Home</a></div>
+    </nav>
+    <div class="container">
+        <h2>CEO Portal</h2>
+        <p class="sub">Restricted access — authorized personnel only</p>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="POST" action="/ceo-login">
+            <label>Name</label>
+            <input type="text" name="name" placeholder="Your name" required>
+            <label>Password</label>
+            <input type="password" name="password" placeholder="CEO password" required>
+            <label>Secret Key</label>
+            <input type="password" name="secret_key" placeholder="Secret key" required>
+            <label>Security Answer</label>
+            <input type="text" name="security_answer" placeholder="Security answer" required>
+            <button type="submit" class="btn">Enter Portal</button>
+        </form>
+    </div>
+</body>
+      </html>
