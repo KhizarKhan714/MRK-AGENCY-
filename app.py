@@ -1,37 +1,41 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
+import psycopg2
 import bcrypt
 import os
 
 app = Flask(__name__)
 app.secret_key = 'mrk_ultra_secure_2026_khizar'
-DB = 'mrk.db'
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+def get_db():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
 def init_db():
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS customers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         first_name TEXT, last_name TEXT,
         email TEXT UNIQUE, password TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS contractors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT, password TEXT, expertise TEXT,
         experience TEXT, note TEXT, cin TEXT,
-        status TEXT DEFAULT "pending")''')
+        status TEXT DEFAULT 'pending')''')
     c.execute('''CREATE TABLE IF NOT EXISTS projects (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         customer_id INTEGER, title TEXT, description TEXT,
         website_type TEXT, budget TEXT, deadline TEXT,
-        package TEXT, status TEXT DEFAULT "pending",
+        package TEXT, status TEXT DEFAULT 'pending',
         assigned_contractor_id INTEGER)''')
     c.execute('''CREATE TABLE IF NOT EXISTS ceo (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT, password TEXT, secret_key TEXT,
         security_answer TEXT)''')
     c.execute("SELECT COUNT(*) FROM ceo")
     if c.fetchone()[0] == 0:
-        c.execute("INSERT INTO ceo (name, password, secret_key, security_answer) VALUES (?,?,?,?)",
+        c.execute("INSERT INTO ceo (name, password, secret_key, security_answer) VALUES (%s,%s,%s,%s)",
                   ('Khizar Khan', 'CEOMRKAgencyKhizarKhan', 'KhizarKhanCEOMRK7', 'Kiran'))
     conn.commit()
     conn.close()
@@ -48,10 +52,10 @@ def register():
             ln = request.form['last_name']
             email = request.form['email']
             pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
-            conn = sqlite3.connect(DB)
+            conn = get_db()
             c = conn.cursor()
-            c.execute('INSERT INTO customers (first_name,last_name,email,password) VALUES (?,?,?,?)',
-                      (fn, ln, email, pw))
+            c.execute('INSERT INTO customers (first_name,last_name,email,password) VALUES (%s,%s,%s,%s)',
+                      (fn, ln, email, pw.decode()))
             conn.commit()
             conn.close()
             return redirect(url_for('login'))
@@ -64,12 +68,12 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         pw = request.form['password'].encode()
-        conn = sqlite3.connect(DB)
+        conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT * FROM customers WHERE email=?', (email,))
+        c.execute('SELECT * FROM customers WHERE email=%s', (email,))
         user = c.fetchone()
         conn.close()
-        if user and bcrypt.checkpw(pw, user[4]):
+        if user and bcrypt.checkpw(pw, user[4].encode()):
             session['customer_id'] = user[0]
             session['customer_name'] = user[1]
             return redirect(url_for('dashboard'))
@@ -88,11 +92,11 @@ def submit_project():
         return redirect(url_for('login'))
     if request.method == 'POST':
         try:
-            conn = sqlite3.connect(DB)
+            conn = get_db()
             c = conn.cursor()
             c.execute('''INSERT INTO projects
                 (customer_id,title,description,website_type,budget,deadline,package)
-                VALUES (?,?,?,?,?,?,?)''',
+                VALUES (%s,%s,%s,%s,%s,%s,%s)''',
                 (session['customer_id'],
                  request.form['title'],
                  request.form['description'],
@@ -102,22 +106,33 @@ def submit_project():
                  request.form['package']))
             conn.commit()
             conn.close()
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('my_projects'))
         except Exception as e:
             return render_template('submit_project.html', error=str(e))
     return render_template('submit_project.html')
+
+@app.route('/my-projects')
+def my_projects():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE customer_id=%s', (session['customer_id'],))
+    projects = c.fetchall()
+    conn.close()
+    return render_template('my_projects.html', projects=projects)
 
 @app.route('/contractor-apply', methods=['GET','POST'])
 def contractor_apply():
     if request.method == 'POST':
         try:
             pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
-            conn = sqlite3.connect(DB)
+            conn = get_db()
             c = conn.cursor()
             c.execute('''INSERT INTO contractors
                 (name,password,expertise,experience,note,status)
-                VALUES (?,?,?,?,?,?)''',
-                (request.form['name'], pw,
+                VALUES (%s,%s,%s,%s,%s,%s)''',
+                (request.form['name'], pw.decode(),
                  request.form['expertise'],
                  request.form['experience'],
                  request.form['note'], 'pending'))
@@ -134,12 +149,12 @@ def contractor_login():
     if request.method == 'POST':
         cin = request.form['cin']
         pw = request.form['password'].encode()
-        conn = sqlite3.connect(DB)
+        conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT * FROM contractors WHERE cin=?', (cin,))
+        c.execute('SELECT * FROM contractors WHERE cin=%s', (cin,))
         contractor = c.fetchone()
         conn.close()
-        if contractor and bcrypt.checkpw(pw, contractor[2]):
+        if contractor and bcrypt.checkpw(pw, contractor[2].encode()):
             session['contractor_id'] = contractor[0]
             session['contractor_name'] = contractor[1]
             return redirect(url_for('contractor_dashboard'))
@@ -163,10 +178,10 @@ def ceo_login():
     pw = request.form['password']
     sk = request.form['secret_key']
     sa = request.form['security_answer']
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
-    c.execute('''SELECT * FROM ceo WHERE name=? AND password=?
-        AND secret_key=? AND security_answer=?''', (name, pw, sk, sa))
+    c.execute('''SELECT * FROM ceo WHERE name=%s AND password=%s
+        AND secret_key=%s AND security_answer=%s''', (name, pw, sk, sa))
     ceo = c.fetchone()
     conn.close()
     if ceo:
@@ -178,7 +193,7 @@ def ceo_login():
 def ceo_dashboard():
     if not session.get('ceo'):
         return redirect(url_for('ceo_portal'))
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
     c.execute("SELECT * FROM contractors WHERE status='pending'")
     contractors = c.fetchall()
@@ -194,9 +209,9 @@ def approve_contractor(id):
         return redirect(url_for('ceo_portal'))
     import random
     cin = 'MRK' + str(random.randint(10000, 99999))
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE contractors SET status='approved', cin=? WHERE id=?",
+    c.execute("UPDATE contractors SET status='approved', cin=%s WHERE id=%s",
               (cin, id))
     conn.commit()
     conn.close()
@@ -206,9 +221,9 @@ def approve_contractor(id):
 def reject_contractor(id):
     if not session.get('ceo'):
         return redirect(url_for('ceo_portal'))
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE contractors SET status='rejected' WHERE id=?", (id,))
+    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('ceo_dashboard'))
@@ -217,23 +232,12 @@ def reject_contractor(id):
 def approve_project(id):
     if not session.get('ceo'):
         return redirect(url_for('ceo_portal'))
-    conn = sqlite3.connect(DB)
+    conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE projects SET status='approved' WHERE id=?", (id,))
+    c.execute("UPDATE projects SET status='approved' WHERE id=%s", (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('ceo_dashboard'))
-
-@app.route('/my-projects')
-def my_projects():
-    if 'customer_id' not in session:
-        return redirect(url_for('login'))
-    conn = sqlite3.connect(DB)
-    c = conn.cursor()
-    c.execute('SELECT * FROM projects WHERE customer_id=?', (session['customer_id'],))
-    projects = c.fetchall()
-    conn.close()
-    return render_template('my_projects.html', projects=projects)
 
 @app.route('/logout')
 def logout():
