@@ -224,6 +224,17 @@ def approve_project(id):
     conn.close()
     return redirect(url_for('ceo_dashboard'))
 
+@app.route('/my-projects')
+def my_projects():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE customer_id=?', (session['customer_id'],))
+    projects = c.fetchall()
+    conn.close()
+    return render_template('my_projects.html', projects=projects)
+
 @app.route('/logout')
 def logout():
     session.clear()
