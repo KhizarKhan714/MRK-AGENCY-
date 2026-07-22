@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRK Agency - My Projects</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; min-height: 100vh; }
+        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
+        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
+        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        .header { background: #000; color: white; padding: 30px 40px; }
+        .header h2 { font-size: 24px; display: block; }
+        .content { padding: 30px 40px; }
+        .project { background: white; padding: 25px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .project h3 { font-size: 18px; margin-bottom: 8px; display: block; }
+        .project p { color: #666; font-size: 14px; margin-bottom: 5px; display: block; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-top: 10px; }
+        .pending { background: #fff3cd; color: #856404; }
+        .approved { background: #d4edda; color: #155724; }
+        .empty { text-align: center; padding: 60px 20px; color: #666; }
+        .empty h3 { font-size: 20px; margin-bottom: 10px; display: block; }
+        .btn { background: #000; color: white; padding: 12px 25px; font-size: 14px; font-weight: bold; border-radius: 5px; text-decoration: none; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>MRK AGENCY</h1>
+        <div>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+    <div class="header">
+        <h2>My Projects</h2>
+    </div>
+    <div class="content">
+        {% if projects %}
+            {% for p in projects %}
+            <div class="project">
+                <h3>{{ p[2] }}</h3>
+                <p>Service: {{ p[4] }}</p>
+                <p>Package: {{ p[7] }}</p>
+                <p>Deadline: {{ p[6] }}</p>
+                <p>Description: {{ p[3] }}</p>
+                <span class="status {{ p[8] }}">{{ p[8].upper() }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty">
+                <h3>No projects yet</h3>
+                <p>You haven't submitted any projects yet.</p>
+                <a href="/submit-project" class="btn">Submit Your First Project</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+  </html>
