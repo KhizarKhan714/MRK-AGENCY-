@@ -255,6 +255,15 @@ def setup_ceo():
     conn.close()
     return "CEO setup done. Delete this route now."
 
+@app.route('/check-ceo')
+def check_ceo():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT name, password, secret_key, security_answer FROM ceo")
+    row = c.fetchone()
+    conn.close()
+    return str(row)
+
 init_db()
 
 if __name__ == '__main__':
