@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 app.secret_key = 'mrk_ultra_secure_2026_khizar'
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://')
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
