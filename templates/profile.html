@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRK Agency — My Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #F8F9FB; --surface: #FFFFFF; --dark: #0A0F1E;
+            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
+            --border: #E2E8F0; --text: #0A0F1E; --muted: #64748B;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav {
+            background: var(--dark); height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 48px; border-bottom: 2px solid var(--blue);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
+        .nav-logo span { color: var(--blue); }
+        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
+        nav a.nav-link:hover { color: #fff; }
+        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; }
+        nav a.nav-logout:hover { color: #ff6b6b; }
+
+        .hero-bar { background: var(--dark); padding: 48px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hero-bar .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+        .hero-bar h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .hero-bar p { font-size: 15px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+
+        .content { max-width: 900px; margin: 0 auto; padding: 48px; }
+
+        .profile-header {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 40px;
+            display: flex; align-items: center; gap: 32px;
+            margin-bottom: 32px; border-top: 3px solid var(--blue);
+        }
+        .avatar-wrap { position: relative; flex-shrink: 0; }
+        .avatar {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: var(--blue-soft); border: 3px solid var(--blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 800; color: var(--blue);
+            overflow: hidden; object-fit: cover;
+        }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .avatar-edit {
+            position: absolute; bottom: 2px; right: 2px;
+            width: 28px; height: 28px; background: var(--blue);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; cursor: pointer; border: 2px solid #fff;
+            font-size: 12px;
+        }
+        .profile-info h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .profile-info p { font-size: 14px; color: var(--muted); }
+        .profile-badge {
+            display: inline-block; background: var(--blue-soft); color: var(--blue);
+            font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+            text-transform: uppercase; padding: 4px 12px; border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 640px) { .cards-grid { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 32px;
+            border-left: 3px solid var(--blue);
+        }
+        .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+        .field input {
+            width: 100%; padding: 11px 14px;
+            border: 1px solid var(--border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
+            background: var(--bg); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+        }
+        .field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); background: #fff; }
+        .field input[disabled] { background: #F1F5F9; color: var(--muted); cursor: not-allowed; }
+        .btn-primary {
+            width: 100%; padding: 12px; background: var(--blue);
+            color: #fff; border: none; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+            cursor: pointer; transition: background 0.2s; margin-top: 8px;
+        }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .success {
+            background: #F0FDF4; border: 1px solid #BBF7D0;
+            color: #16A34A; padding: 12px 16px; border-radius: 6px;
+            font-size: 13px; font-weight: 500; margin-bottom: 20px;
+        }
+        .error {
+            background: #FEF2F2; border: 1px solid #FECACA;
+            color: #DC2626; padding: 12px 16px; border-radius: 6px;
+            font-size: 13px; font-weight: 500; margin-bottom: 20px;
+        }
+        .photo-card { grid-column: 1 / -1; }
+        .photo-upload-area {
+            border: 2px dashed var(--border); border-radius: 8px;
+            padding: 32px; text-align: center; cursor: pointer;
+            transition: border-color 0.2s; background: var(--bg);
+        }
+        .photo-upload-area:hover { border-color: var(--blue); background: var(--blue-soft); }
+        .photo-upload-area p { font-size: 14px; color: var(--muted); margin-top: 8px; }
+        .photo-upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        #photo-input { display: none; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
+        <div>
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/my-projects" class="nav-link">My Projects</a>
+            <a href="/logout" class="nav-logout">Sign Out</a>
+        </div>
+    </nav>
+
+    <div class="hero-bar">
+        <div class="eyebrow">Account Settings</div>
+        <h1>My Profile</h1>
+        <p>Manage your personal information and account security.</p>
+    </div>
+
+    <div class="content">
+        <div class="profile-header">
+            <div class="avatar-wrap">
+                <div class="avatar" id="avatar-display">
+                    {% if customer.photo %}
+                        <img src="{{ customer.photo }}" alt="Profile Photo">
+                    {% else %}
+                        {{ customer.first_name[0] }}{{ customer.last_name[0] }}
+                    {% endif %}
+                </div>
+                <div class="avatar-edit" onclick="document.getElementById('photo-input').click()">✎</div>
+                <input type="file" id="photo-input" accept="image/*" onchange="previewPhoto(this)">
+            </div>
+            <div class="profile-info">
+                <h2>{{ customer.first_name }} {{ customer.last_name }}</h2>
+                <p>{{ customer.email }}</p>
+                <span class="profile-badge">Client</span>
+            </div>
+        </div>
+
+        {% if success %}<div class="success">{{ success }}</div>{% endif %}
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+        <div class="cards-grid">
+            <div class="card">
+                <h3>Personal Information</h3>
+                <form method="POST" action="/update-profile">
+                    <input type="hidden" name="action" value="update_info">
+                    <div class="field">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" value="{{ customer.first_name }}" required>
+                    </div>
+                    <div class="field">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" value="{{ customer.last_name }}" required>
+                    </div>
+                    <div class="field">
+                        <label>Email Address</label>
+                        <input type="email" name="email" value="{{ customer.email }}" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Change Password</h3>
+                <form method="POST" action="/update-profile">
+                    <input type="hidden" name="action" value="change_password">
+                    <div class="field">
+                        <label>Current Password</label>
+                        <input type="password" name="current_password" placeholder="Enter current password" required>
+                    </div>
+                    <div class="field">
+                        <label>New Password</label>
+                        <input type="password" name="new_password" placeholder="Enter new password" required>
+                    </div>
+                    <div class="field">
+                        <label>Confirm New Password</label>
+                        <input type="password" name="confirm_password" placeholder="Confirm new password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Update Password</button>
+                </form>
+            </div>
+
+            <div class="card photo-card">
+                <h3>Profile Photo</h3>
+                <form method="POST" action="/update-profile" enctype="multipart/form-data" id="photo-form">
+                    <input type="hidden" name="action" value="update_photo">
+                    <input type="file" name="photo" id="photo-input-form" accept="image/*" style="display:none" onchange="this.form.submit()">
+                    <div class="photo-upload-area" onclick="document.getElementById('photo-input-form').click()">
+                        <div class="upload-icon">📷</div>
+                        <strong>Click to upload a photo</strong>
+                        <p>JPG, PNG up to 5MB. Your photo is visible only to you and the CEO.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var avatar = document.getElementById('avatar-display');
+                    avatar.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</body>
+      </html>
