@@ -1,3 +1,93 @@
+import base64
+
+@app.route('/profile')
+def profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+    row = c.fetchone()
+    conn.close()
+    customer = {
+        'id': row[0],
+        'first_name': row[1],
+        'last_name': row[2],
+        'email': row[3],
+        'photo': row[4]
+    }
+    return render_template('profile.html', customer=customer)
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    action = request.form.get('action')
+    conn = get_db()
+    c = conn.cursor()
+
+    if action == 'update_info':
+        fn = request.form['first_name'].strip()
+        ln = request.form['last_name'].strip()
+        email = request.form['email'].strip()
+        try:
+            c.execute('UPDATE customers SET first_name=%s, last_name=%s, email=%s WHERE id=%s',
+                      (fn, ln, email, session['customer_id']))
+            conn.commit()
+            session['customer_name'] = fn
+            c.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+            row = c.fetchone()
+            customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+            conn.close()
+            return render_template('profile.html', customer=customer, success='Profile updated successfully.')
+        except Exception as e:
+            conn.close()
+            c2 = get_db().cursor()
+            c2.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+            row = c2.fetchone()
+            customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+            return render_template('profile.html', customer=customer, error='Email already in use.')
+
+    elif action == 'change_password':
+        current_pw = request.form['current_password'].encode()
+        new_pw = request.form['new_password']
+        confirm_pw = request.form['confirm_password']
+        c.execute('SELECT password, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        customer = {'id': session['customer_id'], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+        if not bcrypt.checkpw(current_pw, row[0].encode()):
+            conn.close()
+            return render_template('profile.html', customer=customer, error='Current password is incorrect.')
+        if new_pw != confirm_pw:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='New passwords do not match.')
+        if len(new_pw) < 6:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='New password must be at least 6 characters.')
+        hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+        c.execute('UPDATE customers SET password=%s WHERE id=%s', (hashed, session['customer_id']))
+        conn.commit()
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Password changed successfully.')
+
+    elif action == 'update_photo':
+        photo_file = request.files.get('photo')
+        if photo_file and photo_file.filename:
+            photo_data = photo_file.read()
+            b64 = base64.b64encode(photo_data).decode()
+            mime = photo_file.content_type
+            data_url = f'data:{mime};base64,{b64}'
+            c.execute('UPDATE customers SET photo=%s WHERE id=%s', (data_url, session['customer_id']))
+            conn.commit()
+        c.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Profile photo updated.')
+
+    conn.close()
+    return redirect(url_for('profile'))
+
 from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 import bcrypt
