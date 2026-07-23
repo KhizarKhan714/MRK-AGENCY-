@@ -1,59 +1,386 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>MRK Agency</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRK Agency — Where Your Brand Achieves Glory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #fff; color: #000; }
-        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
-        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
-        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; font-weight: 500; }
-        .hero { text-align: center; padding: 120px 20px; background: #fff; }
-        .hero h2 { font-size: 46px; margin-bottom: 20px; font-weight: 800; }
-        .hero h2 span { border-bottom: 4px solid #000; }
-        .hero p { font-size: 18px; color: #666; margin-bottom: 40px; }
-        .buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-        .btn { background: #000; color: white; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 5px; text-decoration: none; }
-        .btn-outline { background: white; color: #000; border: 2px solid #000; padding: 15px 40px; font-size: 16px; font-weight: bold; border-radius: 5px; text-decoration: none; }
-        .services { padding: 80px 40px; background: #F5F5F5; text-align: center; }
-        .services h3 { font-size: 32px; font-weight: 800; margin-bottom: 40px; }
-        .service-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-        .service-card { background: white; padding: 30px; border-radius: 8px; width: 200px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-        .service-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
-        .service-card p { font-size: 13px; color: #666; }
-        footer { background: #000; color: white; text-align: center; padding: 30px; font-size: 14px; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #F8F9FB;
+            --surface: #FFFFFF;
+            --dark: #0A0F1E;
+            --blue: #1A56DB;
+            --blue-dark: #1240A8;
+            --blue-soft: #EEF3FF;
+            --border: #E2E8F0;
+            --text: #0A0F1E;
+            --muted: #64748B;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+        /* NAV */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: var(--dark);
+            height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 48px;
+            border-bottom: 2px solid var(--blue);
+        }
+        .nav-logo {
+            font-size: 18px; font-weight: 800; letter-spacing: 0.15em;
+            color: #fff; text-transform: uppercase; text-decoration: none;
+        }
+        .nav-logo span { color: var(--blue); }
+        .nav-links a {
+            color: rgba(255,255,255,0.6); text-decoration: none;
+            font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
+            margin-left: 32px; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: #fff; }
+        .nav-links .nav-cta {
+            background: var(--blue); color: #fff;
+            padding: 8px 20px; border-radius: 4px;
+            font-weight: 600;
+        }
+        .nav-links .nav-cta:hover { background: var(--blue-dark); color: #fff; }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            background: var(--dark);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center;
+            padding: 100px 40px 80px;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at 30% 50%, rgba(26,86,219,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 30%, rgba(26,86,219,0.08) 0%, transparent 50%);
+        }
+        .hero-inner { position: relative; z-index: 1; max-width: 780px; }
+        .hero-eyebrow {
+            display: inline-block;
+            font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--blue);
+            border: 1px solid rgba(26,86,219,0.4);
+            padding: 6px 16px; border-radius: 2px;
+            margin-bottom: 32px;
+        }
+        .hero h1 {
+            font-size: clamp(40px, 7vw, 72px);
+            font-weight: 900; line-height: 1.05;
+            color: #fff; margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+        .hero h1 .accent {
+            color: var(--blue);
+            position: relative;
+        }
+        .hero-sub {
+            font-size: 18px; color: rgba(255,255,255,0.5);
+            font-weight: 400; margin-bottom: 48px; line-height: 1.6;
+        }
+        .hero-sub strong { color: rgba(255,255,255,0.8); font-weight: 500; }
+        .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn-primary {
+            background: var(--blue); color: #fff;
+            padding: 16px 40px; border-radius: 4px;
+            font-size: 15px; font-weight: 700; text-decoration: none;
+            letter-spacing: 0.02em; transition: all 0.2s;
+            border: 2px solid var(--blue);
+        }
+        .btn-primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+        .btn-secondary {
+            background: transparent; color: #fff;
+            padding: 16px 40px; border-radius: 4px;
+            font-size: 15px; font-weight: 600; text-decoration: none;
+            letter-spacing: 0.02em; transition: all 0.2s;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .btn-secondary:hover { border-color: rgba(255,255,255,0.6); }
+
+        /* STATS BAR */
+        .stats-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 32px 48px;
+            display: flex; justify-content: center; gap: 80px; flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-num { font-size: 32px; font-weight: 800; color: var(--blue); }
+        .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0.05em; margin-top: 4px; }
+
+        /* SERVICES */
+        .services {
+            padding: 100px 48px;
+            background: var(--bg);
+            max-width: 1200px; margin: 0 auto;
+        }
+        .section-label {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--blue);
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 800; color: var(--text);
+            margin-bottom: 16px; letter-spacing: -0.02em;
+        }
+        .section-sub { font-size: 16px; color: var(--muted); max-width: 520px; margin-bottom: 60px; line-height: 1.6; }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .service-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            border-left: 3px solid var(--blue);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .service-card:hover {
+            box-shadow: 0 8px 32px rgba(26,86,219,0.1);
+            transform: translateY(-2px);
+        }
+        .service-icon {
+            width: 44px; height: 44px;
+            background: var(--blue-soft);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .service-card h4 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+        .service-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+        /* PACKAGES */
+        .packages-section {
+            background: var(--dark);
+            padding: 100px 48px;
+        }
+        .packages-inner { max-width: 1200px; margin: 0 auto; }
+        .packages-section .section-label { color: var(--blue); }
+        .packages-section .section-title { color: #fff; }
+        .packages-section .section-sub { color: rgba(255,255,255,0.5); }
+        .pkg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .pkg-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 28px;
+            transition: border-color 0.2s;
+        }
+        .pkg-card:hover { border-color: var(--blue); }
+        .pkg-card.featured {
+            background: var(--blue);
+            border-color: var(--blue);
+        }
+        .pkg-name { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
+        .pkg-card.featured .pkg-name { color: rgba(255,255,255,0.8); }
+        .pkg-price { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .pkg-delivery { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
+        .pkg-card.featured .pkg-delivery { color: rgba(255,255,255,0.7); }
+        .pkg-features { list-style: none; }
+        .pkg-features li {
+            font-size: 13px; color: rgba(255,255,255,0.6);
+            padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .pkg-card.featured .pkg-features li { color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.15); }
+        .pkg-features li::before { content: '→'; color: var(--blue); font-size: 11px; }
+        .pkg-card.featured .pkg-features li::before { color: rgba(255,255,255,0.8); }
+
+        /* CTA */
+        .cta-section {
+            background: var(--blue-soft);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 80px 48px;
+            text-align: center;
+        }
+        .cta-section h2 { font-size: 36px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.02em; }
+        .cta-section p { font-size: 16px; color: var(--muted); margin-bottom: 36px; }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            padding: 40px 48px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 16px;
+            border-top: 2px solid var(--blue);
+        }
+        .footer-logo { font-size: 16px; font-weight: 800; letter-spacing: 0.15em; color: #fff; }
+        .footer-logo span { color: var(--blue); }
+        footer p { font-size: 13px; color: rgba(255,255,255,0.3); }
+        .footer-links a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; transition: color 0.2s; }
+        .footer-links a:hover { color: #fff; }
     </style>
 </head>
 <body>
     <nav>
-        <h1>MRK AGENCY</h1>
-        <div>
-            <a href="/">Home</a>
-            <a href="/login">Login</a>
-            <a href="/register">Register</a>
-            <a href="/contractor-apply">Join as Contractor</a>
+        <a href="/" class="nav-logo">MRK<span>.</span>Agency</a>
+        <div class="nav-links">
+            <a href="/login">Client Login</a>
+            <a href="/contractor-login">Contractors</a>
+            <a href="/register" class="nav-cta">Get Started</a>
         </div>
     </nav>
+
     <div class="hero">
-        <h2>Where Your Brand <span>Achieves Glory</span></h2>
-        <p>Web Development. SEO. AI Integration. Design.</p>
-        <div class="buttons">
-            <a href="/register" class="btn">Get Started</a>
-            <a href="/contractor-apply" class="btn-outline">Join as Contractor</a>
+        <div class="hero-inner">
+            <span class="hero-eyebrow">Pakistan's Premier Digital Agency</span>
+            <h1>Where Your Brand<br><span class="accent">Achieves Glory</span></h1>
+            <p class="hero-sub">
+                <strong>Web Development · SEO · UI/UX Design</strong><br>
+                Graphic Design · Software Engineering — built for Western markets.
+            </p>
+            <div class="hero-btns">
+                <a href="/register" class="btn-primary">Start a Project</a>
+                <a href="/contractor-apply" class="btn-secondary">Join as Contractor</a>
+            </div>
         </div>
     </div>
-    <div class="services">
-        <h3>What We Offer</h3>
-        <div class="service-grid">
-            <div class="service-card"><h4>Web Development</h4><p>Modern, fast, responsive websites</p></div>
-            <div class="service-card"><h4>SEO</h4><p>Rank higher, get more clients</p></div>
-            <div class="service-card"><h4>AI Integration</h4><p>Smart automation for your business</p></div>
-            <div class="service-card"><h4>UI/UX Design</h4><p>Beautiful, user-friendly interfaces</p></div>
-            <div class="service-card"><h4>Graphic Design</h4><p>Logos, branding, visuals</p></div>
+
+    <div class="stats-bar">
+        <div class="stat"><div class="stat-num">5</div><div class="stat-label">Core Services</div></div>
+        <div class="stat"><div class="stat-num">$999</div><div class="stat-label">Starting Price</div></div>
+        <div class="stat"><div class="stat-num">2 Weeks</div><div class="stat-label">Fastest Delivery</div></div>
+    </div>
+
+    <div style="background: var(--bg);">
+        <div class="services">
+            <div class="section-label">What We Do</div>
+            <h2 class="section-title">Full-Spectrum Digital Services</h2>
+            <p class="section-sub">From concept to launch — every service your brand needs to dominate its market.</p>
+            <div class="service-grid">
+                <div class="service-card">
+                    <div class="service-icon">⚡</div>
+                    <h4>Web Development</h4>
+                    <p>Modern, fast, and responsive websites engineered for performance and conversion.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">📈</div>
+                    <h4>SEO</h4>
+                    <p>Rank higher on Google, drive organic traffic, and turn visitors into clients.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🎨</div>
+                    <h4>UI/UX Design</h4>
+                    <p>Interfaces that are beautiful, intuitive, and built around your users.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">✦</div>
+                    <h4>Graphic Design</h4>
+                    <p>Logos, brand identity, and visuals that make your brand unforgettable.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🖥</div>
+                    <h4>Web Design</h4>
+                    <p>Pixel-perfect designs that communicate trust and professionalism instantly.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">⚙️</div>
+                    <h4>Software Engineering</h4>
+                    <p>Custom software solutions built to automate and scale your business.</p>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="packages-section">
+        <div class="packages-inner">
+            <div class="section-label">Pricing</div>
+            <h2 class="section-title">Transparent Packages</h2>
+            <p class="section-sub">No surprises. Choose the package that fits your goals and budget.</p>
+            <div class="pkg-grid">
+                <div class="pkg-card">
+                    <div class="pkg-name">Bronze</div>
+                    <div class="pkg-price">$999</div>
+                    <div class="pkg-delivery">Delivery in 2 weeks</div>
+                    <ul class="pkg-features">
+                        <li>Up to 5 pages</li>
+                        <li>Web Design + Dev</li>
+                        <li>Mobile Responsive</li>
+                        <li>Basic SEO</li>
+                    </ul>
+                </div>
+                <div class="pkg-card">
+                    <div class="pkg-name">Consular</div>
+                    <div class="pkg-price">$1,499</div>
+                    <div class="pkg-delivery">Delivery in 3 weeks</div>
+                    <ul class="pkg-features">
+                        <li>Up to 10 pages</li>
+                        <li>Web Design + Dev</li>
+                        <li>Full SEO</li>
+                        <li>Contact Form</li>
+                    </ul>
+                </div>
+                <div class="pkg-card featured">
+                    <div class="pkg-name">Gold</div>
+                    <div class="pkg-price">$2,499</div>
+                    <div class="pkg-delivery">Delivery in 5 weeks</div>
+                    <ul class="pkg-features">
+                        <li>Up to 20 pages</li>
+                        <li>Premium Design + Dev</li>
+                        <li>Full SEO + Analytics</li>
+                        <li>Live Chat + Forms</li>
+                        <li>Graphic Design</li>
+                    </ul>
+                </div>
+                <div class="pkg-card">
+                    <div class="pkg-name">Diamond</div>
+                    <div class="pkg-price">$4,499</div>
+                    <div class="pkg-delivery">Delivery in 8 weeks</div>
+                    <ul class="pkg-features">
+                        <li>Unlimited pages</li>
+                        <li>Custom UI/UX + Dev</li>
+                        <li>All Integrations</li>
+                        <li>Branding Suite</li>
+                        <li>Software Features</li>
+                    </ul>
+                </div>
+                <div class="pkg-card">
+                    <div class="pkg-name">Custom Executive</div>
+                    <div class="pkg-price">$5,000+</div>
+                    <div class="pkg-delivery">Timeline discussed</div>
+                    <ul class="pkg-features">
+                        <li>Everything in Diamond</li>
+                        <li>Custom Software</li>
+                        <li>Dedicated Contact</li>
+                        <li>AI Integration (Soon)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <h2>Ready to Build Something Great?</h2>
+        <p>Join clients from the US, UK, and Europe who trust MRK Agency with their digital presence.</p>
+        <a href="/register" class="btn-primary">Create Your Account</a>
+    </div>
+
     <footer>
+        <div class="footer-logo">MRK<span>.</span>Agency</div>
         <p>&copy; 2026 MRK Agency. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
+            <a href="/contractor-apply">Contractors</a>
+        </div>
     </footer>
 </body>
-              </html>
+    </html>
