@@ -1,115 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>MRK Agency - Submit Project</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRK Agency — Submit Project</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; }
-        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
-        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
-        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
-        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
-        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; }
-        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
-        label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; margin-top: 15px; }
-        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #DDD; border-radius: 5px; font-size: 14px; }
-        textarea { height: 100px; resize: vertical; }
-        .pkg-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-        .pkg { border: 2px solid #DDD; padding: 15px; border-radius: 8px; cursor: pointer; }
-        .pkg input[type=radio] { margin-right: 10px; }
-        .pkg h4 { display: inline; font-size: 15px; }
-        .pkg p { font-size: 13px; color: #666; margin-top: 8px; padding-left: 25px; }
-        .pkg .price { font-weight: 800; color: #000; font-size: 16px; }
-        .pkg .delivery { color: #888; font-size: 12px; }
-        .budget-box { display: none; margin-top: 15px; }
-        .coming-soon { background: #f5f5f5; border: 1px dashed #aaa; padding: 12px; border-radius: 5px; color: #aaa; font-size: 13px; text-align: center; margin-top: 5px; }
-        .btn { width: 100%; background: #000; color: white; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 25px; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #F8F9FB; --surface: #FFFFFF; --dark: #0A0F1E;
+            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
+            --border: #E2E8F0; --text: #0A0F1E; --muted: #64748B;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav {
+            background: var(--dark); height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 48px; border-bottom: 2px solid var(--blue);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
+        .nav-logo span { color: var(--blue); }
+        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
+        nav a.nav-link:hover { color: #fff; }
+        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; }
+        nav a.nav-logout:hover { color: #ff6b6b; }
+
+        .hero-bar { background: var(--dark); padding: 48px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .hero-bar .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+        .hero-bar h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+        .hero-bar p { font-size: 15px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+
+        .content { max-width: 800px; margin: 0 auto; padding: 48px; }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 40px;
+            border-top: 3px solid var(--blue);
+            margin-bottom: 24px;
+        }
+        .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .field { margin-bottom: 20px; }
+        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+        .field input, .field textarea, .field select {
+            width: 100%; padding: 12px 16px;
+            border: 1px solid var(--border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
+            background: var(--bg); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+        }
+        .field textarea { height: 120px; resize: vertical; }
+        .field input:focus, .field textarea:focus, .field select:focus {
+            border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); background: #fff;
+        }
+
+        /* PACKAGES */
+        .pkg-grid { display: grid; gap: 12px; }
+        .pkg-option { display: none; }
+        .pkg-label {
+            display: block; border: 1px solid var(--border);
+            border-radius: 8px; padding: 20px 24px; cursor: pointer;
+            transition: all 0.2s; background: var(--bg);
+        }
+        .pkg-label:hover { border-color: var(--blue); background: var(--blue-soft); }
+        .pkg-option:checked + .pkg-label {
+            border-color: var(--blue); background: var(--blue-soft);
+            box-shadow: 0 0 0 2px rgba(26,86,219,0.2);
+        }
+        .pkg-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .pkg-name-text { font-size: 16px; font-weight: 700; }
+        .pkg-price-text { font-size: 20px; font-weight: 800; color: var(--blue); }
+        .pkg-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+        .pkg-delivery { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 6px; }
+
+        .coming-soon {
+            background: #F8FAFF; border: 1px dashed #C7D9FF;
+            color: var(--muted); padding: 14px 16px; border-radius: 6px;
+            font-size: 13px; text-align: center;
+        }
+        .budget-box { display: none; margin-top: 16px; }
+        .btn-primary {
+            width: 100%; padding: 16px; background: var(--blue);
+            color: #fff; border: none; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .error {
+            background: #FEF2F2; border: 1px solid #FECACA;
+            color: #DC2626; padding: 12px 16px; border-radius: 6px;
+            font-size: 13px; font-weight: 500; margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <nav>
-        <h1>MRK AGENCY</h1>
-        <div><a href="/dashboard">Dashboard</a><a href="/logout">Logout</a></div>
+        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
+        <div>
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/my-projects" class="nav-link">My Projects</a>
+            <a href="/logout" class="nav-logout">Sign Out</a>
+        </div>
     </nav>
-    <div class="container">
-        <h2>Submit a Project</h2>
-        <p class="sub">Tell us what you need and we will build it for you</p>
+
+    <div class="hero-bar">
+        <div class="eyebrow">New Project</div>
+        <h1>Submit a Project</h1>
+        <p>Describe your vision and we'll bring it to life.</p>
+    </div>
+
+    <div class="content">
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
         <form method="POST" action="/submit-project">
-            <label>Project Title</label>
-            <input type="text" name="title" placeholder="e.g. Business Website for My Company" required>
 
-            <label>Project Description</label>
-            <textarea name="description" placeholder="Describe your project in detail..." required></textarea>
-
-            <label>Service Type</label>
-            <select name="website_type">
-                <option>Web Development</option>
-                <option>Web Design</option>
-                <option>UI/UX Design</option>
-                <option>Graphic Design</option>
-                <option>SEO</option>
-                <option>Software Engineering</option>
-            </select>
-
-            <label>AI Integration</label>
-            <div class="coming-soon">🚀 AI Integration — Coming Soon</div>
-
-            <label>Select Package</label>
-            <div class="pkg-grid">
-                <label class="pkg">
-                    <input type="radio" name="package" value="Bronze - $999" required>
-                    <h4>Bronze</h4> <span class="price">$999</span>
-                    <p>Up to 5 pages · Web Design + Development · Mobile Responsive · Basic SEO</p>
-                    <p class="delivery">⏱ Delivery: 2 weeks</p>
-                </label>
-                <label class="pkg">
-                    <input type="radio" name="package" value="Consular - $1499">
-                    <h4>Consular</h4> <span class="price">$1,499</span>
-                    <p>Up to 10 pages · Web Design + Development · Mobile Responsive · Full SEO · Contact Form</p>
-                    <p class="delivery">⏱ Delivery: 3 weeks</p>
-                </label>
-                <label class="pkg">
-                    <input type="radio" name="package" value="Gold - $2499">
-                    <h4>Gold</h4> <span class="price">$2,499</span>
-                    <p>Up to 20 pages · Premium Design + Development · Mobile Responsive · Full SEO + Analytics · Contact Form + Live Chat · Graphic Design</p>
-                    <p class="delivery">⏱ Delivery: 5 weeks</p>
-                </label>
-                <label class="pkg">
-                    <input type="radio" name="package" value="Diamond - $4499">
-                    <h4>Diamond</h4> <span class="price">$4,499</span>
-                    <p>Unlimited pages · Custom UI/UX + Development · All Integrations · Graphic Design + Branding · Software Features · Speed Optimization</p>
-                    <p class="delivery">⏱ Delivery: 8 weeks</p>
-                </label>
-                <label class="pkg">
-                    <input type="radio" name="package" value="Custom Executive - $5000+" id="custom-pkg">
-                    <h4>Custom Executive</h4> <span class="price">$5,000+</span>
-                    <p>Everything in Diamond · Custom Software Development · Dedicated Point of Contact · AI Integration (Coming Soon)</p>
-                    <p class="delivery">⏱ Delivery: Discussed per project</p>
-                </label>
+            <div class="card">
+                <h3>Project Details</h3>
+                <div class="field">
+                    <label>Project Title</label>
+                    <input type="text" name="title" placeholder="e.g. Business Website for My Company" required>
+                </div>
+                <div class="field">
+                    <label>Project Description</label>
+                    <textarea name="description" placeholder="Describe your project in detail — your goals, target audience, and any specific requirements..." required></textarea>
+                </div>
+                <div class="field">
+                    <label>Service Type</label>
+                    <select name="website_type">
+                        <option>Web Development</option>
+                        <option>Web Design</option>
+                        <option>UI/UX Design</option>
+                        <option>Graphic Design</option>
+                        <option>SEO</option>
+                        <option>Software Engineering</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>AI Integration</label>
+                    <div class="coming-soon">🚀 AI Integration — Coming Soon</div>
+                </div>
+                <div class="field">
+                    <label>Project Deadline</label>
+                    <input type="date" name="deadline" required>
+                </div>
             </div>
 
-            <div class="budget-box" id="budget-box">
-                <label>Your Budget (Minimum $5,000)</label>
-                <input type="number" name="budget" placeholder="Enter your budget e.g. 7000" min="5000">
+            <div class="card">
+                <h3>Select Your Package</h3>
+                <div class="pkg-grid">
+                    <div>
+                        <input type="radio" class="pkg-option" name="package" id="pkg1" value="Bronze - $999" required>
+                        <label class="pkg-label" for="pkg1">
+                            <div class="pkg-top"><span class="pkg-name-text">Bronze</span><span class="pkg-price-text">$999</span></div>
+                            <div class="pkg-desc">Up to 5 pages · Web Design + Development · Mobile Responsive · Basic SEO</div>
+                            <div class="pkg-delivery">⏱ Delivery: 2 weeks</div>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" class="pkg-option" name="package" id="pkg2" value="Consular - $1499">
+                        <label class="pkg-label" for="pkg2">
+                            <div class="pkg-top"><span class="pkg-name-text">Consular</span><span class="pkg-price-text">$1,499</span></div>
+                            <div class="pkg-desc">Up to 10 pages · Web Design + Development · Mobile Responsive · Full SEO · Contact Form</div>
+                            <div class="pkg-delivery">⏱ Delivery: 3 weeks</div>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" class="pkg-option" name="package" id="pkg3" value="Gold - $2499">
+                        <label class="pkg-label" for="pkg3">
+                            <div class="pkg-top"><span class="pkg-name-text">Gold</span><span class="pkg-price-text">$2,499</span></div>
+                            <div class="pkg-desc">Up to 20 pages · Premium Design + Development · Full SEO + Analytics · Live Chat + Forms · Graphic Design</div>
+                            <div class="pkg-delivery">⏱ Delivery: 5 weeks</div>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" class="pkg-option" name="package" id="pkg4" value="Diamond - $4499">
+                        <label class="pkg-label" for="pkg4">
+                            <div class="pkg-top"><span class="pkg-name-text">Diamond</span><span class="pkg-price-text">$4,499</span></div>
+                            <div class="pkg-desc">Unlimited pages · Custom UI/UX + Development · All Integrations · Branding Suite · Software Features</div>
+                            <div class="pkg-delivery">⏱ Delivery: 8 weeks</div>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" class="pkg-option" name="package" id="pkg5" value="Custom Executive - $5000+">
+                        <label class="pkg-label" for="pkg5">
+                            <div class="pkg-top"><span class="pkg-name-text">Custom Executive</span><span class="pkg-price-text">$5,000+</span></div>
+                            <div class="pkg-desc">Everything in Diamond · Custom Software Development · Dedicated Point of Contact · AI Integration (Coming Soon)</div>
+                            <div class="pkg-delivery">⏱ Timeline discussed per project</div>
+                        </label>
+                    </div>
+                </div>
+                <div class="budget-box" id="budget-box">
+                    <div class="field" style="margin-top:16px;margin-bottom:0">
+                        <label>Your Budget (Minimum $5,000)</label>
+                        <input type="number" name="budget" placeholder="e.g. 7000" min="5000">
+                    </div>
+                </div>
             </div>
 
-            <label>Deadline</label>
-            <input type="date" name="deadline" required>
-
-            <button type="submit" class="btn">Submit Project</button>
+            <button type="submit" class="btn-primary">Submit Project Request</button>
         </form>
     </div>
+
     <script>
-        document.querySelectorAll('input[name=package]').forEach(function(radio) {
+        document.querySelectorAll('.pkg-option').forEach(function(radio) {
             radio.addEventListener('change', function() {
-                var budgetBox = document.getElementById('budget-box');
-                if (this.id === 'custom-pkg') {
-                    budgetBox.style.display = 'block';
-                } else {
-                    budgetBox.style.display = 'none';
-                }
+                document.getElementById('budget-box').style.display =
+                    this.id === 'pkg5' ? 'block' : 'none';
             });
         });
     </script>
 </body>
-      </html>
+    </html>
