@@ -174,17 +174,16 @@ def ceo_portal():
 
 @app.route('/ceo-login', methods=['POST'])
 def ceo_login():
-    name = request.form['name']
-    pw = request.form['password']
-    sk = request.form['secret_key']
-    sa = request.form['security_answer']
+    name = request.form['name'].strip()
+    pw = request.form['password'].strip()
+    sk = request.form['secret_key'].strip()
+    sa = request.form['security_answer'].strip()
     conn = get_db()
     c = conn.cursor()
-    c.execute('''SELECT * FROM ceo WHERE name=%s AND password=%s
-        AND secret_key=%s AND security_answer=%s''', (name, pw, sk, sa))
+    c.execute('SELECT * FROM ceo WHERE name=%s', (name,))
     ceo = c.fetchone()
     conn.close()
-    if ceo:
+    if ceo and ceo[2] == pw and ceo[3] == sk and ceo[4] == sa:
         session['ceo'] = True
         return redirect(url_for('ceo_dashboard'))
     return render_template('ceo_login.html', error='Invalid credentials. Access denied.')
