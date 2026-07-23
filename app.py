@@ -333,6 +333,17 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
+c.execute('''CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        first_name TEXT, last_name TEXT,
+        email TEXT UNIQUE, password TEXT,
+        photo TEXT)''')
+try:
+        c.execute('ALTER TABLE customers ADD COLUMN IF NOT EXISTS photo TEXT')
+        conn.commit()
+    except:
+        conn.rollback()
+        
 init_db()
 
 if __name__ == '__main__':
