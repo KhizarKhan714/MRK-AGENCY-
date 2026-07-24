@@ -1,52 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>MRK Agency - Join as Contractor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRK Agency — Join as Contractor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #F5F5F5; color: #000; }
-        nav { background: #fff; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E0E0E0; }
-        nav h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; }
-        nav a { color: #000; text-decoration: none; margin-left: 20px; font-size: 14px; }
-        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
-        h2 { margin-bottom: 5px; font-size: 26px; font-weight: 800; }
-        .sub { color: #666; font-size: 14px; margin-bottom: 30px; }
-        .success { background: #e0ffe0; color: #060; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; }
-        label { font-size: 13px; font-weight: 700; display: block; margin-bottom: 6px; margin-top: 15px; }
-        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #DDD; border-radius: 5px; font-size: 14px; }
-        textarea { height: 100px; resize: vertical; }
-        .btn { width: 100%; background: #000; color: white; padding: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 25px; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #F8F9FB; --surface: #FFFFFF; --dark: #0A0F1E;
+            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
+            --border: #E2E8F0; --text: #0A0F1E; --muted: #64748B;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        nav {
+            background: var(--dark); height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 48px; border-bottom: 2px solid var(--blue);
+        }
+        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
+        .nav-logo span { color: var(--blue); }
+        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
+        nav a.nav-link:hover { color: #fff; }
+
+        .page { display: flex; align-items: flex-start; justify-content: center; padding: 60px 20px; min-height: calc(100vh - 64px); }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 48px; width: 100%; max-width: 600px;
+            box-shadow: 0 4px 24px rgba(10,15,30,0.08);
+            border-top: 3px solid var(--blue);
+        }
+        .card-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+        .card h2 { font-size: 28px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; }
+        .card-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+        .success {
+            background: #F0FDF4; border: 1px solid #BBF7D0;
+            color: #16A34A; padding: 14px 16px; border-radius: 6px;
+            font-size: 14px; font-weight: 500; margin-bottom: 20px;
+        }
+        .error {
+            background: #FEF2F2; border: 1px solid #FECACA;
+            color: #DC2626; padding: 12px 16px; border-radius: 6px;
+            font-size: 13px; font-weight: 500; margin-bottom: 20px;
+        }
+        .field { margin-bottom: 20px; }
+        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+        .field input, .field textarea, .field select {
+            width: 100%; padding: 12px 16px;
+            border: 1px solid var(--border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
+            background: var(--bg); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+        }
+        .field textarea { height: 110px; resize: vertical; }
+        .field input:focus, .field textarea:focus, .field select:focus {
+            border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); background: #fff;
+        }
+        .btn-primary {
+            width: 100%; padding: 14px; background: var(--blue);
+            color: #fff; border: none; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: background 0.2s; margin-top: 8px;
+        }
+        .btn-primary:hover { background: var(--blue-dark); }
+        .note-box {
+            background: var(--blue-soft); border: 1px solid #C7D9FF;
+            border-radius: 8px; padding: 16px; margin-bottom: 28px;
+            font-size: 13px; color: var(--blue); line-height: 1.5;
+        }
+        .note-box strong { font-weight: 700; }
+        .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+        .card-footer { text-align: center; font-size: 14px; color: var(--muted); }
+        .card-footer a { color: var(--blue); font-weight: 600; text-decoration: none; }
     </style>
 </head>
 <body>
     <nav>
-        <h1>MRK AGENCY</h1>
-        <div><a href="/">Home</a><a href="/contractor-login">Contractor Login</a></div>
+        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
+        <div>
+            <a href="/" class="nav-link">Home</a>
+            <a href="/contractor-login" class="nav-link">Contractor Login</a>
+        </div>
     </nav>
-    <div class="container">
-        <h2>Join as Contractor</h2>
-        <p class="sub">Apply to work with MRK Agency and serve global clients</p>
-        {% if success %}<div class="success">{{ success }}</div>{% endif %}
-        <form method="POST" action="/contractor-apply">
-            <label>Full Name</label>
-            <input type="text" name="name" placeholder="Your full name" required>
-            <label>Expertise</label>
-            <select name="expertise">
-                <option>Web Development</option>
-                <option>Web Design</option>
-                <option>UI/UX Design</option>
-                <option>Graphic Design</option>
-                <option>SEO</option>
-                <option>Software Engineering</option>
-            </select>
-            <label>Years of Experience</label>
-            <input type="number" name="experience" placeholder="e.g. 3" required>
-            <label>About You</label>
-            <textarea name="note" placeholder="Tell us about yourself and your skills..." required></textarea>
-            <label>Password</label>
-            <input type="password" name="password" placeholder="Create a password" required>
-            <button type="submit" class="btn">Submit Application</button>
-        </form>
+
+    <div class="page">
+        <div class="card">
+            <div class="card-eyebrow">Contractor Portal</div>
+            <h2>Join MRK Agency</h2>
+            <p class="card-sub">Apply to work with our global client base across the US, UK, and Europe. Upon approval, you'll receive your unique Contractor ID (CIN).</p>
+
+            <div class="note-box">
+                <strong>How it works:</strong> Submit your application → CEO reviews → Upon approval, you receive your CIN to log in and access your dashboard.
+            </div>
+
+            {% if success %}<div class="success">{{ success }}</div>{% endif %}
+            {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+            <form method="POST" action="/contractor-apply">
+                <div class="field">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Your full name" required>
+                </div>
+                <div class="field">
+                    <label>Area of Expertise</label>
+                    <select name="expertise">
+                        <option>Web Development</option>
+                        <option>Web Design</option>
+                        <option>UI/UX Design</option>
+                        <option>Graphic Design</option>
+                        <option>SEO</option>
+                        <option>Software Engineering</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Years of Experience</label>
+                    <input type="number" name="experience" placeholder="e.g. 3" min="0" required>
+                </div>
+                <div class="field">
+                    <label>About You</label>
+                    <textarea name="note" placeholder="Tell us about your skills, past work, and why you'd be a great fit for MRK Agency..." required></textarea>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Create a secure password" required>
+                </div>
+                <button type="submit" class="btn-primary">Submit Application</button>
+            </form>
+            <hr class="divider">
+            <div class="card-footer">Already approved? <a href="/contractor-login">Login here</a></div>
+        </div>
     </div>
 </body>
-  </html>
+    </html>
