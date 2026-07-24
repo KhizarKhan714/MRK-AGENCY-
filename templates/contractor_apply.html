@@ -16,66 +16,84 @@
         nav {
             background: var(--dark); height: 64px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 48px; border-bottom: 2px solid var(--blue);
+            padding: 0 32px; border-bottom: 2px solid var(--blue);
         }
-        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
-        .nav-logo span { color: var(--blue); }
-        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
+        .nav-logo { font-size: 17px; font-weight: 800; letter-spacing: 0.12em; color: #fff; text-decoration: none; }
+        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 20px; }
         nav a.nav-link:hover { color: #fff; }
 
-        .page { display: flex; align-items: flex-start; justify-content: center; padding: 60px 20px; min-height: calc(100vh - 64px); }
-        .card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 48px; width: 100%; max-width: 600px;
-            box-shadow: 0 4px 24px rgba(10,15,30,0.08);
-            border-top: 3px solid var(--blue);
+        .page { padding: 48px 20px; max-width: 720px; margin: 0 auto; }
+        .page-header { margin-bottom: 36px; }
+        .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
+        .page-header h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .page-header p { font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+        .note-box {
+            background: var(--blue-soft); border: 1px solid #C7D9FF;
+            border-radius: 8px; padding: 16px 20px; margin-bottom: 28px;
+            font-size: 13px; color: var(--blue); line-height: 1.6;
         }
-        .card-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-        .card h2 { font-size: 28px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.02em; }
-        .card-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
         .success {
             background: #F0FDF4; border: 1px solid #BBF7D0;
-            color: #16A34A; padding: 14px 16px; border-radius: 6px;
-            font-size: 14px; font-weight: 500; margin-bottom: 20px;
+            color: #16A34A; padding: 14px 18px; border-radius: 8px;
+            font-size: 14px; font-weight: 500; margin-bottom: 24px;
         }
         .error {
             background: #FEF2F2; border: 1px solid #FECACA;
-            color: #DC2626; padding: 12px 16px; border-radius: 6px;
-            font-size: 13px; font-weight: 500; margin-bottom: 20px;
+            color: #DC2626; padding: 14px 18px; border-radius: 8px;
+            font-size: 13px; margin-bottom: 24px;
         }
-        .field { margin-bottom: 20px; }
-        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 32px; margin-bottom: 20px;
+            border-top: 3px solid var(--blue);
+        }
+        .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
         .field input, .field textarea, .field select {
-            width: 100%; padding: 12px 16px;
+            width: 100%; padding: 11px 14px;
             border: 1px solid var(--border); border-radius: 6px;
             font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
-            background: var(--bg); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+            background: var(--bg); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .field textarea { height: 110px; resize: vertical; }
+        .field textarea { height: 100px; resize: vertical; }
         .field input:focus, .field textarea:focus, .field select:focus {
             border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); background: #fff;
         }
+        .field .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+        .upload-area {
+            border: 2px dashed var(--border); border-radius: 8px;
+            padding: 24px; text-align: center; cursor: pointer;
+            transition: all 0.2s; background: var(--bg);
+        }
+        .upload-area:hover { border-color: var(--blue); background: var(--blue-soft); }
+        .upload-area input { display: none; }
+        .upload-area .upload-icon { font-size: 28px; margin-bottom: 8px; }
+        .upload-area p { font-size: 13px; color: var(--muted); }
+        .upload-area strong { font-size: 14px; color: var(--text); display: block; margin-bottom: 4px; }
+        .file-chosen { font-size: 12px; color: var(--blue); margin-top: 6px; font-weight: 600; }
+
         .btn-primary {
-            width: 100%; padding: 14px; background: var(--blue);
+            width: 100%; padding: 15px; background: var(--blue);
             color: #fff; border: none; border-radius: 6px;
             font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700;
-            cursor: pointer; transition: background 0.2s; margin-top: 8px;
+            cursor: pointer; transition: background 0.2s;
         }
         .btn-primary:hover { background: var(--blue-dark); }
-        .note-box {
-            background: var(--blue-soft); border: 1px solid #C7D9FF;
-            border-radius: 8px; padding: 16px; margin-bottom: 28px;
-            font-size: 13px; color: var(--blue); line-height: 1.5;
-        }
-        .note-box strong { font-weight: 700; }
-        .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
-        .card-footer { text-align: center; font-size: 14px; color: var(--muted); }
-        .card-footer a { color: var(--blue); font-weight: 600; text-decoration: none; }
+        .bottom-link { text-align: center; margin-top: 20px; font-size: 14px; color: var(--muted); }
+        .bottom-link a { color: var(--blue); font-weight: 600; text-decoration: none; }
     </style>
 </head>
 <body>
     <nav>
-        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
+        <a href="/" class="nav-logo">MRK AGENCY</a>
         <div>
             <a href="/" class="nav-link">Home</a>
             <a href="/contractor-login" class="nav-link">Contractor Login</a>
@@ -83,51 +101,129 @@
     </nav>
 
     <div class="page">
-        <div class="card">
-            <div class="card-eyebrow">Contractor Portal</div>
-            <h2>Join MRK Agency</h2>
-            <p class="card-sub">Apply to work with our global client base across the US, UK, and Europe. Upon approval, you'll receive your unique Contractor ID (CIN).</p>
+        <div class="page-header">
+            <div class="eyebrow">Contractor Portal</div>
+            <h1>Join MRK Agency</h1>
+            <p>Apply to work with our global client base across the US, UK, and Europe. Complete all fields carefully — incomplete applications will not be reviewed.</p>
+        </div>
 
-            <div class="note-box">
-                <strong>How it works:</strong> Submit your application → CEO reviews → Upon approval, you receive your CIN to log in and access your dashboard.
+        <div class="note-box">
+            <strong>How it works:</strong> Submit your application → CEO reviews all details → Upon approval, you receive your unique CIN (Contractor ID Number) to access your dashboard.
+        </div>
+
+        {% if success %}<div class="success">{{ success }}</div>{% endif %}
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+        <form method="POST" action="/contractor-apply" enctype="multipart/form-data">
+
+            <div class="card">
+                <h3>Personal Information</h3>
+                <div class="row">
+                    <div class="field">
+                        <label>Full Name</label>
+                        <input type="text" name="name" placeholder="Your full legal name" required>
+                    </div>
+                    <div class="field">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="your@email.com" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="field">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" placeholder="+92 300 0000000" required>
+                        <div class="hint">Include country code</div>
+                    </div>
+                    <div class="field">
+                        <label>WhatsApp Number</label>
+                        <input type="tel" name="whatsapp" placeholder="+92 300 0000000" required>
+                        <div class="hint">Must be active on WhatsApp</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>CNIC Number</label>
+                    <input type="text" name="cnic" placeholder="00000-0000000-0" required>
+                    <div class="hint">Your 13-digit national identity card number</div>
+                </div>
             </div>
 
-            {% if success %}<div class="success">{{ success }}</div>{% endif %}
-            {% if error %}<div class="error">{{ error }}</div>{% endif %}
-
-            <form method="POST" action="/contractor-apply">
-                <div class="field">
-                    <label>Full Name</label>
-                    <input type="text" name="name" placeholder="Your full name" required>
+            <div class="card">
+                <h3>Professional Details</h3>
+                <div class="row">
+                    <div class="field">
+                        <label>Primary Expertise</label>
+                        <select name="expertise" required>
+                            <option value="">Select expertise</option>
+                            <option>Web Development</option>
+                            <option>Web Design</option>
+                            <option>UI/UX Design</option>
+                            <option>Graphic Design</option>
+                            <option>SEO</option>
+                            <option>Software Engineering</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Years of Experience</label>
+                        <input type="number" name="experience" placeholder="e.g. 3" min="0" max="50" required>
+                    </div>
                 </div>
                 <div class="field">
-                    <label>Area of Expertise</label>
-                    <select name="expertise">
-                        <option>Web Development</option>
-                        <option>Web Design</option>
-                        <option>UI/UX Design</option>
-                        <option>Graphic Design</option>
-                        <option>SEO</option>
-                        <option>Software Engineering</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Years of Experience</label>
-                    <input type="number" name="experience" placeholder="e.g. 3" min="0" required>
+                    <label>Specialties</label>
+                    <input type="text" name="specialties" placeholder="e.g. React, Node.js, WordPress, Figma, Adobe XD" required>
+                    <div class="hint">List your specific skills and tools separated by commas</div>
                 </div>
                 <div class="field">
                     <label>About You</label>
-                    <textarea name="note" placeholder="Tell us about your skills, past work, and why you'd be a great fit for MRK Agency..." required></textarea>
+                    <textarea name="note" placeholder="Tell us about yourself, your work experience, past projects, and why you want to join MRK Agency. Be specific and professional." required></textarea>
                 </div>
+            </div>
+
+            <div class="card">
+                <h3>Documents</h3>
                 <div class="field">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="Create a secure password" required>
+                    <label>Upload CV / Resume</label>
+                    <div class="upload-area" onclick="document.getElementById('cv-input').click()">
+                        <input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx" onchange="showFileName(this, 'cv-name')">
+                        <div class="upload-icon">📄</div>
+                        <strong>Click to upload your CV</strong>
+                        <p>PDF, DOC, or DOCX — max 5MB</p>
+                        <div class="file-chosen" id="cv-name"></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn-primary">Submit Application</button>
-            </form>
-            <hr class="divider">
-            <div class="card-footer">Already approved? <a href="/contractor-login">Login here</a></div>
-        </div>
+                <div class="field" style="margin-top: 20px;">
+                    <label>Upload CNIC Image</label>
+                    <div class="upload-area" onclick="document.getElementById('cnic-input').click()">
+                        <input type="file" id="cnic-input" name="cnic_image" accept="image/*" onchange="showFileName(this, 'cnic-name')">
+                        <div class="upload-icon">🪪</div>
+                        <strong>Click to upload CNIC photo</strong>
+                        <p>Front side of your national identity card — JPG or PNG</p>
+                        <div class="file-chosen" id="cnic-name"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Account Security</h3>
+                <div class="field">
+                    <label>Create Password</label>
+                    <input type="password" name="password" placeholder="Minimum 6 characters" required>
+                    <div class="hint">You will use this password along with your CIN to log in after approval</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Submit Application</button>
+        </form>
+
+        <div class="bottom-link">Already approved? <a href="/contractor-login">Login here</a></div>
     </div>
+
+    <script>
+        function showFileName(input, targetId) {
+            var el = document.getElementById(targetId);
+            if (input.files && input.files[0]) {
+                el.textContent = '✓ ' + input.files[0].name;
+            }
+        }
+    </script>
 </body>
     </html>
