@@ -11,97 +11,156 @@
             --bg: #F0F4FF; --surface: #FFFFFF; --dark: #0A0F1E;
             --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
             --border: #D1DCF8; --text: #0A0F1E; --muted: #64748B;
+            --red: #DC2626; --red-soft: #FEF2F2; --red-border: #FECACA;
+            --green: #16A34A; --green-soft: #F0FDF4; --green-border: #BBF7D0;
         }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
         nav {
             background: var(--dark); height: 64px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 48px; border-bottom: 2px solid var(--blue);
+            padding: 0 32px; border-bottom: 2px solid var(--blue);
             position: sticky; top: 0; z-index: 100;
         }
-        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
-        .nav-logo span { color: var(--blue); }
-        .nav-badge {
+        .nav-left { display: flex; align-items: center; gap: 12px; }
+        .nav-logo { font-size: 17px; font-weight: 800; letter-spacing: 0.12em; color: #fff; text-decoration: none; }
+        .ceo-badge {
             background: var(--blue); color: #fff;
             font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-            text-transform: uppercase; padding: 4px 10px; border-radius: 2px;
-            margin-left: 12px;
+            padding: 3px 10px; border-radius: 2px; text-transform: uppercase;
         }
-        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; }
+        .nav-tabs { display: flex; gap: 4px; }
+        .nav-tab {
+            color: rgba(255,255,255,0.5); background: none; border: none;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+            padding: 7px 14px; border-radius: 6px; cursor: pointer;
+            transition: all 0.2s; letter-spacing: 0.02em;
+        }
+        .nav-tab:hover, .nav-tab.active { color: #fff; background: rgba(255,255,255,0.1); }
+        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 16px; }
         nav a.nav-logout:hover { color: #ff6b6b; }
 
-        .hero-bar {
-            background: var(--dark); padding: 48px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-        .hero-bar .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-        .hero-bar h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        .hero-bar p { font-size: 15px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+        .hero-bar { background: var(--dark); padding: 36px 32px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
+        .hero-bar h1 { font-size: 28px; font-weight: 800; color: #fff; }
+        .hero-bar p { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: 6px; }
 
-        .content { max-width: 1100px; margin: 0 auto; padding: 48px; }
+        .content { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
 
-        .section { margin-bottom: 48px; }
-        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-        .section-header h2 { font-size: 20px; font-weight: 800; }
-        .count-badge {
-            background: var(--blue); color: #fff;
-            font-size: 12px; font-weight: 700; width: 24px; height: 24px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        }
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
 
+        /* ITEM CARDS */
         .item-card {
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; padding: 28px; margin-bottom: 16px;
-            border-left: 3px solid var(--blue);
-            transition: box-shadow 0.2s;
+            border-radius: 10px; padding: 24px; margin-bottom: 16px;
+            border-left: 3px solid var(--blue); transition: box-shadow 0.2s;
         }
         .item-card:hover { box-shadow: 0 4px 20px rgba(26,86,219,0.1); }
-        .item-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+        .item-card.suspended { border-left-color: var(--red); opacity: 0.8; }
+
+        .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
         .item-name { font-size: 18px; font-weight: 700; }
         .item-type {
-            font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
             text-transform: uppercase; color: var(--blue);
             background: var(--blue-soft); padding: 4px 10px; border-radius: 20px;
+            white-space: nowrap; flex-shrink: 0;
         }
-        .item-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 14px; }
-        .meta-item { font-size: 13px; color: var(--muted); }
-        .meta-item strong { color: var(--text); font-weight: 600; }
-        .item-note { font-size: 14px; color: var(--muted); line-height: 1.6; padding: 14px; background: var(--bg); border-radius: 6px; margin-bottom: 16px; }
-        .actions { display: flex; gap: 10px; }
+
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .detail-item .d-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+        .detail-item .d-value { font-size: 13px; font-weight: 600; color: var(--text); word-break: break-all; }
+
+        .note-box { font-size: 13px; color: var(--muted); line-height: 1.6; padding: 12px 14px; background: var(--bg); border-radius: 6px; margin-bottom: 16px; }
+
+        .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .btn-approve {
-            padding: 10px 24px; background: var(--blue); color: #fff;
+            padding: 9px 20px; background: var(--blue); color: #fff;
             border: none; border-radius: 6px; font-family: 'Inter', sans-serif;
-            font-size: 13px; font-weight: 700; cursor: pointer;
-            text-decoration: none; transition: background 0.2s;
-            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            text-decoration: none; transition: background 0.2s; display: inline-flex; align-items: center; gap: 5px;
         }
         .btn-approve:hover { background: var(--blue-dark); }
         .btn-reject {
-            padding: 10px 24px; background: #fff; color: #DC2626;
-            border: 1px solid #FECACA; border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+            padding: 9px 20px; background: var(--red-soft); color: var(--red);
+            border: 1px solid var(--red-border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
             cursor: pointer; text-decoration: none; transition: all 0.2s;
-            display: inline-flex; align-items: center; gap: 6px;
         }
-        .btn-reject:hover { background: #FEF2F2; border-color: #DC2626; }
+        .btn-reject:hover { background: #fee2e2; }
+        .btn-suspend {
+            padding: 9px 20px; background: #FFF7ED; color: #C2410C;
+            border: 1px solid #FED7AA; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-suspend:hover { background: #ffedd5; }
+        .btn-unsuspend {
+            padding: 9px 20px; background: var(--green-soft); color: var(--green);
+            border: 1px solid var(--green-border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-delete {
+            padding: 9px 20px; background: #fff; color: #9CA3AF;
+            border: 1px solid #E5E7EB; border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-decoration: none;
+        }
+        .btn-delete:hover { background: var(--red-soft); color: var(--red); border-color: var(--red-border); }
+
+        /* APPROVE PROJECT FORM */
+        .approve-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .pay-input {
+            padding: 9px 14px; border: 1px solid var(--border); border-radius: 6px;
+            font-family: 'Inter', sans-serif; font-size: 13px; width: 160px; outline: none;
+        }
+        .pay-input:focus { border-color: var(--blue); }
+
+        /* SECTION HEADER */
+        .section-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; margin-top: 8px; }
+        .section-hdr h2 { font-size: 18px; font-weight: 800; }
+        .count-pill {
+            background: var(--blue); color: #fff;
+            font-size: 11px; font-weight: 700; min-width: 22px; height: 22px;
+            border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 7px;
+        }
+        .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
         .empty-state {
+            text-align: center; padding: 40px; color: var(--muted);
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; padding: 40px; text-align: center; color: var(--muted);
-            font-size: 14px;
+            border-radius: 10px; font-size: 14px;
         }
-        .empty-state .empty-icon { font-size: 28px; margin-bottom: 10px; }
+        .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
 
-        .divider { border: none; border-top: 2px solid var(--border); margin-bottom: 48px; }
+        .cnic-img { max-width: 200px; border-radius: 6px; border: 1px solid var(--border); margin-top: 8px; }
+
+        .suspended-tag {
+            background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border);
+            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+        }
+        .approved-tag {
+            background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border);
+            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+        }
     </style>
 </head>
 <body>
     <nav>
-        <div style="display:flex;align-items:center;">
-            <a href="/" class="nav-logo">MRK<span></span>Agency</a>
-            <span class="nav-badge">CEO</span>
+        <div class="nav-left">
+            <a href="/" class="nav-logo">MRK AGENCY</a>
+            <span class="ceo-badge">CEO</span>
         </div>
-        <div>
+        <div style="display:flex;align-items:center;">
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('pending')">Pending</button>
+                <button class="nav-tab" onclick="showTab('contractors')">Contractors</button>
+                <button class="nav-tab" onclick="showTab('projects')">Projects</button>
+                <button class="nav-tab" onclick="showTab('customers')">Customers</button>
+            </div>
             <a href="/logout" class="nav-logout">Sign Out</a>
         </div>
     </nav>
@@ -109,79 +168,188 @@
     <div class="hero-bar">
         <div class="eyebrow">Executive Dashboard</div>
         <h1>CEO Control Center</h1>
-        <p>Review and manage contractor applications and client project requests.</p>
+        <p>Full control over contractors, clients, and projects.</p>
     </div>
 
     <div class="content">
 
-        <!-- CONTRACTORS -->
-        <div class="section">
-            <div class="section-header">
-                <h2>Contractor Applications</h2>
-                {% if contractors %}<div class="count-badge">{{ contractors|length }}</div>{% endif %}
-            </div>
+        <!-- PENDING TAB -->
+        <div class="tab-section active" id="tab-pending">
 
-            {% if contractors %}
-                {% for c in contractors %}
+            <div class="section-hdr">
+                <h2>Pending Contractor Applications</h2>
+                {% if pending_contractors %}<span class="count-pill">{{ pending_contractors|length }}</span>{% endif %}
+            </div>
+            {% if pending_contractors %}
+                {% for c in pending_contractors %}
                 <div class="item-card">
                     <div class="item-top">
                         <div class="item-name">{{ c[1] }}</div>
                         <span class="item-type">{{ c[3] }}</span>
                     </div>
-                    <div class="item-meta">
-                        <div class="meta-item">Experience: <strong>{{ c[4] }} years</strong></div>
-                        <div class="meta-item">Status: <strong>Pending Review</strong></div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="d-label">Email</div><div class="d-value">{{ c[8] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">Phone</div><div class="d-value">{{ c[9] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">WhatsApp</div><div class="d-value">{{ c[10] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">CNIC</div><div class="d-value">{{ c[11] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">Experience</div><div class="d-value">{{ c[4] }} years</div></div>
+                        <div class="detail-item"><div class="d-label">Specialties</div><div class="d-value">{{ c[14] or '—' }}</div></div>
                     </div>
-                    <div class="item-note">{{ c[5] }}</div>
-                    <div class="actions">
+                    {% if c[5] %}<div class="note-box">{{ c[5] }}</div>{% endif %}
+                    {% if c[12] %}<img src="{{ c[12] }}" class="cnic-img" alt="CNIC">{% endif %}
+                    <div class="actions" style="margin-top:14px;">
                         <a href="/approve-contractor/{{ c[0] }}" class="btn-approve">✓ Approve & Issue CIN</a>
                         <a href="/reject-contractor/{{ c[0] }}" class="btn-reject">✗ Reject</a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">👥</div>
-                    No pending contractor applications.
-                </div>
+                <div class="empty-state"><div class="icon">👥</div>No pending contractor applications.</div>
             {% endif %}
-        </div>
 
-        <div class="divider"></div>
+            <div class="divider"></div>
 
-        <!-- PROJECTS -->
-        <div class="section">
-            <div class="section-header">
-                <h2>Client Project Requests</h2>
-                {% if projects %}<div class="count-badge">{{ projects|length }}</div>{% endif %}
+            <div class="section-hdr">
+                <h2>Pending Project Requests</h2>
+                {% if pending_projects %}<span class="count-pill">{{ pending_projects|length }}</span>{% endif %}
             </div>
-
-            {% if projects %}
-                {% for p in projects %}
+            {% if pending_projects %}
+                {% for p in pending_projects %}
                 <div class="item-card">
                     <div class="item-top">
                         <div class="item-name">{{ p[2] }}</div>
                         <span class="item-type">{{ p[4] }}</span>
                     </div>
-                    <div class="item-meta">
-                        <div class="meta-item">Package: <strong>{{ p[7] }}</strong></div>
-                        <div class="meta-item">Deadline: <strong>{{ p[6] }}</strong></div>
-                        <div class="meta-item">Budget: <strong>{{ p[5] if p[5] else 'Per Package' }}</strong></div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="d-label">Package</div><div class="d-value">{{ p[7] }}</div></div>
+                        <div class="detail-item"><div class="d-label">Deadline</div><div class="d-value">{{ p[6] }}</div></div>
+                        <div class="detail-item"><div class="d-label">Budget</div><div class="d-value">{{ p[5] or 'Per Package' }}</div></div>
                     </div>
-                    <div class="item-note">{{ p[3] }}</div>
-                    <div class="actions">
-                        <a href="/approve-project/{{ p[0] }}" class="btn-approve">✓ Approve Project</a>
+                    <div class="note-box">{{ p[3] }}</div>
+                    <form method="POST" action="/approve-project/{{ p[0] }}">
+                        <div class="approve-form">
+                            <input type="number" name="contractor_pay" class="pay-input" placeholder="Contractor pay ($)" min="0">
+                            <button type="submit" class="btn-approve">✓ Approve Project</button>
+                            <a href="/reject-project/{{ p[0] }}" class="btn-reject">✗ Reject</a>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><div class="icon">📁</div>No pending project requests.</div>
+            {% endif %}
+        </div>
+
+        <!-- CONTRACTORS TAB -->
+        <div class="tab-section" id="tab-contractors">
+            <div class="section-hdr">
+                <h2>Approved Contractors</h2>
+                {% if approved_contractors %}<span class="count-pill">{{ approved_contractors|length }}</span>{% endif %}
+            </div>
+            {% if approved_contractors %}
+                {% for c in approved_contractors %}
+                <div class="item-card {% if c[15] %}suspended{% endif %}">
+                    <div class="item-top">
+                        <div>
+                            <div class="item-name">{{ c[1] }}</div>
+                            {% if c[6] %}<div style="font-size:12px;color:var(--blue);font-weight:700;margin-top:4px;">CIN: {{ c[6] }}</div>{% endif %}
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <span class="item-type">{{ c[3] }}</span>
+                            {% if c[15] %}<span class="suspended-tag">SUSPENDED</span>{% else %}<span class="approved-tag">ACTIVE</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="d-label">Email</div><div class="d-value">{{ c[8] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">Phone</div><div class="d-value">{{ c[9] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">WhatsApp</div><div class="d-value">{{ c[10] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">CNIC</div><div class="d-value">{{ c[11] or '—' }}</div></div>
+                        <div class="detail-item"><div class="d-label">Experience</div><div class="d-value">{{ c[4] }} years</div></div>
+                        <div class="detail-item"><div class="d-label">Specialties</div><div class="d-value">{{ c[14] or '—' }}</div></div>
+                    </div>
+                    {% if c[12] %}<img src="{{ c[12] }}" class="cnic-img" alt="CNIC">{% endif %}
+                    <div class="actions" style="margin-top:14px;">
+                        {% if c[15] %}
+                            <a href="/approve-contractor/{{ c[0] }}" class="btn-unsuspend">↑ Reinstate</a>
+                        {% else %}
+                            <a href="/suspend-contractor/{{ c[0] }}" class="btn-suspend">⊘ Suspend & Revoke CIN</a>
+                        {% endif %}
+                        <a href="/delete-contractor/{{ c[0] }}" class="btn-delete" onclick="return confirm('Permanently delete this contractor?')">Delete</a>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">📁</div>
-                    No pending project requests.
+                <div class="empty-state"><div class="icon">👤</div>No approved contractors yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- PROJECTS TAB -->
+        <div class="tab-section" id="tab-projects">
+            <div class="section-hdr">
+                <h2>Approved Projects</h2>
+                {% if approved_projects %}<span class="count-pill">{{ approved_projects|length }}</span>{% endif %}
+            </div>
+            {% if approved_projects %}
+                {% for p in approved_projects %}
+                <div class="item-card">
+                    <div class="item-top">
+                        <div class="item-name">{{ p[2] }}</div>
+                        <span class="item-type">{{ p[4] }}</span>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="d-label">Package</div><div class="d-value">{{ p[7] }}</div></div>
+                        <div class="detail-item"><div class="d-label">Deadline</div><div class="d-value">{{ p[6] }}</div></div>
+                        <div class="detail-item"><div class="d-label">Contractor Pay</div><div class="d-value" style="color:var(--green);font-weight:800;">${{ p[10] or 'Not set' }}</div></div>
+                        <div class="detail-item"><div class="d-label">Accepted By</div><div class="d-value">{{ 'Contractor #' + p[11]|string if p[11] else 'Open' }}</div></div>
+                    </div>
+                    <div class="note-box">{{ p[3] }}</div>
                 </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><div class="icon">📂</div>No approved projects yet.</div>
+            {% endif %}
+        </div>
+
+        <!-- CUSTOMERS TAB -->
+        <div class="tab-section" id="tab-customers">
+            <div class="section-hdr">
+                <h2>Registered Customers</h2>
+                {% if customers %}<span class="count-pill">{{ customers|length }}</span>{% endif %}
+            </div>
+            {% if customers %}
+                {% for cu in customers %}
+                <div class="item-card {% if cu[6] %}suspended{% endif %}">
+                    <div class="item-top">
+                        <div>
+                            <div class="item-name">{{ cu[1] }} {{ cu[2] }}</div>
+                            <div style="font-size:13px;color:var(--muted);margin-top:3px;">{{ cu[3] }}</div>
+                        </div>
+                        {% if cu[6] %}<span class="suspended-tag">SUSPENDED</span>{% else %}<span class="approved-tag">ACTIVE</span>{% endif %}
+                    </div>
+                    <div class="actions">
+                        {% if cu[6] %}
+                            <a href="/unsuspend-customer/{{ cu[0] }}" class="btn-unsuspend">↑ Reinstate</a>
+                        {% else %}
+                            <a href="/suspend-customer/{{ cu[0] }}" class="btn-suspend">⊘ Suspend Account</a>
+                        {% endif %}
+                        <a href="/delete-customer/{{ cu[0] }}" class="btn-delete" onclick="return confirm('Permanently delete this customer and all their data?')">Delete</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><div class="icon">👥</div>No registered customers yet.</div>
             {% endif %}
         </div>
 
     </div>
+
+    <script>
+        function showTab(name) {
+            document.querySelectorAll('.tab-section').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('.nav-tab').forEach(function(el) { el.classList.remove('active'); });
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 </body>
-    </html>
+                </html>
