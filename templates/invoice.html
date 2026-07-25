@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invoice — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB;
+      --dark: #0A0F1E;
+      --bg: #F8F9FB;
+      --white: #ffffff;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --muted: #64748B;
+      --green: #16A34A;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+
+    nav {
+      background: var(--dark);
+      border-bottom: 2px solid var(--blue);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand { color: var(--white); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-decoration: none; }
+    .nav-brand span { color: var(--blue); }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a { color: #CBD5E1; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--white); }
+
+    .page { max-width: 700px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .invoice-box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .inv-header {
+      background: var(--dark);
+      padding: 2rem 2rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .inv-brand { color: var(--white); font-size: 1.4rem; font-weight: 700; letter-spacing: 0.05em; }
+    .inv-brand span { color: var(--blue); }
+    .inv-brand p { font-size: 0.78rem; color: #94A3B8; margin-top: 0.2rem; font-weight: 400; }
+    .inv-ref { text-align: right; }
+    .inv-ref h2 { color: var(--white); font-size: 1rem; font-weight: 700; }
+    .inv-ref p { color: #94A3B8; font-size: 0.8rem; margin-top: 0.2rem; }
+
+    /* STATUS BANNER */
+    .inv-status {
+      background: #D1FAE5;
+      color: #065F46;
+      text-align: center;
+      padding: 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    /* BODY */
+    .inv-body { padding: 2rem; }
+
+    .inv-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .inv-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .inv-row:last-child { border-bottom: none; }
+    .inv-row label { color: var(--muted); font-weight: 500; }
+    .inv-row span { font-weight: 600; color: var(--dark); text-align: right; }
+
+    .inv-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+    .inv-total {
+      background: #F0F4FF;
+      border: 1px solid #C7D7FF;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .inv-total label { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
+    .inv-total span { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
+
+    /* PAYMENT INSTRUCTIONS */
+    .payment-box {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .payment-box h4 { font-size: 0.85rem; font-weight: 700; color: #92400E; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .payment-box p { font-size: 0.85rem; color: #78350F; line-height: 1.6; }
+    .payment-box strong { color: #92400E; }
+
+    /* FOOTER */
+    .inv-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .inv-footer strong { color: var(--blue); }
+
+    /* PRINT BUTTON */
+    .print-row { text-align: right; margin-bottom: 1rem; }
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-blue { background: var(--blue); color: var(--white); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    @media print {
+      nav, .print-row { display: none; }
+      body { background: white; }
+      .page { padding: 0; max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-links">
+    <a href="/my-projects">My Projects</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="print-row">
+    <a href="/my-projects" class="btn btn-outline" style="margin-right:0.5rem;">← Back</a>
+    <button class="btn btn-blue" onclick="window.print()">Print / Save PDF</button>
+  </div>
+
+  <div class="invoice-box">
+
+    <!-- HEADER -->
+    <div class="inv-header">
+      <div class="inv-brand">
+        MRK <span>AGENCY</span>
+        <p>Where your brand achieves glory.</p>
+      </div>
+      <div class="inv-ref">
+        <h2>INVOICE</h2>
+        <p>{{ project[13] }}</p>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="inv-status">✅ PROJECT COMPLETED — PAYMENT DUE</div>
+
+    <!-- BODY -->
+    <div class="inv-body">
+
+      <!-- PROJECT DETAILS -->
+      <div class="inv-section-title">Project Details</div>
+      <div class="inv-row">
+        <label>Project Title</label>
+        <span>{{ project[2] }}</span>
+      </div>
+      <div class="inv-row">
+        <label>Package</label>
+        <span>{{ project[7] or '—' }}</span>
+      </div>
+      <div class="inv-row">
+        <label>Website Type</label>
+        <span>{{ project[4] or '—' }}</span>
+      </div>
+      <div class="inv-row">
+        <label>Deadline</label>
+        <span>{{ project[6] or '—' }}</span>
+      </div>
+      <div class="inv-row">
+        <label>Status</label>
+        <span>Completed ✓</span>
+      </div>
+
+      <div class="inv-divider"></div>
+
+      <!-- TOTAL -->
+      <div class="inv-total">
+        <label>Total Amount Due</label>
+        <span>${{ project[5] }}</span>
+      </div>
+
+      <!-- PAYMENT INSTRUCTIONS -->
+      <div class="payment-box">
+        <h4>Payment Instructions</h4>
+        <p>
+          Please send the payment via <strong>Payoneer</strong> to the following account:<br/><br/>
+          <strong>Account Name:</strong> Khizar Khan<br/>
+          <strong>Payoneer Email:</strong> mrkagency@payoneer.com<br/><br/>
+          Once payment is sent, please email us at <strong>ceo@mrkagency.com</strong> with your
+          invoice reference number <strong>{{ project[13] }}</strong> and payment confirmation screenshot.
+        </p>
+      </div>
+
+      <div class="inv-section-title">Description</div>
+      <p style="font-size:0.88rem; color:var(--muted); line-height:1.6;">{{ project[3] }}</p>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="inv-footer">
+      Thank you for choosing <strong>MRK AGENCY</strong> — where your brand achieves glory.<br/>
+      For any queries, contact us at <strong>ceo@mrkagency.com</strong>
+    </div>
+
+  </div>
+</div>
+
+</body>
+  </html>
