@@ -39,7 +39,8 @@ def init_db():
         status TEXT DEFAULT 'pending',
         email TEXT, phone TEXT, whatsapp TEXT,
         cnic TEXT, cnic_image TEXT, cv TEXT,
-        specialties TEXT, suspended BOOLEAN DEFAULT FALSE)''')
+        specialties TEXT, suspended BOOLEAN DEFAULT FALSE,
+        badge TEXT)''')
     try:
         c.execute('ALTER TABLE contractors ADD COLUMN IF NOT EXISTS email TEXT')
     except: conn.rollback()
@@ -64,6 +65,9 @@ def init_db():
     try:
         c.execute('ALTER TABLE contractors ADD COLUMN IF NOT EXISTS suspended BOOLEAN DEFAULT FALSE')
     except: conn.rollback()
+    try:
+        c.execute('ALTER TABLE contractors ADD COLUMN IF NOT EXISTS badge TEXT')
+    except: conn.rollback()
 
     # PROJECTS
     c.execute('''CREATE TABLE IF NOT EXISTS projects (
@@ -73,12 +77,24 @@ def init_db():
         package TEXT, status TEXT DEFAULT 'pending',
         assigned_contractor_id INTEGER,
         contractor_pay TEXT,
-        accepted_by INTEGER)''')
+        accepted_by INTEGER,
+        rejection_reason TEXT,
+        invoice_ref TEXT,
+        completed BOOLEAN DEFAULT FALSE)''')
     try:
         c.execute('ALTER TABLE projects ADD COLUMN IF NOT EXISTS contractor_pay TEXT')
     except: conn.rollback()
     try:
         c.execute('ALTER TABLE projects ADD COLUMN IF NOT EXISTS accepted_by INTEGER')
+    except: conn.rollback()
+    try:
+        c.execute('ALTER TABLE projects ADD COLUMN IF NOT EXISTS rejection_reason TEXT')
+    except: conn.rollback()
+    try:
+        c.execute('ALTER TABLE projects ADD COLUMN IF NOT EXISTS invoice_ref TEXT')
+    except: conn.rollback()
+    try:
+        c.execute('ALTER TABLE projects ADD COLUMN IF NOT EXISTS completed BOOLEAN DEFAULT FALSE')
     except: conn.rollback()
 
     # CEO
@@ -140,6 +156,13 @@ def login():
             return redirect(url_for('dashboard'))
         return render_template('login.html', error='Invalid email or password.')
     return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('customer_id', None)
+    session.pop('customer_name', None)
+    return redirect(url_for('login'))
 
 
 @app.route('/dashboard')
@@ -275,6 +298,21 @@ def my_projects():
     return render_template('my_projects.html', projects=projects)
 
 
+# ─── INVOICE ────────────────────────────────────────────
+@app.route('/invoice/<int:project_id>')
+def invoice(project_id):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE id=%s AND customer_id=%s', (project_id, session['customer_id']))
+    project = c.fetchone()
+    conn.close()
+    if not project:
+        return redirect(url_for('my_projects'))
+    return render_template('invoice.html', project=project)
+
+
 # ─── CONTRACTOR APPLY ───────────────────────────────────
 @app.route('/contractor-apply', methods=['GET', 'POST'])
 def contractor_apply():
@@ -282,7 +320,6 @@ def contractor_apply():
         try:
             pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
 
-            # Handle file uploads
             cv_data = None
             cv_file = request.files.get('cv')
             if cv_file and cv_file.filename:
@@ -346,6 +383,13 @@ def contractor_login():
     return render_template('contractor_login.html')
 
 
+@app.route('/contractor-logout')
+def contractor_logout():
+    session.pop('contractor_id', None)
+    session.pop('contractor_name', None)
+    return redirect(url_for('contractor_login'))
+
+
 # ─── CONTRACTOR DASHBOARD ───────────────────────────────
 @app.route('/contractor-dashboard')
 def contractor_dashboard():
@@ -353,13 +397,12 @@ def contractor_dashboard():
         return redirect(url_for('contractor_login'))
     conn = get_db()
     c = conn.cursor()
-    # Get contractor profile
     c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
     contractor = c.fetchone()
-    # Get all CEO-approved projects with contractor pay set
     c.execute("""SELECT * FROM projects
                  WHERE status='approved' AND contractor_pay IS NOT NULL
-                 AND (accepted_by IS NULL OR accepted_by=%s)""",
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""",
               (session['contractor_id'],))
     projects = c.fetchall()
     conn.close()
@@ -378,23 +421,29 @@ def contractor_change_password():
     c = conn.cursor()
     c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
     contractor = c.fetchone()
-    c.execute("SELECT * FROM projects WHERE status='approved' AND contractor_pay IS NOT NULL AND (accepted_by IS NULL OR accepted_by=%s)",
+    c.execute("""SELECT * FROM projects WHERE status='approved' AND contractor_pay IS NOT NULL
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""",
               (session['contractor_id'],))
     projects = c.fetchall()
     if not bcrypt.checkpw(current_pw, contractor[2].encode()):
         conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects, error='Current password is incorrect.')
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='Current password is incorrect.')
     if new_pw != confirm_pw:
         conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects, error='New passwords do not match.')
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='New passwords do not match.')
     if len(new_pw) < 6:
         conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects, error='Password must be at least 6 characters.')
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='Password must be at least 6 characters.')
     hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
     c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, session['contractor_id']))
     conn.commit()
     conn.close()
-    return render_template('contractor_dashboard.html', contractor=contractor, projects=projects, success='Password changed successfully.')
+    return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                           success='Password changed successfully.')
 
 
 @app.route('/accept-project/<int:id>')
@@ -405,6 +454,22 @@ def accept_project(id):
     c = conn.cursor()
     c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
               (session['contractor_id'], session['contractor_id'], id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/mark-complete/<int:id>')
+def mark_complete(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    # Generate invoice reference
+    invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+    c.execute("""UPDATE projects SET completed=TRUE, status='completed', invoice_ref=%s
+                 WHERE id=%s AND accepted_by=%s""",
+              (invoice_ref, id, session['contractor_id']))
     conn.commit()
     conn.close()
     return redirect(url_for('contractor_dashboard'))
@@ -433,64 +498,4 @@ def ceo_login():
     return render_template('ceo_login.html', error='Invalid credentials. Access denied.')
 
 
-# ─── CEO DASHBOARD ──────────────────────────────────────
-@app.route('/ceo-dashboard')
-def ceo_dashboard():
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM contractors WHERE status='pending'")
-    pending_contractors = c.fetchall()
-    c.execute("SELECT * FROM contractors WHERE status='approved'")
-    approved_contractors = c.fetchall()
-    c.execute("SELECT * FROM contractors WHERE status='rejected' OR suspended=TRUE")
-    rejected_contractors = c.fetchall()
-    c.execute("SELECT * FROM projects WHERE status='pending'")
-    pending_projects = c.fetchall()
-    c.execute("SELECT * FROM projects WHERE status='approved'")
-    approved_projects = c.fetchall()
-    c.execute("SELECT * FROM customers")
-    customers = c.fetchall()
-    conn.close()
-    return render_template('ceo_dashboard.html',
-        pending_contractors=pending_contractors,
-        approved_contractors=approved_contractors,
-        rejected_contractors=rejected_contractors,
-        pending_projects=pending_projects,
-        approved_projects=approved_projects,
-        customers=customers)
-
-
-@app.route('/approve-contractor/<int:id>')
-def approve_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    cin = 'MRK' + str(random.randint(10000, 99999))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET status='approved', cin=%s, suspended=FALSE WHERE id=%s", (cin, id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/reject-contractor/<int:id>')
-def reject_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/suspend-contractor/<int:id>')
-def suspend_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET suspended=TRUE, cin=NULL WHERE id=%s", (id,)
+@app.route('/ceo
