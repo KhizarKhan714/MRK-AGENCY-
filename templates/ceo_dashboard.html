@@ -1,355 +1,511 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRK Agency — CEO Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #F0F4FF; --surface: #FFFFFF; --dark: #0A0F1E;
-            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
-            --border: #D1DCF8; --text: #0A0F1E; --muted: #64748B;
-            --red: #DC2626; --red-soft: #FEF2F2; --red-border: #FECACA;
-            --green: #16A34A; --green-soft: #F0FDF4; --green-border: #BBF7D0;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CEO Dashboard — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB;
+      --dark: #0A0F1E;
+      --bg: #F0F2F5;
+      --white: #ffffff;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --muted: #64748B;
+      --green: #16A34A;
+      --red: #DC2626;
+      --orange: #D97706;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
-        nav {
-            background: var(--dark); height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 32px; border-bottom: 2px solid var(--blue);
-            position: sticky; top: 0; z-index: 100;
-        }
-        .nav-left { display: flex; align-items: center; gap: 12px; }
-        .nav-logo { font-size: 17px; font-weight: 800; letter-spacing: 0.12em; color: #fff; text-decoration: none; }
-        .ceo-badge {
-            background: var(--blue); color: #fff;
-            font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-            padding: 3px 10px; border-radius: 2px; text-transform: uppercase;
-        }
-        .nav-tabs { display: flex; gap: 4px; }
-        .nav-tab {
-            color: rgba(255,255,255,0.5); background: none; border: none;
-            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
-            padding: 7px 14px; border-radius: 6px; cursor: pointer;
-            transition: all 0.2s; letter-spacing: 0.02em;
-        }
-        .nav-tab:hover, .nav-tab.active { color: #fff; background: rgba(255,255,255,0.1); }
-        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 16px; }
-        nav a.nav-logout:hover { color: #ff6b6b; }
+    nav {
+      background: var(--dark);
+      border-bottom: 2px solid var(--blue);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand { color: var(--white); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-decoration: none; }
+    .nav-brand span { color: var(--blue); }
+    .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-right a { color: #CBD5E1; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
+    .ceo-badge { background: var(--blue); color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
 
-        .hero-bar { background: var(--dark); padding: 36px 32px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
-        .hero-bar h1 { font-size: 28px; font-weight: 800; color: #fff; }
-        .hero-bar p { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: 6px; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-        .content { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .stat-card label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+    .stat-card .stat-val { font-size: 1.6rem; font-weight: 700; color: var(--dark); }
+    .stat-card .stat-val.green { color: var(--green); }
+    .stat-card .stat-val.blue  { color: var(--blue); }
+    .stat-card .stat-val.orange { color: var(--orange); }
+    .stat-card .stat-val.red   { color: var(--red); }
 
-        .tab-section { display: none; }
-        .tab-section.active { display: block; }
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 2rem; overflow-x: auto; }
+    .tab-btn {
+      padding: 0.75rem 1.4rem;
+      font-size: 0.88rem; font-weight: 600;
+      color: var(--muted); background: none; border: none; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      white-space: nowrap; transition: all 0.2s;
+    }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-btn:hover { color: var(--text); }
+    .count-dot {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--red); color: white; border-radius: 999px;
+      font-size: 0.65rem; font-weight: 700; min-width: 18px; height: 18px;
+      padding: 0 4px; margin-left: 5px;
+    }
 
-        /* ITEM CARDS */
-        .item-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; padding: 24px; margin-bottom: 16px;
-            border-left: 3px solid var(--blue); transition: box-shadow 0.2s;
-        }
-        .item-card:hover { box-shadow: 0 4px 20px rgba(26,86,219,0.1); }
-        .item-card.suspended { border-left-color: var(--red); opacity: 0.8; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-        .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-        .item-name { font-size: 18px; font-weight: 700; }
-        .item-type {
-            font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
-            text-transform: uppercase; color: var(--blue);
-            background: var(--blue-soft); padding: 4px 10px; border-radius: 20px;
-            white-space: nowrap; flex-shrink: 0;
-        }
+    /* SECTION */
+    .section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 1rem; }
 
-        .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
-        .detail-item .d-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
-        .detail-item .d-value { font-size: 13px; font-weight: 600; color: var(--text); word-break: break-all; }
+    /* CARD */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+    }
+    .card-head h3 { font-size: 0.95rem; font-weight: 700; color: var(--dark); }
+    .card-head p { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+    .card-body { padding: 1.1rem 1.25rem; }
+    .card-foot { padding: 0.85rem 1.25rem; border-top: 1px solid var(--border); background: #F8F9FB; display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
 
-        .note-box { font-size: 13px; color: var(--muted); line-height: 1.6; padding: 12px 14px; background: var(--bg); border-radius: 6px; margin-bottom: 16px; }
+    /* INFO GRID */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
+    .info-item label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+    .info-item span { font-size: 0.85rem; font-weight: 500; color: var(--dark); word-break: break-word; }
 
-        .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .btn-approve {
-            padding: 9px 20px; background: var(--blue); color: #fff;
-            border: none; border-radius: 6px; font-family: 'Inter', sans-serif;
-            font-size: 12px; font-weight: 700; cursor: pointer;
-            text-decoration: none; transition: background 0.2s; display: inline-flex; align-items: center; gap: 5px;
-        }
-        .btn-approve:hover { background: var(--blue-dark); }
-        .btn-reject {
-            padding: 9px 20px; background: var(--red-soft); color: var(--red);
-            border: 1px solid var(--red-border); border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-            cursor: pointer; text-decoration: none; transition: all 0.2s;
-        }
-        .btn-reject:hover { background: #fee2e2; }
-        .btn-suspend {
-            padding: 9px 20px; background: #FFF7ED; color: #C2410C;
-            border: 1px solid #FED7AA; border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-            cursor: pointer; text-decoration: none; transition: all 0.2s;
-        }
-        .btn-suspend:hover { background: #ffedd5; }
-        .btn-unsuspend {
-            padding: 9px 20px; background: var(--green-soft); color: var(--green);
-            border: 1px solid var(--green-border); border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-            cursor: pointer; text-decoration: none; transition: all 0.2s;
-        }
-        .btn-delete {
-            padding: 9px 20px; background: #fff; color: #9CA3AF;
-            border: 1px solid #E5E7EB; border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-            cursor: pointer; text-decoration: none;
-        }
-        .btn-delete:hover { background: var(--red-soft); color: var(--red); border-color: var(--red-border); }
+    /* BADGES */
+    .status-badge {
+      display: inline-block; padding: 0.25rem 0.75rem;
+      border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+    }
+    .badge-pending  { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-completed { background: #DBEAFE; color: #1E40AF; }
+    .badge-suspended { background: #FEE2E2; color: #991B1B; }
 
-        /* APPROVE PROJECT FORM */
-        .approve-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .pay-input {
-            padding: 9px 14px; border: 1px solid var(--border); border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 13px; width: 160px; outline: none;
-        }
-        .pay-input:focus { border-color: var(--blue); }
+    /* BUTTONS */
+    .btn {
+      display: inline-block; padding: 0.5rem 1rem;
+      border-radius: 7px; font-size: 0.8rem; font-weight: 600;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: opacity 0.2s; white-space: nowrap;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-green  { background: var(--green); color: white; }
+    .btn-red    { background: var(--red); color: white; }
+    .btn-blue   { background: var(--blue); color: white; }
+    .btn-orange { background: var(--orange); color: white; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 
-        /* SECTION HEADER */
-        .section-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; margin-top: 8px; }
-        .section-hdr h2 { font-size: 18px; font-weight: 800; }
-        .count-pill {
-            background: var(--blue); color: #fff;
-            font-size: 11px; font-weight: 700; min-width: 22px; height: 22px;
-            border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
-            padding: 0 7px;
-        }
-        .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+    /* INLINE FORM */
+    .inline-form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .inline-form input, .inline-form select, .inline-form textarea {
+      padding: 0.45rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.82rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .inline-form input:focus, .inline-form select:focus, .inline-form textarea:focus { border-color: var(--blue); }
+    .inline-form textarea { resize: vertical; min-height: 60px; width: 100%; }
 
-        .empty-state {
-            text-align: center; padding: 40px; color: var(--muted);
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; font-size: 14px;
-        }
-        .empty-state .icon { font-size: 28px; margin-bottom: 8px; }
+    /* IMAGE PREVIEW */
+    .img-preview { max-width: 200px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.75rem; cursor: pointer; }
+    .img-preview:hover { opacity: 0.85; }
 
-        .cnic-img { max-width: 200px; border-radius: 6px; border: 1px solid var(--border); margin-top: 8px; }
+    /* DETAIL TOGGLE */
+    .detail-toggle { font-size: 0.78rem; color: var(--blue); cursor: pointer; text-decoration: underline; margin-bottom: 0.75rem; display: inline-block; }
+    .detail-section { display: none; }
+    .detail-section.open { display: block; }
 
-        .suspended-tag {
-            background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border);
-            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
-        }
-        .approved-tag {
-            background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border);
-            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
-        }
-    </style>
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 0.88rem; background: var(--white); border: 1px solid var(--border); border-radius: 12px; }
+
+    /* REVENUE */
+    .revenue-card { background: linear-gradient(135deg, var(--blue), #6366F1); border-radius: 12px; padding: 1.5rem 2rem; color: white; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .revenue-card h2 { font-size: 0.85rem; font-weight: 600; opacity: 0.85; margin-bottom: 0.35rem; }
+    .revenue-card .amount { font-size: 2rem; font-weight: 700; }
+    .revenue-card p { font-size: 0.78rem; opacity: 0.7; margin-top: 0.25rem; }
+  </style>
 </head>
 <body>
-    <nav>
-        <div class="nav-left">
-            <a href="/" class="nav-logo">MRK AGENCY</a>
-            <span class="ceo-badge">CEO</span>
-        </div>
-        <div style="display:flex;align-items:center;">
-            <div class="nav-tabs">
-                <button class="nav-tab active" onclick="showTab('pending')">Pending</button>
-                <button class="nav-tab" onclick="showTab('contractors')">Contractors</button>
-                <button class="nav-tab" onclick="showTab('projects')">Projects</button>
-                <button class="nav-tab" onclick="showTab('customers')">Customers</button>
-            </div>
-            <a href="/logout" class="nav-logout">Sign Out</a>
-        </div>
-    </nav>
 
-    <div class="hero-bar">
-        <div class="eyebrow">Executive Dashboard</div>
-        <h1>CEO Control Center</h1>
-        <p>Full control over contractors, clients, and projects.</p>
+<nav>
+  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-right">
+    <span class="ceo-badge">CEO PORTAL</span>
+    <a href="/ceo-logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- REVENUE -->
+  <div class="revenue-card">
+    <div>
+      <h2>TOTAL REVENUE</h2>
+      <div class="amount">${{ "%.2f"|format(total_revenue) }}</div>
+      <p>From {{ completed_projects|length }} completed project(s)</p>
     </div>
+    <div style="font-size:3rem; opacity:0.3;">$</div>
+  </div>
 
-    <div class="content">
-
-        <!-- PENDING TAB -->
-        <div class="tab-section active" id="tab-pending">
-
-            <div class="section-hdr">
-                <h2>Pending Contractor Applications</h2>
-                {% if pending_contractors %}<span class="count-pill">{{ pending_contractors|length }}</span>{% endif %}
-            </div>
-            {% if pending_contractors %}
-                {% for c in pending_contractors %}
-                <div class="item-card">
-                    <div class="item-top">
-                        <div class="item-name">{{ c[1] }}</div>
-                        <span class="item-type">{{ c[3] }}</span>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item"><div class="d-label">Email</div><div class="d-value">{{ c[8] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">Phone</div><div class="d-value">{{ c[9] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">WhatsApp</div><div class="d-value">{{ c[10] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">CNIC</div><div class="d-value">{{ c[11] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">Experience</div><div class="d-value">{{ c[4] }} years</div></div>
-                        <div class="detail-item"><div class="d-label">Specialties</div><div class="d-value">{{ c[14] or '—' }}</div></div>
-                    </div>
-                    {% if c[5] %}<div class="note-box">{{ c[5] }}</div>{% endif %}
-                    {% if c[12] %}<img src="{{ c[12] }}" class="cnic-img" alt="CNIC">{% endif %}
-                    <div class="actions" style="margin-top:14px;">
-                        <a href="/approve-contractor/{{ c[0] }}" class="btn-approve">✓ Approve & Issue CIN</a>
-                        <a href="/reject-contractor/{{ c[0] }}" class="btn-reject">✗ Reject</a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state"><div class="icon">👥</div>No pending contractor applications.</div>
-            {% endif %}
-
-            <div class="divider"></div>
-
-            <div class="section-hdr">
-                <h2>Pending Project Requests</h2>
-                {% if pending_projects %}<span class="count-pill">{{ pending_projects|length }}</span>{% endif %}
-            </div>
-            {% if pending_projects %}
-                {% for p in pending_projects %}
-                <div class="item-card">
-                    <div class="item-top">
-                        <div class="item-name">{{ p[2] }}</div>
-                        <span class="item-type">{{ p[4] }}</span>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item"><div class="d-label">Package</div><div class="d-value">{{ p[7] }}</div></div>
-                        <div class="detail-item"><div class="d-label">Deadline</div><div class="d-value">{{ p[6] }}</div></div>
-                        <div class="detail-item"><div class="d-label">Budget</div><div class="d-value">{{ p[5] or 'Per Package' }}</div></div>
-                    </div>
-                    <div class="note-box">{{ p[3] }}</div>
-                    <form method="POST" action="/approve-project/{{ p[0] }}">
-                        <div class="approve-form">
-                            <input type="number" name="contractor_pay" class="pay-input" placeholder="Contractor pay ($)" min="0">
-                            <button type="submit" class="btn-approve">✓ Approve Project</button>
-                            <a href="/reject-project/{{ p[0] }}" class="btn-reject">✗ Reject</a>
-                        </div>
-                    </form>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state"><div class="icon">📁</div>No pending project requests.</div>
-            {% endif %}
-        </div>
-
-        <!-- CONTRACTORS TAB -->
-        <div class="tab-section" id="tab-contractors">
-            <div class="section-hdr">
-                <h2>Approved Contractors</h2>
-                {% if approved_contractors %}<span class="count-pill">{{ approved_contractors|length }}</span>{% endif %}
-            </div>
-            {% if approved_contractors %}
-                {% for c in approved_contractors %}
-                <div class="item-card {% if c[15] %}suspended{% endif %}">
-                    <div class="item-top">
-                        <div>
-                            <div class="item-name">{{ c[1] }}</div>
-                            {% if c[6] %}<div style="font-size:12px;color:var(--blue);font-weight:700;margin-top:4px;">CIN: {{ c[6] }}</div>{% endif %}
-                        </div>
-                        <div style="display:flex;gap:8px;align-items:center;">
-                            <span class="item-type">{{ c[3] }}</span>
-                            {% if c[15] %}<span class="suspended-tag">SUSPENDED</span>{% else %}<span class="approved-tag">ACTIVE</span>{% endif %}
-                        </div>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item"><div class="d-label">Email</div><div class="d-value">{{ c[8] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">Phone</div><div class="d-value">{{ c[9] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">WhatsApp</div><div class="d-value">{{ c[10] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">CNIC</div><div class="d-value">{{ c[11] or '—' }}</div></div>
-                        <div class="detail-item"><div class="d-label">Experience</div><div class="d-value">{{ c[4] }} years</div></div>
-                        <div class="detail-item"><div class="d-label">Specialties</div><div class="d-value">{{ c[14] or '—' }}</div></div>
-                    </div>
-                    {% if c[12] %}<img src="{{ c[12] }}" class="cnic-img" alt="CNIC">{% endif %}
-                    <div class="actions" style="margin-top:14px;">
-                        {% if c[15] %}
-                            <a href="/approve-contractor/{{ c[0] }}" class="btn-unsuspend">↑ Reinstate</a>
-                        {% else %}
-                            <a href="/suspend-contractor/{{ c[0] }}" class="btn-suspend">⊘ Suspend & Revoke CIN</a>
-                        {% endif %}
-                        <a href="/delete-contractor/{{ c[0] }}" class="btn-delete" onclick="return confirm('Permanently delete this contractor?')">Delete</a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state"><div class="icon">👤</div>No approved contractors yet.</div>
-            {% endif %}
-        </div>
-
-        <!-- PROJECTS TAB -->
-        <div class="tab-section" id="tab-projects">
-            <div class="section-hdr">
-                <h2>Approved Projects</h2>
-                {% if approved_projects %}<span class="count-pill">{{ approved_projects|length }}</span>{% endif %}
-            </div>
-            {% if approved_projects %}
-                {% for p in approved_projects %}
-                <div class="item-card">
-                    <div class="item-top">
-                        <div class="item-name">{{ p[2] }}</div>
-                        <span class="item-type">{{ p[4] }}</span>
-                    </div>
-                    <div class="detail-grid">
-                        <div class="detail-item"><div class="d-label">Package</div><div class="d-value">{{ p[7] }}</div></div>
-                        <div class="detail-item"><div class="d-label">Deadline</div><div class="d-value">{{ p[6] }}</div></div>
-                        <div class="detail-item"><div class="d-label">Contractor Pay</div><div class="d-value" style="color:var(--green);font-weight:800;">${{ p[10] or 'Not set' }}</div></div>
-                        <div class="detail-item"><div class="d-label">Accepted By</div><div class="d-value">{{ 'Contractor #' + p[11]|string if p[11] else 'Open' }}</div></div>
-                    </div>
-                    <div class="note-box">{{ p[3] }}</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state"><div class="icon">📂</div>No approved projects yet.</div>
-            {% endif %}
-        </div>
-
-        <!-- CUSTOMERS TAB -->
-        <div class="tab-section" id="tab-customers">
-            <div class="section-hdr">
-                <h2>Registered Customers</h2>
-                {% if customers %}<span class="count-pill">{{ customers|length }}</span>{% endif %}
-            </div>
-            {% if customers %}
-                {% for cu in customers %}
-                <div class="item-card {% if cu[6] %}suspended{% endif %}">
-                    <div class="item-top">
-                        <div>
-                            <div class="item-name">{{ cu[1] }} {{ cu[2] }}</div>
-                            <div style="font-size:13px;color:var(--muted);margin-top:3px;">{{ cu[3] }}</div>
-                        </div>
-                        {% if cu[6] %}<span class="suspended-tag">SUSPENDED</span>{% else %}<span class="approved-tag">ACTIVE</span>{% endif %}
-                    </div>
-                    <div class="actions">
-                        {% if cu[6] %}
-                            <a href="/unsuspend-customer/{{ cu[0] }}" class="btn-unsuspend">↑ Reinstate</a>
-                        {% else %}
-                            <a href="/suspend-customer/{{ cu[0] }}" class="btn-suspend">⊘ Suspend Account</a>
-                        {% endif %}
-                        <a href="/delete-customer/{{ cu[0] }}" class="btn-delete" onclick="return confirm('Permanently delete this customer and all their data?')">Delete</a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state"><div class="icon">👥</div>No registered customers yet.</div>
-            {% endif %}
-        </div>
-
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <label>Pending Contractors</label>
+      <div class="stat-val orange">{{ pending_contractors|length }}</div>
     </div>
+    <div class="stat-card">
+      <label>Active Contractors</label>
+      <div class="stat-val green">{{ approved_contractors|length }}</div>
+    </div>
+    <div class="stat-card">
+      <label>Pending Projects</label>
+      <div class="stat-val orange">{{ pending_projects|length }}</div>
+    </div>
+    <div class="stat-card">
+      <label>Active Projects</label>
+      <div class="stat-val blue">{{ approved_projects|length }}</div>
+    </div>
+    <div class="stat-card">
+      <label>Total Customers</label>
+      <div class="stat-val blue">{{ customers|length }}</div>
+    </div>
+    <div class="stat-card">
+      <label>Completed Projects</label>
+      <div class="stat-val green">{{ completed_projects|length }}</div>
+    </div>
+  </div>
 
-    <script>
-        function showTab(name) {
-            document.querySelectorAll('.tab-section').forEach(function(el) { el.classList.remove('active'); });
-            document.querySelectorAll('.nav-tab').forEach(function(el) { el.classList.remove('active'); });
-            document.getElementById('tab-' + name).classList.add('active');
-            event.target.classList.add('active');
-        }
-    </script>
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('pending', this)">
+      Pending
+      {% set total_pending = pending_contractors|length + pending_projects|length %}
+      {% if total_pending > 0 %}<span class="count-dot">{{ total_pending }}</span>{% endif %}
+    </button>
+    <button class="tab-btn" onclick="showTab('contractors', this)">Contractors</button>
+    <button class="tab-btn" onclick="showTab('projects', this)">Projects</button>
+    <button class="tab-btn" onclick="showTab('customers', this)">Customers</button>
+  </div>
+
+  <!-- ══════════════════ TAB: PENDING ══════════════════ -->
+  <div class="tab-content active" id="tab-pending">
+
+    <div class="section-title">Pending Contractor Applications</div>
+    {% if not pending_contractors %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No pending contractor applications.</div>
+    {% else %}
+    {% for ct in pending_contractors %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ ct[1] }}</h3>
+          <p>{{ ct[3] }} · {{ ct[4] }} experience</p>
+        </div>
+        <span class="status-badge badge-pending">⏳ Pending</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+          <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+          <div class="info-item"><label>WhatsApp</label><span>{{ ct[10] or '—' }}</span></div>
+          <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+          <div class="info-item"><label>Specialties</label><span>{{ ct[14] or '—' }}</span></div>
+        </div>
+
+        <span class="detail-toggle" onclick="toggleDetail('ct-{{ ct[0] }}')">View Full Application ▾</span>
+        <div class="detail-section" id="ct-{{ ct[0] }}">
+          {% if ct[12] %}
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;">CNIC Image:</p>
+          <img src="{{ ct[12] }}" class="img-preview" onclick="window.open(this.src)"/>
+          {% endif %}
+          {% if ct[13] %}
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;">CV:</p>
+          <a href="{{ ct[13] }}" download="CV_{{ ct[1] }}" class="btn btn-outline" style="margin-bottom:0.75rem;">Download CV</a>
+          {% endif %}
+          {% if ct[5] %}
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.25rem;">Note from applicant:</p>
+          <p style="font-size:0.85rem;color:var(--text);background:#F8F9FB;padding:0.75rem;border-radius:8px;border:1px solid var(--border);">{{ ct[5] }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/approve-contractor/{{ ct[0] }}" class="btn btn-green"
+           onclick="return confirm('Approve {{ ct[1] }}? A CIN will be generated.')">✓ Approve</a>
+        <a href="/reject-contractor/{{ ct[0] }}" class="btn btn-red"
+           onclick="return confirm('Reject {{ ct[1] }}?')">✗ Reject</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="section-title" style="margin-top:1.5rem;">Pending Project Submissions</div>
+    {% if not pending_projects %}
+    <div class="empty-state">No pending project submissions.</div>
+    {% else %}
+    {% for p in pending_projects %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ p[2] }}</h3>
+          <p>{{ p[3][:80] }}{% if p[3]|length > 80 %}...{% endif %}</p>
+        </div>
+        <span class="status-badge badge-pending">⏳ Pending</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+          <div class="info-item"><label>Budget</label><span>${{ p[5] or '—' }}</span></div>
+          <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
+          <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
+          <div class="info-item"><label>Customer ID</label><span>#{{ p[1] }}</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <!-- APPROVE FORM -->
+        <form action="/approve-project/{{ p[0] }}" method="POST" class="inline-form">
+          <input type="number" name="contractor_pay" placeholder="Contractor Pay ($)" required min="0" step="0.01" style="width:180px;"/>
+          <button type="submit" class="btn btn-green"
+                  onclick="return confirm('Approve this project?')">✓ Approve</button>
+        </form>
+        <!-- REJECT FORM -->
+        <form action="/reject-project/{{ p[0] }}" method="POST" style="width:100%;margin-top:0.5rem;">
+          <div class="inline-form" style="flex-direction:column;align-items:flex-start;">
+            <textarea name="rejection_reason" placeholder="Reason for rejection (shown to customer)..." required></textarea>
+            <button type="submit" class="btn btn-red"
+                    onclick="return confirm('Reject this project?')">✗ Reject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+  <!-- ══════════════════ TAB: CONTRACTORS ══════════════════ -->
+  <div class="tab-content" id="tab-contractors">
+
+    <div class="section-title">Active Contractors ({{ approved_contractors|length }})</div>
+    {% if not approved_contractors %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No active contractors.</div>
+    {% else %}
+    {% for ct in approved_contractors %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ ct[1] }} {% if ct[16] %}<span style="font-size:0.75rem;background:linear-gradient(135deg,#1A56DB,#6366F1);color:white;padding:0.2rem 0.65rem;border-radius:999px;font-weight:700;">{{ ct[16] }}</span>{% endif %}</h3>
+          <p>{{ ct[3] }} · CIN: {{ ct[6] or '—' }}</p>
+        </div>
+        <span class="status-badge badge-approved">✅ Active</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+          <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+          <div class="info-item"><label>Experience</label><span>{{ ct[4] or '—' }}</span></div>
+          <div class="info-item"><label>Specialties</label><span>{{ ct[14] or '—' }}</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/suspend-contractor/{{ ct[0] }}" class="btn btn-orange"
+           onclick="return confirm('Suspend {{ ct[1] }}? Their CIN will be revoked.')">⏸ Suspend</a>
+        <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-red"
+           onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}? This cannot be undone.')">🗑 Delete</a>
+        <!-- AWARD BADGE -->
+        <form action="/award-badge/{{ ct[0] }}" method="POST" class="inline-form">
+          <input type="text" name="badge" placeholder="Badge name..." style="width:140px;" value="{{ ct[16] or '' }}"/>
+          <button type="submit" class="btn btn-blue">🏅 Award</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="section-title" style="margin-top:1.5rem;">Suspended / Rejected ({{ rejected_contractors|length }})</div>
+    {% if not rejected_contractors %}
+    <div class="empty-state">No suspended or rejected contractors.</div>
+    {% else %}
+    {% for ct in rejected_contractors %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ ct[1] }}</h3>
+          <p>{{ ct[3] or '—' }}</p>
+        </div>
+        {% if ct[15] %}
+          <span class="status-badge badge-suspended">⛔ Suspended</span>
+        {% else %}
+          <span class="status-badge badge-rejected">✗ Rejected</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+          <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/reinstate-contractor/{{ ct[0] }}" class="btn btn-green"
+           onclick="return confirm('Reinstate {{ ct[1] }}? A new CIN will be issued.')">↩ Reinstate</a>
+        <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-red"
+           onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}?')">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+  <!-- ══════════════════ TAB: PROJECTS ══════════════════ -->
+  <div class="tab-content" id="tab-projects">
+
+    <div class="section-title">Active Projects ({{ approved_projects|length }})</div>
+    {% if not approved_projects %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No active projects.</div>
+    {% else %}
+    {% for p in approved_projects %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ p[2] }}</h3>
+          <p>{{ p[3][:80] }}{% if p[3]|length > 80 %}...{% endif %}</p>
+        </div>
+        <span class="status-badge badge-approved">✅ Active</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+          <div class="info-item"><label>Budget</label><span>${{ p[5] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+          <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
+          <div class="info-item"><label>Assigned Contractor</label><span>{% if p[9] %}#{{ p[9] }}{% else %}Unassigned{% endif %}</span></div>
+          <div class="info-item"><label>Accepted By</label><span>{% if p[11] %}#{{ p[11] }}{% else %}Pending{% endif %}</span></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="section-title" style="margin-top:1.5rem;">Completed Projects ({{ completed_projects|length }})</div>
+    {% if not completed_projects %}
+    <div class="empty-state">No completed projects yet.</div>
+    {% else %}
+    {% for p in completed_projects %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ p[2] }}</h3>
+          <p>Invoice: {{ p[13] or '—' }}</p>
+        </div>
+        <span class="status-badge badge-completed">🏁 Completed</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+          <div class="info-item"><label>Revenue</label><span>${{ p[5] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor</label><span>{% if p[11] %}#{{ p[11] }}{% else %}—{% endif %}</span></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+   </div>
+
+  <!-- ══════════════════ TAB: CUSTOMERS ══════════════════ -->
+  <div class="tab-content" id="tab-customers">
+
+    <div class="section-title">Active Customers ({{ customers|length }})</div>
+    {% if not customers %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No active customers.</div>
+    {% else %}
+    {% for cu in customers %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ cu[1] }} {{ cu[2] }}</h3>
+          <p>{{ cu[3] }}</p>
+        </div>
+        <span class="status-badge badge-approved">✅ Active</span>
+      </div>
+      <div class="card-foot">
+        <a href="/suspend-customer/{{ cu[0] }}" class="btn btn-orange"
+           onclick="return confirm('Suspend {{ cu[1] }} {{ cu[2] }}?')">⏸ Suspend</a>
+        <a href="/delete-customer/{{ cu[0] }}" class="btn btn-red"
+           onclick="return confirm('PERMANENTLY DELETE {{ cu[1] }} {{ cu[2] }}?')">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="section-title" style="margin-top:1.5rem;">Suspended Customers ({{ suspended_customers|length }})</div>
+    {% if not suspended_customers %}
+    <div class="empty-state">No suspended customers.</div>
+    {% else %}
+    {% for cu in suspended_customers %}
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h3>{{ cu[1] }} {{ cu[2] }}</h3>
+          <p>{{ cu[3] }}</p>
+        </div>
+        <span class="status-badge badge-suspended">⛔ Suspended</span>
+      </div>
+      <div class="card-foot">
+        <a href="/reinstate-customer/{{ cu[0] }}" class="btn btn-green"
+           onclick="return confirm('Reinstate {{ cu[1] }} {{ cu[2] }}?')">↩ Reinstate</a>
+        <a href="/delete-customer/{{ cu[0] }}" class="btn btn-red"
+           onclick="return confirm('PERMANENTLY DELETE {{ cu[1] }} {{ cu[2] }}?')">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+</div>
+
+<script>
+  function showTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+  function toggleDetail(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+    const toggle = el.previousElementSibling;
+    toggle.textContent = el.classList.contains('open') ? 'Hide Details ▴' : 'View Full Application ▾';
+  }
+</script>
 </body>
-                </html>
+</html>
