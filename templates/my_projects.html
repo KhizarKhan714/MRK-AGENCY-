@@ -1,189 +1,384 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRK Agency — My Projects</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #F8F9FB; --surface: #FFFFFF; --dark: #0A0F1E;
-            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
-            --border: #E2E8F0; --text: #0A0F1E; --muted: #64748B;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        nav {
-            background: var(--dark); height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 48px; border-bottom: 2px solid var(--blue);
-            position: sticky; top: 0; z-index: 100;
-        }
-        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
-        .nav-logo span { color: var(--blue); }
-        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
-        nav a.nav-link:hover { color: #fff; }
-        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; }
-        nav a.nav-logout:hover { color: #ff6b6b; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Projects — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB;
+      --dark: #0A0F1E;
+      --bg: #F8F9FB;
+      --white: #ffffff;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --muted: #64748B;
+      --green: #16A34A;
+      --red: #DC2626;
+      --orange: #D97706;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
-        .hero-bar { background: var(--dark); padding: 48px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .hero-bar .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-        .hero-bar h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        .hero-bar p { font-size: 15px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+    /* NAV */
+    nav {
+      background: var(--dark);
+      border-bottom: 2px solid var(--blue);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      color: var(--white);
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+    }
+    .nav-brand span { color: var(--blue); }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a {
+      color: #CBD5E1;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a.active { color: var(--blue); }
 
-        .content { max-width: 900px; margin: 0 auto; padding: 48px; }
+    /* PAGE */
+    .page { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-size: 1.75rem; font-weight: 700; color: var(--dark); }
+    .page-header p { color: var(--muted); margin-top: 0.25rem; font-size: 0.95rem; }
 
-        .project-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 32px; margin-bottom: 24px;
-            border-left: 4px solid var(--blue);
-            transition: box-shadow 0.2s;
-        }
-        .project-card:hover { box-shadow: 0 8px 32px rgba(26,86,219,0.08); }
+    /* EMPTY STATE */
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .empty h3 { font-size: 1.1rem; color: var(--dark); margin-bottom: 0.5rem; }
+    .empty p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-blue { background: var(--blue); color: var(--white); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--blue); color: var(--blue); }
 
-        .project-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-        .project-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
-        .project-meta { font-size: 13px; color: var(--muted); }
+    /* PROJECT CARD */
+    .project-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header h2 { font-size: 1.05rem; font-weight: 700; color: var(--dark); }
+    .card-header p { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
 
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; border-radius: 20px;
-            font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
-            text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
-        }
-        .status-badge.pending { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-        .status-badge.approved { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
-        .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-pending  { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-completed { background: #DBEAFE; color: #1E40AF; }
 
-        .project-details {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 16px; margin: 20px 0; padding: 20px 0;
-            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-        }
-        .detail-item .detail-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-        .detail-item .detail-value { font-size: 14px; font-weight: 600; color: var(--text); }
+    .card-body { padding: 1.25rem 1.5rem; }
 
-        .project-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    /* META GRID */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .meta-item label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+    }
+    .meta-item span { font-size: 0.9rem; font-weight: 500; color: var(--dark); }
 
-        /* PROGRESS TIMELINE */
-        .progress-section { margin-top: 4px; }
-        .progress-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
-        .timeline { display: flex; align-items: center; gap: 0; }
-        .timeline-step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
-        .timeline-step:not(:last-child)::after {
-            content: ''; position: absolute;
-            top: 14px; left: 50%; width: 100%; height: 2px;
-            background: var(--border); z-index: 0;
-        }
-        .timeline-step.done:not(:last-child)::after { background: var(--blue); }
-        .step-dot {
-            width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
-            background: var(--bg); display: flex; align-items: center; justify-content: center;
-            font-size: 12px; z-index: 1; position: relative; flex-shrink: 0;
-        }
-        .timeline-step.done .step-dot { background: var(--blue); border-color: var(--blue); color: #fff; }
-        .timeline-step.active .step-dot { background: #fff; border-color: var(--blue); border-width: 3px; }
-        .step-label { font-size: 10px; font-weight: 600; color: var(--muted); margin-top: 8px; text-align: center; letter-spacing: 0.03em; }
-        .timeline-step.done .step-label { color: var(--blue); }
-        .timeline-step.active .step-label { color: var(--text); font-weight: 700; }
+    /* REJECTION REASON */
+    .rejection-box {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .rejection-box p { font-size: 0.85rem; color: #991B1B; }
+    .rejection-box strong { display: block; font-size: 0.75rem; margin-bottom: 0.25rem; color: #7F1D1D; text-transform: uppercase; letter-spacing: 0.04em; }
 
-        /* EMPTY STATE */
-        .empty {
-            text-align: center; padding: 80px 40px;
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px;
-        }
-        .empty-icon { font-size: 48px; margin-bottom: 20px; }
-        .empty h3 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
-        .empty p { font-size: 15px; color: var(--muted); margin-bottom: 28px; }
-        .btn-primary {
-            display: inline-block; padding: 14px 32px; background: var(--blue);
-            color: #fff; border-radius: 6px; font-size: 15px; font-weight: 700;
-            text-decoration: none; transition: background 0.2s;
-        }
-        .btn-primary:hover { background: var(--blue-dark); }
-    </style>
+    /* PROGRESS TIMELINE */
+    .timeline { margin-bottom: 1.25rem; }
+    .timeline-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .timeline-steps {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .t-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .t-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      z-index: 1;
+      position: relative;
+    }
+    .t-dot.done   { background: var(--green); border-color: var(--green); color: var(--white); }
+    .t-dot.active { background: var(--blue); border-color: var(--blue); color: var(--white); }
+    .t-dot.fail   { background: var(--red); border-color: var(--red); color: var(--white); }
+    .t-text {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+      text-align: center;
+      font-weight: 500;
+    }
+    .t-text.done   { color: var(--green); }
+    .t-text.active { color: var(--blue); font-weight: 600; }
+    .t-text.fail   { color: var(--red); }
+    .t-line {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      margin-top: -14px;
+      position: relative;
+      z-index: 0;
+    }
+    .t-line.done { background: var(--green); }
+
+    /* INVOICE BUTTON */
+    .card-footer {
+      padding: 0.85rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: #F8F9FB;
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
 </head>
 <body>
-    <nav>
-        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
-        <div>
-            <a href="/dashboard" class="nav-link">Dashboard</a>
-            <a href="/submit-project" class="nav-link">New Project</a>
-            <a href="/logout" class="nav-logout">Sign Out</a>
+
+<nav>
+  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/submit-project">New Project</a>
+    <a href="/my-projects" class="active">My Projects</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>My Projects</h1>
+    <p>Track the status and progress of all your submitted projects.</p>
+  </div>
+
+  {% if not projects %}
+  <div class="empty">
+    <h3>No projects yet</h3>
+    <p>You haven't submitted any projects. Start by submitting your first one.</p>
+    <a href="/submit-project" class="btn btn-blue">Submit a Project</a>
+  </div>
+
+  {% else %}
+  {% for p in projects %}
+  {% set status = p[8] %}
+
+  <!-- Determine timeline state -->
+  {% if status == 'pending' %}
+    {% set steps = ['done', 'active', 'none', 'none'] %}
+  {% elif status == 'approved' %}
+    {% set steps = ['done', 'done', 'active', 'none'] %}
+  {% elif status == 'completed' %}
+    {% set steps = ['done', 'done', 'done', 'done'] %}
+  {% elif status == 'rejected' %}
+    {% set steps = ['done', 'fail', 'none', 'none'] %}
+  {% else %}
+    {% set steps = ['done', 'none', 'none', 'none'] %}
+  {% endif %}
+
+  <div class="project-card">
+    <div class="card-header">
+      <div>
+        <h2>{{ p[2] }}</h2>
+        <p>{{ p[3][:80] }}{% if p[3]|length > 80 %}...{% endif %}</p>
+      </div>
+      {% if status == 'pending' %}
+        <span class="badge badge-pending">⏳ Pending</span>
+      {% elif status == 'approved' %}
+        <span class="badge badge-approved">✅ Approved</span>
+      {% elif status == 'completed' %}
+        <span class="badge badge-completed">🏁 Completed</span>
+      {% elif status == 'rejected' %}
+        <span class="badge badge-rejected">❌ Rejected</span>
+      {% endif %}
+    </div>
+
+    <div class="card-body">
+
+      <!-- META -->
+      <div class="meta-grid">
+        <div class="meta-item">
+          <label>Package</label>
+          <span>{{ p[7] or '—' }}</span>
         </div>
-    </nav>
+        <div class="meta-item">
+          <label>Budget</label>
+          <span>${{ p[5] or '—' }}</span>
+        </div>
+        <div class="meta-item">
+          <label>Deadline</label>
+          <span>{{ p[6] or '—' }}</span>
+        </div>
+        <div class="meta-item">
+          <label>Website Type</label>
+          <span>{{ p[4] or '—' }}</span>
+        </div>
+      </div>
 
-    <div class="hero-bar">
-        <div class="eyebrow">Project Tracker</div>
-        <h1>My Projects</h1>
-        <p>Track the real-time status and progress of every project.</p>
+      <!-- PROGRESS TIMELINE -->
+      <div class="timeline">
+        <div class="timeline-label">Progress</div>
+        <div class="timeline-steps">
+          <!-- Step 1: Submitted -->
+          <div class="t-step">
+            <div class="t-dot done">✓</div>
+            <div class="t-text done">Submitted</div>
+          </div>
+
+          <div class="t-line {% if status in ['approved','completed'] %}done{% endif %}"></div>
+
+          <!-- Step 2: Under Review / Rejected -->
+          <div class="t-step">
+            {% if status == 'rejected' %}
+              <div class="t-dot fail">✗</div>
+              <div class="t-text fail">Rejected</div>
+            {% elif status in ['approved','completed'] %}
+              <div class="t-dot done">✓</div>
+              <div class="t-text done">Approved</div>
+            {% else %}
+              <div class="t-dot active">2</div>
+              <div class="t-text active">Under Review</div>
+            {% endif %}
+          </div>
+
+          <div class="t-line {% if status == 'completed' %}done{% endif %}"></div>
+
+          <!-- Step 3: In Progress -->
+          <div class="t-step">
+            {% if status == 'completed' %}
+              <div class="t-dot done">✓</div>
+              <div class="t-text done">In Progress</div>
+            {% elif status == 'approved' %}
+              <div class="t-dot active">3</div>
+              <div class="t-text active">In Progress</div>
+            {% else %}
+              <div class="t-dot">3</div>
+              <div class="t-text">In Progress</div>
+            {% endif %}
+          </div>
+
+          <div class="t-line {% if status == 'completed' %}done{% endif %}"></div>
+
+          <!-- Step 4: Completed -->
+          <div class="t-step">
+            {% if status == 'completed' %}
+              <div class="t-dot done">✓</div>
+              <div class="t-text done">Completed</div>
+            {% else %}
+              <div class="t-dot">4</div>
+              <div class="t-text">Completed</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- REJECTION REASON -->
+      {% if status == 'rejected' and p[12] %}
+      <div class="rejection-box">
+        <strong>Reason for Rejection</strong>
+        <p>{{ p[12] }}</p>
+      </div>
+      {% endif %}
+
     </div>
 
-    <div class="content">
-        {% if projects %}
-            {% for p in projects %}
-            <div class="project-card">
-                <div class="project-top">
-                    <div>
-                        <div class="project-title">{{ p[2] }}</div>
-                        <div class="project-meta">Submitted to MRK Agency</div>
-                    </div>
-                    <span class="status-badge {{ p[8] }}">{{ p[8] }}</span>
-                </div>
-
-                <div class="project-details">
-                    <div class="detail-item">
-                        <div class="detail-label">Service</div>
-                        <div class="detail-value">{{ p[4] }}</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Package</div>
-                        <div class="detail-value">{{ p[7] }}</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Deadline</div>
-                        <div class="detail-value">{{ p[6] }}</div>
-                    </div>
-                </div>
-
-                <div class="project-desc">{{ p[3] }}</div>
-
-                <div class="progress-section">
-                    <div class="progress-label">Project Progress</div>
-                    <div class="timeline">
-                        <div class="timeline-step done">
-                            <div class="step-dot">✓</div>
-                            <div class="step-label">Submitted</div>
-                        </div>
-                        <div class="timeline-step {% if p[8] == 'approved' %}done{% else %}active{% endif %}">
-                            <div class="step-dot">{% if p[8] == 'approved' %}✓{% endif %}</div>
-                            <div class="step-label">Under Review</div>
-                        </div>
-                        <div class="timeline-step {% if p[8] == 'approved' %}done{% endif %}">
-                            <div class="step-dot">{% if p[8] == 'approved' %}✓{% endif %}</div>
-                            <div class="step-label">Approved</div>
-                        </div>
-                        <div class="timeline-step">
-                            <div class="step-dot"></div>
-                            <div class="step-label">In Progress</div>
-                        </div>
-                        <div class="timeline-step">
-                            <div class="step-dot"></div>
-                            <div class="step-label">Delivered</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="empty">
-                <div class="empty-icon">📋</div>
-                <h3>No projects yet</h3>
-                <p>You haven't submitted any projects. Start your first one today.</p>
-                <a href="/submit-project" class="btn-primary">Submit Your First Project</a>
-            </div>
-        {% endif %}
+    <!-- INVOICE BUTTON (only if completed and invoice_ref exists) -->
+    {% if status == 'completed' and p[13] %}
+    <div class="card-footer">
+      <a href="/invoice/{{ p[0] }}" class="btn btn-blue">View Invoice</a>
     </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
 </body>
-    </html>
+      </html>
