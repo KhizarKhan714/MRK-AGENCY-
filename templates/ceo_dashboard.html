@@ -387,4 +387,279 @@
       <div class="card-foot">
         <a href="/suspend-contractor/{{ ct[0] }}" class="btn btn-orange" onclick="return confirm('Suspend {{ ct[1] }}? Their CIN will be revoked.')">⏸ Suspend</a>
         <a href="/ban-cin/{{ ct[0] }}" class="btn btn-dark" onclick="return confirm('BAN {{ ct[1] }} permanently? CIN will be nulled and account banned.')">⛔ Ban CIN</a>
-        <a href="/delete-contract
+        <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-outline" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }} from the database? Cannot be undone.')" style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+        <!-- AWARD BADGE -->
+        <form action="/award-badge/{{ ct[0] }}" method="POST" class="inline-form" style="margin-left:auto;">
+          <input type="text" name="badge" placeholder="Award badge..." style="width:140px;" value="{{ ct[16] or '' }}"/>
+          <button type="submit" class="btn btn-blue">🏅 Award</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <!-- SUSPENDED -->
+    <div class="section-head">
+      <div class="section-title">Suspended / Rejected ({{ rejected_contractors|length }})</div>
+    </div>
+    {% if not rejected_contractors %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">None.</div>
+    {% else %}
+    {% for ct in rejected_contractors %}
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-avatar" style="background:#94A3B8;">{{ ct[1][0]|upper }}</div>
+          <div>
+            <h3>{{ ct[1] }}</h3>
+            <p>{{ ct[3] or '—' }} · {{ ct[8] or 'No email' }}</p>
+          </div>
+        </div>
+        {% if ct[15] %}<span class="status-badge badge-suspended">⛔ Suspended</span>
+        {% else %}<span class="status-badge badge-rejected">✗ Rejected</span>{% endif %}
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+          <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+          <div class="info-item"><label>WhatsApp</label><span>{{ ct[10] or '—' }}</span></div>
+          <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+          <div class="info-item"><label>Expertise</label><span>{{ ct[3] or '—' }}</span></div>
+          <div class="info-item"><label>CIN</label><span>{{ ct[6] or 'Revoked' }}</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/reinstate-contractor/{{ ct[0] }}" class="btn btn-green" onclick="return confirm('Reinstate {{ ct[1] }}? A new CIN will be issued.')">↩ Reinstate</a>
+        <a href="/ban-cin/{{ ct[0] }}" class="btn btn-dark" onclick="return confirm('Permanently BAN {{ ct[1] }}?')">⛔ Ban</a>
+        <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-outline" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}?')" style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <!-- BANNED -->
+    <div class="section-head">
+      <div class="section-title">Banned Contractors ({{ banned_contractors|length }})</div>
+    </div>
+    {% if not banned_contractors %}
+    <div class="empty-state">No banned contractors.</div>
+    {% else %}
+    {% for ct in banned_contractors %}
+    <div class="card" style="border-color:#FCA5A5;">
+      <div class="card-head" style="background:#FFF5F5;">
+        <div class="card-head-left">
+          <div class="card-avatar" style="background:#DC2626;">{{ ct[1][0]|upper }}</div>
+          <div>
+            <h3>{{ ct[1] }}</h3>
+            <p>{{ ct[8] or '—' }} · CNIC: {{ ct[11] or '—' }}</p>
+          </div>
+        </div>
+        <span class="status-badge badge-banned">⛔ BANNED</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+          <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+          <div class="info-item"><label>WhatsApp</label><span>{{ ct[10] or '—' }}</span></div>
+          <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+          <div class="info-item"><label>CIN</label><span style="color:var(--red);">Permanently Banned</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-red" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }} from database?')">🗑 Delete from Database</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+
+  <!-- ══════════════ TAB: PROJECTS ══════════════ -->
+  <div class="tab-content" id="tab-projects">
+
+    <div class="section-head"><div class="section-title">Active Projects ({{ approved_projects|length }})</div></div>
+    {% if not approved_projects %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No active projects.</div>
+    {% else %}
+    {% for p in approved_projects %}
+    <div class="card">
+      <div class="card-head">
+        <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or '—' }}</p></div>
+        <span class="status-badge badge-approved">✅ Active</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+          <div class="info-item"><label>Budget</label><span>${{ p[5] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+          <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
+          <div class="info-item"><label>Assigned Contractor</label><span>{% if p[9] %}#{{ p[9] }}{% else %}Unassigned{% endif %}</span></div>
+          <div class="info-item"><label>Accepted By</label><span>{% if p[11] %}#{{ p[11] }}{% else %}Awaiting{% endif %}</span></div>
+          <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <div class="section-head"><div class="section-title">Completed Projects ({{ completed_projects|length }})</div></div>
+    {% if not completed_projects %}
+    <div class="empty-state">No completed projects yet.</div>
+    {% else %}
+    {% for p in completed_projects %}
+    <div class="card">
+      <div class="card-head">
+        <div><h3>{{ p[2] }}</h3><p>Invoice: {{ p[13] or '—' }}</p></div>
+        <span class="status-badge badge-completed">🏁 Completed</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+          <div class="info-item"><label>Revenue</label><span>${{ p[5] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+          <div class="info-item"><label>Contractor</label><span>{% if p[11] %}#{{ p[11] }}{% else %}—{% endif %}</span></div>
+          <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+
+  <!-- ══════════════ TAB: CUSTOMERS ══════════════ -->
+  <div class="tab-content" id="tab-customers">
+
+    <div class="section-head"><div class="section-title">Active Customers ({{ customers|length }})</div></div>
+    {% if not customers %}
+    <div class="empty-state" style="margin-bottom:1.5rem;">No active customers.</div>
+    {% else %}
+    {% for cu in customers %}
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          {% if cu[5] %}
+            <div class="card-avatar"><img src="{{ cu[5] }}" alt="{{ cu[1] }}"/></div>
+          {% else %}
+            <div class="card-avatar">{{ cu[1][0]|upper }}</div>
+          {% endif %}
+          <div>
+            <h3>{{ cu[1] }} {{ cu[2] }}</h3>
+            <p>{{ cu[3] }} · {{ project_counts.get(cu[0], 0) }} project(s) submitted</p>
+          </div>
+        </div>
+        <span class="status-badge badge-approved">✅ Active</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Customer ID</label><span>#{{ cu[0] }}</span></div>
+          <div class="info-item"><label>Full Name</label><span>{{ cu[1] }} {{ cu[2] }}</span></div>
+          <div class="info-item"><label>Email</label><span>{{ cu[3] }}</span></div>
+          <div class="info-item">
+            <label>Phone</label>
+            <span>{{ cu[7] if cu[7] else '—' }}</span>
+          </div>
+          <div class="info-item">
+            <label>WhatsApp</label>
+            {% if cu[8] %}
+              <a href="https://wa.me/{{ cu[8]|replace('+','') }}" target="_blank">{{ cu[8] }}</a>
+            {% else %}
+              <span>—</span>
+            {% endif %}
+          </div>
+          <div class="info-item"><label>Projects Submitted</label><span>{{ project_counts.get(cu[0], 0) }}</span></div>
+          <div class="info-item"><label>Status</label><span style="color:var(--green);font-weight:600;">Active</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/suspend-customer/{{ cu[0] }}" class="btn btn-orange"
+           onclick="return confirm('Suspend {{ cu[1] }} {{ cu[2] }}? They will not be able to login.')">⏸ Suspend</a>
+        <a href="/delete-customer/{{ cu[0] }}" class="btn btn-outline"
+           onclick="return confirm('PERMANENTLY DELETE {{ cu[1] }} {{ cu[2] }}? All their data will be removed.')"
+           style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <div class="section-head"><div class="section-title">Suspended Customers ({{ suspended_customers|length }})</div></div>
+    {% if not suspended_customers %}
+    <div class="empty-state">No suspended customers.</div>
+    {% else %}
+    {% for cu in suspended_customers %}
+    <div class="card" style="border-color:#FCA5A5;">
+      <div class="card-head" style="background:#FFF5F5;">
+        <div class="card-head-left">
+          {% if cu[5] %}
+            <div class="card-avatar"><img src="{{ cu[5] }}" alt="{{ cu[1] }}"/></div>
+          {% else %}
+            <div class="card-avatar" style="background:#94A3B8;">{{ cu[1][0]|upper }}</div>
+          {% endif %}
+          <div>
+            <h3>{{ cu[1] }} {{ cu[2] }}</h3>
+            <p>{{ cu[3] }} · {{ project_counts.get(cu[0], 0) }} project(s)</p>
+          </div>
+        </div>
+        <span class="status-badge badge-suspended">⛔ Suspended</span>
+      </div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><label>Customer ID</label><span>#{{ cu[0] }}</span></div>
+          <div class="info-item"><label>Full Name</label><span>{{ cu[1] }} {{ cu[2] }}</span></div>
+          <div class="info-item"><label>Email</label><span>{{ cu[3] }}</span></div>
+          <div class="info-item">
+            <label>Phone</label>
+            <span>{{ cu[7] if cu[7] else '—' }}</span>
+          </div>
+          <div class="info-item">
+            <label>WhatsApp</label>
+            {% if cu[8] %}
+              <a href="https://wa.me/{{ cu[8]|replace('+','') }}" target="_blank">{{ cu[8] }}</a>
+            {% else %}
+              <span>—</span>
+            {% endif %}
+          </div>
+          <div class="info-item"><label>Projects</label><span>{{ project_counts.get(cu[0], 0) }}</span></div>
+          <div class="info-item"><label>Status</label><span style="color:var(--red);font-weight:600;">Suspended</span></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <a href="/reinstate-customer/{{ cu[0] }}" class="btn btn-green"
+           onclick="return confirm('Reinstate {{ cu[1] }} {{ cu[2] }}?')">↩ Reinstate</a>
+        <a href="/delete-customer/{{ cu[0] }}" class="btn btn-outline"
+           onclick="return confirm('PERMANENTLY DELETE {{ cu[1] }} {{ cu[2] }}?')"
+           style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+</div>
+
+<script>
+  function showTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+  function toggleExpand(id, el) {
+    const sec = document.getElementById(id);
+    sec.classList.toggle('open');
+    el.textContent = sec.classList.contains('open') ? '▾ Hide Details' : '▸ View Documents & Note';
+  }
+</script>
+</body>
+          </html>
