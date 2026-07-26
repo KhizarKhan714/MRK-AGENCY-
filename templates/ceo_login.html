@@ -1,275 +1,227 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>MRK Agency - CEO Portal</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CEO Portal — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB;
+      --dark: #0A0F1E;
+      --bg: #F8F9FB;
+      --white: #ffffff;
+      --border: #E2E8F0;
+      --text: #1E293B;
+      --muted: #64748B;
+      --red: #DC2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* NAV */
+    nav {
+      background: var(--dark);
+      border-bottom: 2px solid var(--blue);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { color: var(--white); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-decoration: none; }
+    .nav-brand span { color: var(--blue); }
+    .nav-links a { color: #CBD5E1; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
 
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: #000;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
 
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 60%);
-            z-index: 0;
-        }
+    .login-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    }
 
-        body::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background:
-                radial-gradient(ellipse at 20% 50%, rgba(255,215,0,0.04) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 50%, rgba(255,215,0,0.04) 0%, transparent 50%);
-            z-index: 0;
-        }
+    /* HEADER */
+    .card-header { text-align: center; margin-bottom: 2rem; }
+    .restricted-tag {
+      display: inline-block;
+      background: #FEF2F2;
+      color: var(--red);
+      border: 1px solid #FECACA;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .card-header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 0.3rem;
+    }
+    .card-header h1 span { color: var(--blue); }
+    .card-header p { font-size: 0.85rem; color: var(--muted); }
 
-        nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            padding: 20px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255,215,0,0.1);
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-        }
+    /* DIVIDER */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 1.75rem;
+    }
 
-        nav .logo {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 22px;
-            font-weight: 700;
-            color: #FFD700;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-        }
+    /* FORM */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .form-group input:focus {
+      border-color: var(--blue);
+      background: var(--white);
+    }
+    .form-group input::placeholder { color: #B0BDCA; }
 
-        nav a {
-            color: rgba(255,255,255,0.4);
-            text-decoration: none;
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            transition: color 0.3s;
-        }
+    /* SUBMIT */
+    .submit-btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      letter-spacing: 0.03em;
+      transition: opacity 0.2s;
+    }
+    .submit-btn:hover { opacity: 0.88; }
 
-        nav a:hover { color: #FFD700; }
+    /* ERROR */
+    .alert-error {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      color: #991B1B;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1.25rem;
+      text-align: center;
+    }
 
-        .container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 440px;
-            padding: 20px;
-        }
+    /* FOOTER */
+    .card-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+    .card-footer strong { color: var(--dark); }
 
-        .top-badge {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .top-badge .line {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .top-badge .line::before,
-        .top-badge .line::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
-        }
-
-        .top-badge .diamond {
-            color: #FFD700;
-            font-size: 8px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .top-badge h1 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 42px;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: 2px;
-            line-height: 1;
-        }
-
-        .top-badge h1 span { color: #FFD700; }
-
-        .top-badge p {
-            margin-top: 10px;
-            font-size: 10px;
-            letter-spacing: 4px;
-            color: rgba(255,255,255,0.25);
-            text-transform: uppercase;
-        }
-
-        .card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,215,0,0.15);
-            border-radius: 2px;
-            padding: 45px 40px;
-            position: relative;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 1px;
-            background: #FFD700;
-        }
-
-        .error {
-            background: rgba(180,0,0,0.15);
-            border: 1px solid rgba(255,50,50,0.3);
-            color: #ff6666;
-            padding: 12px 16px;
-            font-size: 11px;
-            letter-spacing: 1px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .field {
-            margin-bottom: 22px;
-        }
-
-        label {
-            display: block;
-            font-size: 9px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: rgba(255,215,0,0.6);
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        input {
-            width: 100%;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-bottom: 1px solid rgba(255,215,0,0.3);
-            padding: 13px 16px;
-            color: #fff;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.3s;
-            border-radius: 0;
-        }
-
-        input:focus {
-            border-color: rgba(255,215,0,0.6);
-            background: rgba(255,215,0,0.03);
-        }
-
-        input::placeholder {
-            color: rgba(255,255,255,0.15);
-            font-size: 12px;
-            letter-spacing: 1px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #000;
-            border: none;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn:hover {
-            background: linear-gradient(135deg, #FFA500, #FFD700);
-            box-shadow: 0 0 30px rgba(255,215,0,0.3);
-        }
-
-        .footer-text {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 9px;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.1);
-            text-transform: uppercase;
-        }
-    </style>
+    footer {
+      text-align: center;
+      padding: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">MRK Agency</div>
-        <a href="/">Return</a>
-    </nav>
 
-    <div class="container">
-        <div class="top-badge">
-            <div class="line"><span class="diamond">◆ Restricted Access ◆</span></div>
-            <h1>CEO <span>Portal</span></h1>
-            <p>Authorized Personnel Only</p>
-        </div>
+<nav>
+  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-links">
+    <a href="/">← Back to Site</a>
+  </div>
+</nav>
 
-        <div class="card">
-            {% if error %}
-            <div class="error">⚠ {{ error }}</div>
-            {% endif %}
+<div class="main">
+  <div class="login-card">
 
-            <form method="POST" action="/ceo-login">
-                <div class="field">
-                    <label>Full Name</label>
-                    <input type="text" name="name" placeholder="Enter your name" autocomplete="off">
-                </div>
-                <div class="field">
-                    <label>Password</label>
-                    <input type="password" name="password" placeholder="CEO password">
-                </div>
-                <div class="field">
-                    <label>Secret Key</label>
-                    <input type="password" name="secret_key" placeholder="Secret key">
-                </div>
-                <div class="field">
-                    <label>Security Answer</label>
-                    <input type="text" name="security_answer" placeholder="Security answer">
-                </div>
-                <button type="submit" class="btn">Enter Portal</button>
-            </form>
-        </div>
-
-        <p class="footer-text">MRK Agency &nbsp;·&nbsp; Confidential</p>
+    <div class="card-header">
+      <div class="restricted-tag">⚠ Restricted Access</div>
+      <h1>CEO <span>Portal</span></h1>
+      <p>Authorized personnel only. All access is logged.</p>
     </div>
+
+    <div class="divider"></div>
+
+    {% if error %}
+    <div class="alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form action="/ceo-login" method="POST">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="Enter your name" required autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="CEO password" required/>
+      </div>
+      <div class="form-group">
+        <label>Secret Key</label>
+        <input type="password" name="secret_key" placeholder="Secret key" required/>
+      </div>
+      <div class="form-group">
+        <label>Security Answer</label>
+        <input type="password" name="security_answer" placeholder="Security answer" required/>
+      </div>
+      <button type="submit" class="submit-btn">ENTER PORTAL</button>
+    </form>
+
+    <div class="card-footer">
+      <strong>MRK AGENCY</strong> &nbsp;·&nbsp; CONFIDENTIAL
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  MRK AGENCY &nbsp;·&nbsp; CEO Portal &nbsp;·&nbsp; Unauthorized access is prohibited.
+</footer>
+
 </body>
     </html>
