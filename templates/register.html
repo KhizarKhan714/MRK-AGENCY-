@@ -13,8 +13,8 @@
     .nav-brand { color:var(--white); font-size:1.15rem; font-weight:700; letter-spacing:0.05em; text-decoration:none; }
     .nav-brand span { color:var(--blue); }
     .nav-links a { color:#CBD5E1; text-decoration:none; font-size:0.85rem; font-weight:500; }
-    .main { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem 1.5rem; }
-    .card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:2.25rem 2rem; width:100%; max-width:420px; box-shadow:0 4px 24px rgba(0,0,0,0.06); }
+    .main { flex:1; display:flex; align-items:center; justify-content:center; padding:2.5rem 1.5rem; }
+    .card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:2.25rem 2rem; width:100%; max-width:440px; box-shadow:0 4px 24px rgba(0,0,0,0.06); }
     .card-title { font-size:1.5rem; font-weight:700; color:var(--dark); margin-bottom:0.25rem; }
     .card-title span { color:var(--blue); }
     .card-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.75rem; }
@@ -24,6 +24,11 @@
     .form-group input { width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:9px; font-size:0.9rem; font-family:'Inter',sans-serif; color:var(--text); background:var(--bg); outline:none; transition:border-color 0.2s,background 0.2s; }
     .form-group input:focus { border-color:var(--blue); background:var(--white); }
     .form-group input::placeholder { color:#B0BDCA; }
+
+    .section-divider { display:flex; align-items:center; gap:0.75rem; margin:1.25rem 0 1rem; }
+    .section-divider span { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); white-space:nowrap; }
+    .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .hint-box { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:0.6rem 0.85rem; font-size:0.78rem; color:#1E40AF; margin-bottom:1rem; }
     .submit-btn { width:100%; padding:0.78rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.9rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; margin-top:0.5rem; transition:opacity 0.2s; }
     .submit-btn:hover { opacity:0.88; }
     .alert-error { background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; border-radius:8px; padding:0.75rem 1rem; font-size:0.85rem; margin-bottom:1.25rem; }
@@ -40,18 +45,53 @@
   <div class="card">
     <div class="card-title">Create <span>Account</span></div>
     <div class="card-sub">Join MRK AGENCY as a client and submit your first project.</div>
+
     {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+
     <form action="/register" method="POST">
+
+      <!-- NAME -->
       <div class="row">
-        <div class="form-group"><label>First Name</label><input type="text" name="first_name" placeholder="Ali" required/></div>
-        <div class="form-group"><label>Last Name</label><input type="text" name="last_name" placeholder="Khan" required/></div>
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" name="first_name" placeholder="Ali" required/>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" name="last_name" placeholder="Khan" required/>
+        </div>
       </div>
-      <div class="form-group"><label>Email Address</label><input type="email" name="email" placeholder="you@example.com" required/></div>
-      <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Min. 6 characters" required/></div>
+
+      <!-- EMAIL + PASSWORD -->
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="you@example.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Min. 6 characters" required/>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="section-divider"><span>Contact Details</span></div>
+      <div class="hint-box">📞 Required so we can contact you directly about your project. Your details are kept private.</div>
+
+      <div class="row">
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="+92 300 0000000" required/>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <input type="tel" name="whatsapp" placeholder="+92 300 0000000" required/>
+        </div>
+      </div>
+
       <button type="submit" class="submit-btn">Create Account</button>
     </form>
-    <div class="bottom-link">Already have an account? <a href="/login">Login</a></div>
+
+    <div class="bottom-link">Already have an account? <a href="/login">Sign in</a></div>
   </div>
 </div>
 </body>
-    </html>
+  </html>
