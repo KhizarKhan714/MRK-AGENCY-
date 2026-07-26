@@ -1,210 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MRK Agency — Submit Project</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #F8F9FB; --surface: #FFFFFF; --dark: #0A0F1E;
-            --blue: #1A56DB; --blue-dark: #1240A8; --blue-soft: #EEF3FF;
-            --border: #E2E8F0; --text: #0A0F1E; --muted: #64748B;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        nav {
-            background: var(--dark); height: 64px;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 48px; border-bottom: 2px solid var(--blue);
-            position: sticky; top: 0; z-index: 100;
-        }
-        .nav-logo { font-size: 18px; font-weight: 800; letter-spacing: 0.15em; color: #fff; text-decoration: none; }
-        .nav-logo span { color: var(--blue); }
-        nav a.nav-link { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; font-weight: 500; margin-left: 24px; transition: color 0.2s; }
-        nav a.nav-link:hover { color: #fff; }
-        nav a.nav-logout { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 13px; margin-left: 24px; }
-        nav a.nav-logout:hover { color: #ff6b6b; }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit a Project — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F8F9FB; --white:#ffffff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --red:#DC2626; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
 
-        .hero-bar { background: var(--dark); padding: 48px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .hero-bar .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-        .hero-bar h1 { font-size: 32px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-        .hero-bar p { font-size: 15px; color: rgba(255,255,255,0.4); margin-top: 8px; }
+    /* NAV */
+    nav { background:var(--dark); border-bottom:2px solid var(--blue); padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .nav-brand { color:var(--white); font-size:1.1rem; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; }
+    .nav-brand span { color:var(--blue); }
+    .nav-links { display:flex; gap:1.25rem; align-items:center; }
+    .nav-links a { color:#CBD5E1; text-decoration:none; font-size:0.82rem; font-weight:500; transition:color 0.2s; white-space:nowrap; }
+    .nav-links a:hover { color:var(--white); }
+    .nav-links a.active { color:var(--blue); }
+    .hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:4px; }
+    .hamburger span { display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all 0.3s; }
+    .hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity:0; }
+    .hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    .mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; background:var(--dark); border-bottom:2px solid var(--blue); flex-direction:column; padding:1rem 1.5rem 1.5rem; gap:0; z-index:99; }
+    .mobile-menu.open { display:flex; }
+    .mobile-menu a { color:rgba(255,255,255,0.7); text-decoration:none; font-size:0.9rem; font-weight:500; padding:0.65rem 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .mobile-menu a:last-child { border-bottom:none; }
+    .mobile-menu a.active { color:var(--blue); }
+    @media (max-width:640px) { .nav-links { display:none; } .hamburger { display:flex; } }
 
-        .content { max-width: 800px; margin: 0 auto; padding: 48px; }
-        .card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 40px;
-            border-top: 3px solid var(--blue);
-            margin-bottom: 24px;
-        }
-        .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        .field { margin-bottom: 20px; }
-        .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-        .field input, .field textarea, .field select {
-            width: 100%; padding: 12px 16px;
-            border: 1px solid var(--border); border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text);
-            background: var(--bg); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
-        }
-        .field textarea { height: 120px; resize: vertical; }
-        .field input:focus, .field textarea:focus, .field select:focus {
-            border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); background: #fff;
-        }
+    /* HERO */
+    .hero { background:var(--dark); padding:2.75rem 1.5rem 2.25rem; border-bottom:1px solid #1A2744; }
+    .hero-inner { max-width:680px; margin:0 auto; }
+    .hero-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--blue); margin-bottom:0.5rem; }
+    .hero h1 { font-size:1.75rem; font-weight:800; color:var(--white); margin-bottom:0.4rem; }
+    .hero p { font-size:0.88rem; color:#94A3B8; }
 
-        /* PACKAGES */
-        .pkg-grid { display: grid; gap: 12px; }
-        .pkg-option { display: none; }
-        .pkg-label {
-            display: block; border: 1px solid var(--border);
-            border-radius: 8px; padding: 20px 24px; cursor: pointer;
-            transition: all 0.2s; background: var(--bg);
-        }
-        .pkg-label:hover { border-color: var(--blue); background: var(--blue-soft); }
-        .pkg-option:checked + .pkg-label {
-            border-color: var(--blue); background: var(--blue-soft);
-            box-shadow: 0 0 0 2px rgba(26,86,219,0.2);
-        }
-        .pkg-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .pkg-name-text { font-size: 16px; font-weight: 700; }
-        .pkg-price-text { font-size: 20px; font-weight: 800; color: var(--blue); }
-        .pkg-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
-        .pkg-delivery { font-size: 12px; color: var(--blue); font-weight: 600; margin-top: 6px; }
+    /* PAGE */
+    .page { max-width:680px; margin:0 auto; padding:2.5rem 1.5rem; }
 
-        .coming-soon {
-            background: #F8FAFF; border: 1px dashed #C7D9FF;
-            color: var(--muted); padding: 14px 16px; border-radius: 6px;
-            font-size: 13px; text-align: center;
-        }
-        .budget-box { display: none; margin-top: 16px; }
-        .btn-primary {
-            width: 100%; padding: 16px; background: var(--blue);
-            color: #fff; border: none; border-radius: 6px;
-            font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
-            cursor: pointer; transition: background 0.2s;
-        }
-        .btn-primary:hover { background: var(--blue-dark); }
-        .error {
-            background: #FEF2F2; border: 1px solid #FECACA;
-            color: #DC2626; padding: 12px 16px; border-radius: 6px;
-            font-size: 13px; font-weight: 500; margin-bottom: 20px;
-        }
-    </style>
+    .alert-error { background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; border-radius:8px; padding:0.75rem 1rem; font-size:0.85rem; margin-bottom:1.5rem; }
+
+    /* FORM CARD */
+    .form-card { background:var(--white); border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px; overflow:hidden; margin-bottom:1.25rem; }
+    .form-card-title { font-size:0.88rem; font-weight:700; color:var(--dark); padding:1rem 1.25rem; border-bottom:1px solid var(--border); background:#FAFBFC; }
+    .form-card-body { padding:1.25rem; }
+
+    .form-group { margin-bottom:1rem; }
+    .form-group:last-child { margin-bottom:0; }
+    .form-group label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.4rem; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:8px;
+      font-size:0.88rem; font-family:'Inter',sans-serif; color:var(--text);
+      background:var(--bg); outline:none; transition:border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue); background:var(--white); }
+    .form-group input::placeholder, .form-group textarea::placeholder { color:#B0BDCA; }
+    .form-group textarea { resize:vertical; min-height:110px; }
+    .field-hint { font-size:0.72rem; color:var(--muted); margin-top:0.3rem; }
+
+    /* AI COMING SOON */
+    .ai-box { background:#F0F4FF; border:1.5px solid #C7D7FF; border-radius:8px; padding:0.7rem 1rem; font-size:0.83rem; color:#3B4FC8; font-weight:500; display:flex; align-items:center; gap:0.5rem; }
+
+    /* PACKAGES */
+    .pkg-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .pkg-option { display:none; }
+    .pkg-option + label {
+      display:block; padding:0.9rem 1rem; border:1.5px solid var(--border);
+      border-radius:9px; cursor:pointer; transition:all 0.2s;
+      background:var(--bg);
+    }
+    .pkg-option:checked + label { border-color:var(--blue); background:#EFF6FF; }
+    .pkg-option + label .pkg-name { font-size:0.8rem; font-weight:700; color:var(--dark); }
+    .pkg-option + label .pkg-price { font-size:1rem; font-weight:800; color:var(--blue); margin-top:0.15rem; }
+    .pkg-option + label .pkg-desc { font-size:0.7rem; color:var(--muted); margin-top:0.2rem; }
+
+    /* SUBMIT */
+    .submit-btn { width:100%; padding:0.85rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.95rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s; }
+    .submit-btn:hover { opacity:0.88; }
+  </style>
 </head>
 <body>
-    <nav>
-        <a href="/" class="nav-logo">MRK<span></span>Agency</a>
-        <div>
-            <a href="/dashboard" class="nav-link">Dashboard</a>
-            <a href="/my-projects" class="nav-link">My Projects</a>
-            <a href="/logout" class="nav-logout">Sign Out</a>
+
+<nav>
+  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/my-projects">My Projects</a>
+    <a href="/submit-project" class="active">New Project</a>
+    <a href="/profile">Profile</a>
+    <a href="/logout">Logout</a>
+  </div>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+</nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/dashboard">Dashboard</a>
+  <a href="/my-projects">My Projects</a>
+  <a href="/submit-project" class="active">New Project</a>
+  <a href="/profile">Profile</a>
+  <a href="/logout">Logout</a>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">New Project</div>
+    <h1>Submit a Project</h1>
+    <p>Describe your vision and we'll bring it to life.</p>
+  </div>
+</div>
+
+<div class="page">
+
+  {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
+
+  <form action="/submit-project" method="POST">
+
+    <!-- PROJECT DETAILS -->
+    <div class="form-card">
+      <div class="form-card-title">Project Details</div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Project Title</label>
+          <input type="text" name="title" placeholder="e.g. Business Website for My Company" required/>
         </div>
-    </nav>
-
-    <div class="hero-bar">
-        <div class="eyebrow">New Project</div>
-        <h1>Submit a Project</h1>
-        <p>Describe your vision and we'll bring it to life.</p>
+        <div class="form-group">
+          <label>Project Description</label>
+          <textarea name="description" placeholder="Describe your project in detail — your goals, target audience, and any specific requirements..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Service Type</label>
+          <select name="website_type" required>
+            <option value="" disabled selected>Select a service</option>
+            <option value="Web Development">Web Development</option>
+            <option value="Web Design">Web Design</option>
+            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="SEO">SEO</option>
+            <option value="Graphic Design">Graphic Design</option>
+            <option value="Software Engineering">Software Engineering</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>AI Integration</label>
+          <div class="ai-box">🚀 AI Integration — Coming Soon</div>
+        </div>
+      </div>
     </div>
 
-    <div class="content">
-        {% if error %}<div class="error">{{ error }}</div>{% endif %}
-        <form method="POST" action="/submit-project">
+    <!-- PACKAGE -->
+    <div class="form-card">
+      <div class="form-card-title">Choose a Package</div>
+      <div class="form-card-body">
+        <div class="pkg-grid">
 
-            <div class="card">
-                <h3>Project Details</h3>
-                <div class="field">
-                    <label>Project Title</label>
-                    <input type="text" name="title" placeholder="e.g. Business Website for My Company" required>
-                </div>
-                <div class="field">
-                    <label>Project Description</label>
-                    <textarea name="description" placeholder="Describe your project in detail — your goals, target audience, and any specific requirements..." required></textarea>
-                </div>
-                <div class="field">
-                    <label>Service Type</label>
-                    <select name="website_type">
-                        <option>Web Development</option>
-                        <option>Web Design</option>
-                        <option>UI/UX Design</option>
-                        <option>Graphic Design</option>
-                        <option>SEO</option>
-                        <option>Software Engineering</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>AI Integration</label>
-                    <div class="coming-soon">🚀 AI Integration — Coming Soon</div>
-                </div>
-                <div class="field">
-                    <label>Project Deadline</label>
-                    <input type="date" name="deadline" required>
-                </div>
-            </div>
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="pkg1" value="Bronze - $999" required/>
+            <label for="pkg1">
+              <div class="pkg-name">Bronze</div>
+              <div class="pkg-price">$999</div>
+              <div class="pkg-desc">5 pages · 2 weeks · Basic SEO</div>
+            </label>
+          </div>
 
-            <div class="card">
-                <h3>Select Your Package</h3>
-                <div class="pkg-grid">
-                    <div>
-                        <input type="radio" class="pkg-option" name="package" id="pkg1" value="Bronze - $999" required>
-                        <label class="pkg-label" for="pkg1">
-                            <div class="pkg-top"><span class="pkg-name-text">Bronze</span><span class="pkg-price-text">$999</span></div>
-                            <div class="pkg-desc">Up to 5 pages · Web Design + Development · Mobile Responsive · Basic SEO</div>
-                            <div class="pkg-delivery">⏱ Delivery: 2 weeks</div>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" class="pkg-option" name="package" id="pkg2" value="Consular - $1499">
-                        <label class="pkg-label" for="pkg2">
-                            <div class="pkg-top"><span class="pkg-name-text">Consular</span><span class="pkg-price-text">$1,499</span></div>
-                            <div class="pkg-desc">Up to 10 pages · Web Design + Development · Mobile Responsive · Full SEO · Contact Form</div>
-                            <div class="pkg-delivery">⏱ Delivery: 3 weeks</div>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" class="pkg-option" name="package" id="pkg3" value="Gold - $2499">
-                        <label class="pkg-label" for="pkg3">
-                            <div class="pkg-top"><span class="pkg-name-text">Gold</span><span class="pkg-price-text">$2,499</span></div>
-                            <div class="pkg-desc">Up to 20 pages · Premium Design + Development · Full SEO + Analytics · Live Chat + Forms · Graphic Design</div>
-                            <div class="pkg-delivery">⏱ Delivery: 5 weeks</div>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" class="pkg-option" name="package" id="pkg4" value="Diamond - $4499">
-                        <label class="pkg-label" for="pkg4">
-                            <div class="pkg-top"><span class="pkg-name-text">Diamond</span><span class="pkg-price-text">$4,499</span></div>
-                            <div class="pkg-desc">Unlimited pages · Custom UI/UX + Development · All Integrations · Branding Suite · Software Features</div>
-                            <div class="pkg-delivery">⏱ Delivery: 8 weeks</div>
-                        </label>
-                    </div>
-                    <div>
-                        <input type="radio" class="pkg-option" name="package" id="pkg5" value="Custom Executive - $5000+">
-                        <label class="pkg-label" for="pkg5">
-                            <div class="pkg-top"><span class="pkg-name-text">Custom Executive</span><span class="pkg-price-text">$5,000+</span></div>
-                            <div class="pkg-desc">Everything in Diamond · Custom Software Development · Dedicated Point of Contact · AI Integration (Coming Soon)</div>
-                            <div class="pkg-delivery">⏱ Timeline discussed per project</div>
-                        </label>
-                    </div>
-                </div>
-                <div class="budget-box" id="budget-box">
-                    <div class="field" style="margin-top:16px;margin-bottom:0">
-                        <label>Your Budget (Minimum $5,000)</label>
-                        <input type="number" name="budget" placeholder="e.g. 7000" min="5000">
-                    </div>
-                </div>
-            </div>
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="pkg2" value="Consular - $1499"/>
+            <label for="pkg2">
+              <div class="pkg-name">Consular</div>
+              <div class="pkg-price">$1,499</div>
+              <div class="pkg-desc">10 pages · 3 weeks · Full SEO</div>
+            </label>
+          </div>
 
-            <button type="submit" class="btn-primary">Submit Project Request</button>
-        </form>
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="pkg3" value="Gold - $2499"/>
+            <label for="pkg3">
+              <div class="pkg-name">Gold </div>
+              <div class="pkg-price">$2,499</div>
+              <div class="pkg-desc">20 pages · 5 weeks · Analytics</div>
+            </label>
+          </div>
+
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="pkg4" value="Diamond - $4499"/>
+            <label for="pkg4">
+              <div class="pkg-name">Diamond</div>
+              <div class="pkg-price">$4,499</div>
+              <div class="pkg-desc">Unlimited · 8 weeks · Branding</div>
+            </label>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <input class="pkg-option" type="radio" name="package" id="pkg5" value="Custom Executive - $5000+"/>
+            <label for="pkg5">
+              <div class="pkg-name">Custom Executive</div>
+              <div class="pkg-price">$5,000+</div>
+              <div class="pkg-desc">Everything in Diamond + custom software + dedicated contact</div>
+            </label>
+          </div>
+
+        </div>
+      </div>
     </div>
 
-    <script>
-        document.querySelectorAll('.pkg-option').forEach(function(radio) {
-            radio.addEventListener('change', function() {
-                document.getElementById('budget-box').style.display =
-                    this.id === 'pkg5' ? 'block' : 'none';
-            });
-        });
-    </script>
+    <!-- BUDGET & DEADLINE -->
+    <div class="form-card">
+      <div class="form-card-title">Budget & Timeline</div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Your Budget (USD)</label>
+          <input type="number" name="budget" placeholder="e.g. 1499" min="0"/>
+          <div class="field-hint">Optional — enter your budget if different from package price</div>
+        </div>
+        <div class="form-group">
+          <label>Project Deadline</label>
+          <input type="date" name="deadline" required/>
+          <div class="field-hint">When do you need this completed by?</div>
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn">Submit Project →</button>
+
+  </form>
+</div>
+
+<script>
+  function toggleMenu() {
+    const m = document.getElementById('mobileMenu'); const b = document.getElementById('hamburger');
+    m.classList.toggle('open'); b.classList.toggle('open');
+  }
+  document.querySelectorAll('.mobile-menu a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+    });
+  });
+</script>
 </body>
     </html>
