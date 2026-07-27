@@ -330,53 +330,62 @@ def invoice(project_id):
 
 
 # ─── CONTRACTOR APPLY ───────────────────────────────────
+    
 @app.route('/contractor-apply', methods=['GET', 'POST'])
+@app.route('/contractor/apply', methods=['GET', 'POST'])
 def contractor_apply():
     if request.method == 'POST':
-        try:
-            pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
+        name        = request.form['name'].strip()
+        email       = request.form['email'].strip().lower()
+        country     = request.form.get('country', '').strip()
+        phone       = request.form.get('phone', '').strip()
+        whatsapp    = request.form.get('whatsapp', '').strip()
+        national_id = request.form.get('national_id', '').strip()
+        expertise   = request.form['expertise']
+        experience  = request.form.get('experience', '')
+        specialties = request.form.get('specialties', '')
+        note        = request.form.get('note', '')
+        password    = request.form['password']
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
-            cv_data = None
-            cv_file = request.files.get('cv')
-            if cv_file and cv_file.filename:
-                cv_bytes = cv_file.read()
-                cv_b64 = base64.b64encode(cv_bytes).decode()
-                cv_data = f'data:{cv_file.content_type};base64,{cv_b64}'
+        cnic_image_name = None
+        cv_name = None
 
-            cnic_img_data = None
-            cnic_img = request.files.get('cnic_image')
-            if cnic_img and cnic_img.filename:
-                cnic_bytes = cnic_img.read()
-                cnic_b64 = base64.b64encode(cnic_bytes).decode()
-                cnic_img_data = f'data:{cnic_img.content_type};base64,{cnic_b64}'
+        if 'cnic_image' in request.files:
+            f = request.files['cnic_image']
+            if f and allowed_file(f.filename):
+                cnic_image_name = secure_filename(f'id_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cnic_image_name))
 
-            conn = get_db()
-            c = conn.cursor()
-            c.execute('''INSERT INTO contractors
-                (name, password, expertise, experience, note, status,
-                 email, phone, whatsapp, cnic, cnic_image, cv, specialties)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
-                (request.form['name'].strip(),
-                 pw.decode(),
-                 request.form['expertise'],
-                 request.form['experience'],
-                 request.form['note'].strip(),
-                 'pending',
-                 request.form['email'].strip(),
-                 request.form['phone'].strip(),
-                 request.form['whatsapp'].strip(),
-                 request.form['cnic'].strip(),
-                 cnic_img_data,
-                 cv_data,
-                 request.form['specialties'].strip()))
-            conn.commit()
-            conn.close()
-            return render_template('contractor_apply.html',
-                success='Application submitted successfully. The CEO will review your application.')
-        except Exception as e:
-            return render_template('contractor_apply.html', error=str(e))
+        if 'cv' in request.files:
+            f = request.files['cv']
+            if f and allowed_file(f.filename):
+                cv_name = secure_filename(f'cv_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cv_name))
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO contractors
+            (name, email, phone, whatsapp, cnic, cnic_image, cv,
+             expertise, experience, specialties, note, password, status,
+             country, national_id)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s)
+            RETURNING id''',
+            (name, email, phone, whatsapp, national_id, cnic_image_name, cv_name,
+             expertise, experience, specialties, note, hashed,
+             country, national_id))
+        new_id = c.fetchone()[0]
+        conn.commit()
+        conn.close()
+
+        log_audit('contractor', new_id, name, 'CONTRACTOR_APPLIED',
+                  target_type='contractor', target_id=new_id)
+        send_notification('ceo', 1, f'New Contractor Application: {name}',
+                          f'{expertise} specialist from {country} applied.',
+                          '/mrkceokhan7/dashboard')
+        flash('Application submitted! You will receive your CIN upon approval.', 'success')
+        return redirect(url_for('contractor_login'))
     return render_template('contractor_apply.html')
-
 
 # ─── CONTRACTOR LOGIN ────────────────────────────────────
 @app.route('/contractor-login', methods=['GET', 'POST'])
