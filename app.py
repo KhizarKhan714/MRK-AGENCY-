@@ -76,6 +76,12 @@ def init_db():
     try:
         c.execute('ALTER TABLE contractors ADD COLUMN IF NOT EXISTS badge TEXT')
     except: conn.rollback()
+    try:
+        c.execute("ALTER TABLE contractors ADD COLUMN IF NOT EXISTS country TEXT")
+    except: conn.rollback()
+    try:
+        c.execute("ALTER TABLE contractors ADD COLUMN IF NOT EXISTS national_id TEXT")
+    except: conn.rollback()
 
     # PROJECTS
     c.execute('''CREATE TABLE IF NOT EXISTS projects (
