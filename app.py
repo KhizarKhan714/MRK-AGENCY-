@@ -119,8 +119,19 @@ def init_db():
     c.execute("SELECT COUNT(*) FROM ceo")
     if c.fetchone()[0] == 0:
         c.execute("INSERT INTO ceo (name, password, secret_key, security_answer) VALUES (%s,%s,%s,%s)",
-                  ('Khizar Khan', 'CEOMRKAgencyKhizarKhan', 'KhizarKhanCEOMRK7', 'Kiran'))
+             ('Khizar Khan', 'CEOMRKAgencyKhizarKhan', 'KhizarKhanCEOMRK7', 'Kiran'))
 
+    c.execute('''CREATE TABLE IF NOT EXISTS team_members (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT,
+    specialties TEXT,
+    bio TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    projects_count INTEGER DEFAULT 0,
+    photo TEXT
+)''')
+    
     conn.commit()
     conn.close()
 
