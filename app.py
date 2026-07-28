@@ -563,7 +563,8 @@ def ceo_dashboard():
     customers = c.fetchall()
     c.execute("SELECT * FROM customers WHERE suspended=TRUE")
     suspended_customers = c.fetchall()
-
+    c.execute("SELECT * FROM team_members ORDER BY created_at")
+    team_members = c.fetchall()
     # All contractors including banned
     c.execute("SELECT * FROM contractors WHERE status='banned'")
     banned_contractors = c.fetchall()
