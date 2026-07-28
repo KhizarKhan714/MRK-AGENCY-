@@ -648,18 +648,276 @@
 
 </div>
 
-<script>
-  function showTab(name, el) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    el.classList.add('active');
-  }
-  function toggleExpand(id, el) {
-    const sec = document.getElementById(id);
-    sec.classList.toggle('open');
-    el.textContent = sec.classList.contains('open') ? '▾ Hide Details' : '▸ View Documents & Note';
-  }
-</script>
-</body>
-          </html>
+  <!-- ── CONTACT & SITE SETTINGS ── -->
+    <div class="section-head"><div class="section-title">Contact Details & Site Copy</div></div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-avatar" style="background:var(--blue);border-radius:10px;font-size:1.1rem;">⚙️</div>
+          <div>
+            <h3>Public Contact Information</h3>
+            <p>Updates live on your homepage instantly — no code changes needed.</p>
+          </div>
+        </div>
+        <span class="status-badge badge-approved">🌐 Live on Homepage</span>
+      </div>
+      <div class="card-body">
+        <form action="/ceo/site-settings" method="POST">
+          <div class="info-grid" style="margin-bottom:1.25rem;">
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Hero Tagline</div>
+              <input type="text" name="hero_tagline"
+                value="{{ settings.get('hero_tagline', 'Where Your Brand Achieves Glory') if settings else 'Where Your Brand Achieves Glory' }}"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Hero Sub-text</div>
+              <input type="text" name="hero_subtext"
+                value="{{ settings.get('hero_subtext', '') if settings else '' }}"
+                placeholder="e.g. Web Development · SEO · UI/UX Design"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Agency Bio</div>
+              <textarea name="agency_bio" rows="3"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;resize:vertical;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
+                placeholder="A short bio about MRK AGENCY shown on the homepage...">{{ settings.get('agency_bio', '') if settings else '' }}</textarea>
+            </div>
+            <div>
+              <div class="note-label">Contact Email</div>
+              <input type="email" name="contact_email"
+                value="{{ settings.get('contact_email', 'ceo@mrkagency.com') if settings else 'ceo@mrkagency.com' }}"
+                placeholder="ceo@mrkagency.com"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div>
+              <div class="note-label">Contact Phone</div>
+              <input type="tel" name="contact_phone"
+                value="{{ settings.get('contact_phone', '') if settings else '' }}"
+                placeholder="+92 300 0000000"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div>
+              <div class="note-label">WhatsApp Number</div>
+              <input type="tel" name="contact_whatsapp"
+                value="{{ settings.get('contact_whatsapp', '') if settings else '' }}"
+                placeholder="+92 300 0000000"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-blue">💾 Save Settings</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- ── PORTFOLIO ── -->
+    <div class="section-head"><div class="section-title">Portfolio Projects</div></div>
+
+    <!-- ADD FORM -->
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-avatar" style="background:linear-gradient(135deg,var(--blue),#6366F1);border-radius:10px;font-size:1.1rem;">🖥</div>
+          <div>
+            <h3>Add New Portfolio Project</h3>
+            <p>NDA projects stay hidden. Non-NDA projects appear live on your homepage.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <form action="/ceo/portfolio/add" method="POST" enctype="multipart/form-data">
+          <div class="info-grid" style="margin-bottom:1rem;">
+            <div>
+              <div class="note-label">Project Title *</div>
+              <input type="text" name="title" required placeholder="e.g. TechCorp Business Website"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div>
+              <div class="note-label">Category</div>
+              <select name="category"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;">
+                <option value="Web Development">Web Development</option>
+                <option value="Web Design">Web Design</option>
+                <option value="UI/UX Design">UI/UX Design</option>
+                <option value="SEO">SEO</option>
+                <option value="Graphic Design">Graphic Design</option>
+                <option value="Software Engineering">Software Engineering</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Description</div>
+              <textarea name="description" rows="2" placeholder="Brief description of what was built and delivered..."
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;resize:vertical;"></textarea>
+            </div>
+            <div>
+              <div class="note-label">Live URL (optional)</div>
+              <input type="url" name="live_url" placeholder="https://client-website.com"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div>
+              <div class="note-label">Display Order (lower = first)</div>
+              <input type="number" name="display_order" value="0" min="0"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div>
+              <div class="note-label">Project Screenshot / Image</div>
+              <input type="file" name="image" accept="image/*"
+                style="width:100%;font-size:0.8rem;color:var(--muted);margin-top:0.35rem;"/>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.6rem;padding-top:1.4rem;">
+              <input type="checkbox" name="is_nda" id="is_nda" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer;"/>
+              <label for="is_nda" style="font-size:0.82rem;font-weight:600;color:var(--red);cursor:pointer;">🔒 NDA — Keep hidden from public</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-blue">➕ Add to Portfolio</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- EXISTING PORTFOLIO -->
+    {% if portfolio %}
+      {% for p in portfolio %}
+      <div class="card" style="{% if p[6] %}border-color:#FCA5A5;{% endif %}">
+        <div class="card-head" style="{% if p[6] %}background:#FFF5F5;{% endif %}">
+          <div class="card-head-left">
+            {% if p[4] %}
+              <div class="card-avatar" style="border-radius:8px;overflow:hidden;padding:0;">
+                <img src="/uploads/{{ p[4] }}" style="width:44px;height:44px;object-fit:cover;" alt="{{ p[1] }}"/>
+              </div>
+            {% else %}
+              <div class="card-avatar" style="border-radius:8px;font-size:1.2rem;">🖥</div>
+            {% endif %}
+            <div>
+              <h3>{{ p[1] }}</h3>
+              <p>{{ p[3] or '—' }}{% if p[5] %} &nbsp;·&nbsp; <a href="{{ p[5] }}" target="_blank" style="color:var(--blue);">Live ↗</a>{% endif %}</p>
+            </div>
+          </div>
+          {% if p[6] %}
+            <span class="status-badge badge-banned">🔒 NDA — Hidden</span>
+          {% else %}
+            <span class="status-badge badge-approved">🌐 Public</span>
+          {% endif %}
+        </div>
+        {% if p[2] %}
+        <div class="card-body">
+          <p style="font-size:0.83rem;color:var(--muted);line-height:1.55;">{{ p[2] }}</p>
+        </div>
+        {% endif %}
+        <div class="card-foot">
+          <a href="/ceo/portfolio/toggle-nda/{{ p[0] }}" class="btn {% if p[6] %}btn-green{% else %}btn-orange{% endif %}">
+            {% if p[6] %}🔓 Make Public{% else %}🔒 Mark as NDA{% endif %}
+          </a>
+          <a href="/ceo/portfolio/delete/{{ p[0] }}" class="btn btn-outline"
+             onclick="return confirm('Delete {{ p[1] }} from portfolio? This cannot be undone.')"
+             style="color:var(--red);border-color:var(--red);">🗑 Remove</a>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">No portfolio projects yet. Add your first one above — it will appear live on your homepage immediately.</div>
+    {% endif %}
+
+    <div class="sep"></div>
+
+    <!-- ── TEAM PROFILES ── -->
+    <div class="section-head"><div class="section-title">Team Profiles (Featured Contractors)</div></div>
+    <div class="card" style="margin-bottom:1.25rem;">
+      <div class="card-head">
+        <div class="card-head-left">
+          <div class="card-avatar" style="background:linear-gradient(135deg,#16A34A,#059669);border-radius:10px;font-size:1.1rem;">👥</div>
+          <div>
+            <h3>Add Team Member to Homepage</h3>
+            <p>Showcase your best contractors to build client trust. Only featured members appear publicly.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <form action="/ceo/team/add" method="POST" enctype="multipart/form-data">
+          <div class="info-grid" style="margin-bottom:1rem;">
+            <div>
+              <div class="note-label">Full Name *</div>
+              <input type="text" name="name" required placeholder="e.g. Azlan Khan"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div>
+              <div class="note-label">Role / Title *</div>
+              <input type="text" name="role" required placeholder="e.g. Lead Web Developer"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Specialties</div>
+              <input type="text" name="specialties" placeholder="e.g. React, WordPress, Figma, Python..."
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Short Bio</div>
+              <textarea name="bio" rows="2" placeholder="A short professional bio about this team member..."
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;resize:vertical;"></textarea>
+            </div>
+            <div>
+              <div class="note-label">Profile Photo</div>
+              <input type="file" name="photo" accept="image/*"
+                style="width:100%;font-size:0.8rem;color:var(--muted);margin-top:0.35rem;"/>
+            </div>
+            <div>
+              <div class="note-label">Projects Completed</div>
+              <input type="number" name="projects_count" value="0" min="0"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;"/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-green">➕ Add Team Member</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- EXISTING TEAM MEMBERS -->
+    {% if team_members %}
+      {% for t in team_members %}
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-left">
+            {% if t[7] %}
+              <div class="card-avatar" style="padding:0;overflow:hidden;">
+                <img src="/uploads/{{ t[7] }}" style="width:44px;height:44px;object-fit:cover;" alt="{{ t[1] }}"/>
+              </div>
+            {% else %}
+              <div class="card-avatar">{{ t[1][0]|upper }}</div>
+            {% endif %}
+            <div>
+              <h3>{{ t[1] }}</h3>
+              <p>{{ t[2] or '—' }} &nbsp;·&nbsp; {{ t[3] or 'No specialties listed' }}</p>
+            </div>
+          </div>
+          <span class="status-badge badge-approved">🌐 Featured</span>
+        </div>
+        {% if t[4] %}
+        <div class="card-body">
+          <p style="font-size:0.83rem;color:var(--muted);">{{ t[4] }}</p>
+          <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--blue);font-weight:600;">{{ t[6] or 0 }} project(s) completed</div>
+        </div>
+        {% endif %}
+        <div class="card-foot">
+          <a href="/ceo/team/delete/{{ t[0] }}" class="btn btn-outline"
+             onclick="return confirm('Remove {{ t[1] }} from the team page?')"
+             style="color:var(--red);border-color:var(--red);">🗑 Remove</a>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">No team members featured yet. Add your first contractor above to build trust with clients.</div>
+    {% endif %}
+
+  </div>
+
+
+ </div>
+  
+
