@@ -4,16 +4,18 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Apply as Contractor — MRK AGENCY</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F8F9FB; --white:#ffffff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --red:#DC2626; --green:#16A34A; }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+
     nav { background:var(--dark); border-bottom:2px solid var(--blue); padding:0 1.5rem; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
-    .nav-brand { color:var(--white); font-size:1.1rem; font-weight:700; letter-spacing:0.06em; text-decoration:none; }
+    .nav-brand { color:var(--white); font-size:1.1rem; font-weight:700; letter-spacing:0.06em; text-decoration:none; white-space:nowrap; }
     .nav-brand span { color:var(--blue); }
     .nav-links { display:flex; gap:1.25rem; align-items:center; }
-    .nav-links a { color:#CBD5E1; text-decoration:none; font-size:0.82rem; font-weight:500; }
+    .nav-links a { color:#CBD5E1; text-decoration:none; font-size:0.82rem; font-weight:500; white-space:nowrap; }
+    .nav-links a:hover { color:var(--white); }
     .hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:4px; }
     .hamburger span { display:block; width:22px; height:2px; background:#fff; border-radius:2px; transition:all 0.3s; }
     .hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
@@ -25,45 +27,57 @@
     .mobile-menu a:last-child { border-bottom:none; }
     @media (max-width:640px) { .nav-links { display:none; } .hamburger { display:flex; } }
 
-    /* HERO */
-    .hero { background:var(--dark); padding:3rem 1.5rem 2.5rem; border-bottom:1px solid #1A2744; }
-    .hero-inner { max-width:680px; margin:0 auto; }
-    .hero-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--blue); margin-bottom:0.6rem; }
-    .hero h1 { font-size:1.8rem; font-weight:800; color:var(--white); margin-bottom:0.5rem; }
+    .hero { background:var(--dark); padding:2.75rem 1.5rem 2.25rem; border-bottom:1px solid #1A2744; }
+    .hero-inner { max-width:700px; margin:0 auto; }
+    .hero-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--blue); margin-bottom:0.5rem; }
+    .hero h1 { font-size:1.75rem; font-weight:800; color:var(--white); margin-bottom:0.4rem; }
     .hero p { font-size:0.88rem; color:#94A3B8; line-height:1.6; }
 
-    .page { max-width:680px; margin:0 auto; padding:2.5rem 1.5rem; }
+    .page { max-width:700px; margin:0 auto; padding:2.5rem 1.5rem; }
 
-    /* ALERT */
     .alert { padding:0.85rem 1rem; border-radius:8px; font-size:0.88rem; font-weight:500; margin-bottom:1.5rem; }
     .alert-success { background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7; }
-    .alert-error { background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; }
+    .alert-error   { background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5; }
 
-    /* HOW IT WORKS */
-    .how-box { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; font-size:0.82rem; color:#1E40AF; line-height:1.6; }
+    .how-box { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.5rem; font-size:0.82rem; color:#1E40AF; line-height:1.7; }
     .how-box strong { color:#1E3A8A; }
 
-    /* FORM CARD */
     .form-card { background:var(--white); border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px; overflow:hidden; margin-bottom:1.25rem; }
     .form-card-title { font-size:0.88rem; font-weight:700; color:var(--dark); padding:1rem 1.25rem; border-bottom:1px solid var(--border); background:#FAFBFC; }
     .form-card-body { padding:1.25rem; }
 
     .form-group { margin-bottom:1rem; }
+    .form-group:last-child { margin-bottom:0; }
     .form-group label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.4rem; }
     .form-group input, .form-group select, .form-group textarea {
-      width:100%; padding:0.65rem 0.9rem; border:1.5px solid var(--border); border-radius:8px;
-      font-size:0.88rem; font-family:'Inter',sans-serif; color:var(--text); background:var(--bg);
-      outline:none; transition:border-color 0.2s;
+      width:100%; padding:0.7rem 1rem; border:1.5px solid var(--border); border-radius:8px;
+      font-size:0.88rem; font-family:'Inter',sans-serif; color:var(--text);
+      background:var(--bg); outline:none; transition:border-color 0.2s;
     }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue); background:var(--white); }
-    .form-group input.invalid { border-color:var(--red); }
-    .form-group input.valid { border-color:var(--green); }
-    .form-group textarea { resize:vertical; min-height:80px; }
+    .form-group textarea { resize:vertical; min-height:90px; }
     .field-hint { font-size:0.72rem; color:var(--muted); margin-top:0.3rem; }
     .field-error { font-size:0.72rem; color:var(--red); margin-top:0.3rem; display:none; }
+    .input-valid   { border-color:var(--green) !important; }
+    .input-invalid { border-color:var(--red) !important; }
+
     .row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
 
-    .submit-btn { width:100%; padding:0.85rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.95rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s; margin-top:0.5rem; }
+    /* PHONE ROW: flag+code + number */
+    .phone-row { display:grid; grid-template-columns:140px 1fr; gap:0.6rem; }
+    .dial-select { padding:0.7rem 0.5rem; font-size:0.88rem; }
+
+    /* COUNTRY SELECT */
+    .country-select-wrap { position:relative; }
+    .country-flag-preview { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); font-size:1.1rem; pointer-events:none; }
+    .country-select-wrap select { padding-left:2.25rem; }
+
+    /* ID label dynamic */
+    #id-label-text { font-weight:700; }
+
+    .row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.75rem; }
+
+    .submit-btn { width:100%; padding:0.88rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.95rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s; margin-top:0.25rem; }
     .submit-btn:hover { opacity:0.88; }
   </style>
 </head>
@@ -92,47 +106,94 @@
 
 <div class="page">
 
-  {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
   {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
   <div class="how-box">
-    <strong>How it works:</strong> Submit your application → CEO reviews all details → Upon approval, you receive your unique CIN (Contractor ID Number) <strong>via email</strong> to access your dashboard.
+    <strong>How it works:</strong> Submit your application → CEO reviews all details → Upon approval, you will be contacted directly with your unique CIN (Contractor ID Number) to access your dashboard.
   </div>
 
-  <form action="/contractor-apply" method="POST" enctype="multipart/form-data" id="applyForm" novalidate>
+  <form action="/contractor/apply" method="POST" enctype="multipart/form-data" id="applyForm" novalidate>
 
     <!-- PERSONAL INFO -->
     <div class="form-card">
       <div class="form-card-title">Personal Information</div>
       <div class="form-card-body">
+
         <div class="form-group">
           <label>Full Name</label>
           <input type="text" name="name" placeholder="Your full legal name" required/>
         </div>
+
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" name="email" id="email" placeholder="your@email.com" required/>
+          <input type="email" name="email" placeholder="your@email.com" required/>
         </div>
-        <div class="row">
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" name="phone" id="phone" placeholder="+92 300 0000000" required/>
-            <div class="field-hint">Include country code e.g. +92</div>
-            <div class="field-error" id="phone-error">Enter a valid phone number with country code (min 10 digits)</div>
-          </div>
-          <div class="form-group">
-            <label>WhatsApp Number</label>
-            <input type="tel" name="whatsapp" id="whatsapp" placeholder="+92 300 0000000" required/>
-            <div class="field-hint">Include country code e.g. +92</div>
-            <div class="field-error" id="whatsapp-error">Enter a valid WhatsApp number with country code</div>
-          </div>
-        </div>
+
+        <!-- COUNTRY -->
         <div class="form-group">
-          <label>CNIC Number</label>
-          <input type="text" name="cnic" id="cnic" placeholder="XXXXX-XXXXXXX-X" maxlength="15" required/>
-          <div class="field-hint">Format: XXXXX-XXXXXXX-X (Pakistani National ID)</div>
-          <div class="field-error" id="cnic-error">CNIC must be in format XXXXX-XXXXXXX-X</div>
+          <label>Country of Residence</label>
+          <div class="country-select-wrap">
+            <span class="country-flag-preview" id="countryFlag">🌍</span>
+            <select name="country" id="countrySelect" required onchange="onCountryChange()">
+              <option value="" disabled selected>Select your country</option>
+              <option value="Pakistan"       data-flag="🇵🇰" data-code="+92"  data-id="CNIC (National ID Card)">🇵🇰 Pakistan</option>
+              <option value="Bangladesh"     data-flag="🇧🇩" data-code="+880" data-id="NID (National Identity Card)">🇧🇩 Bangladesh</option>
+              <option value="India"          data-flag="🇮🇳" data-code="+91"  data-id="Aadhaar / PAN Card">🇮🇳 India</option>
+              <option value="Sri Lanka"      data-flag="🇱🇰" data-code="+94"  data-id="NIC (National Identity Card)">🇱🇰 Sri Lanka</option>
+              <option value="Nepal"          data-flag="🇳🇵" data-code="+977" data-id="Citizenship Certificate">🇳🇵 Nepal</option>
+              <option value="Philippines"    data-flag="🇵🇭" data-code="+63"  data-id="PhilSys / Passport">🇵🇭 Philippines</option>
+              <option value="Indonesia"      data-flag="🇮🇩" data-code="+62"  data-id="KTP (National ID)">🇮🇩 Indonesia</option>
+              <option value="Nigeria"        data-flag="🇳🇬" data-code="+234" data-id="NIN (National ID Number)">🇳🇬 Nigeria</option>
+              <option value="Egypt"          data-flag="🇪🇬" data-code="+20"  data-id="National ID Card">🇪🇬 Egypt</option>
+              <option value="Kenya"          data-flag="🇰🇪" data-code="+254" data-id="National ID Card">🇰🇪 Kenya</option>
+              <option value="Ghana"          data-flag="🇬🇭" data-code="+233" data-id="Ghana Card / Passport">🇬🇭 Ghana</option>
+              <option value="Vietnam"        data-flag="🇻🇳" data-code="+84"  data-id="CCCD (Citizen ID Card)">🇻🇳 Vietnam</option>
+              <option value="Ukraine"        data-flag="🇺🇦" data-code="+380" data-id="Passport / ID Card">🇺🇦 Ukraine</option>
+              <option value="Other"          data-flag="🌍"  data-code=""     data-id="Government-issued ID">🌍 Other</option>
+            </select>
+          </div>
         </div>
+
+        <!-- PHONE -->
+        <div class="form-group">
+          <label>Phone Number</label>
+          <div class="phone-row">
+            <select id="phoneCode" class="dial-select" onchange="updatePhoneField('phone', this.value)">
+              <option value="">Code</option>
+            </select>
+            <input type="tel" name="phone" id="phoneInput" placeholder="300 0000000" required/>
+          </div>
+          <div class="field-hint">Select your country code then enter your number</div>
+          <div class="field-error" id="phone-error">Enter a valid phone number</div>
+        </div>
+
+        <!-- WHATSAPP -->
+        <div class="form-group">
+          <label>WhatsApp Number</label>
+          <div class="phone-row">
+            <select id="waCode" class="dial-select" onchange="updatePhoneField('whatsapp', this.value)">
+              <option value="">Code</option>
+            </select>
+            <input type="tel" name="whatsapp" id="waInput" placeholder="300 0000000" required/>
+          </div>
+          <div class="field-hint">Include if different from phone number</div>
+          <div class="field-error" id="wa-error">Enter a valid WhatsApp number</div>
+        </div>
+
+        <!-- GOVERNMENT ID -->
+        <div class="form-group">
+          <label id="id-label-text">Government ID Number</label>
+          <input type="text" name="national_id" id="nationalIdInput" placeholder="Enter your ID number" required/>
+          <div class="field-hint" id="id-hint">Select your country first to see the correct ID format</div>
+        </div>
+
       </div>
     </div>
 
@@ -140,6 +201,7 @@
     <div class="form-card">
       <div class="form-card-title">Professional Details</div>
       <div class="form-card-body">
+
         <div class="form-group">
           <label>Area of Expertise</label>
           <select name="expertise" required>
@@ -152,6 +214,7 @@
             <option value="Software Engineering">Software Engineering</option>
           </select>
         </div>
+
         <div class="form-group">
           <label>Years of Experience</label>
           <select name="experience" required>
@@ -162,15 +225,18 @@
             <option value="5+ years">5+ years</option>
           </select>
         </div>
+
         <div class="form-group">
-          <label>Specialties</label>
-          <input type="text" name="specialties" placeholder="e.g. React, WordPress, Figma, Python..." required/>
-          <div class="field-hint">List your key tools, frameworks, or skills</div>
+          <label>Specialties & Skills</label>
+          <input type="text" name="specialties" placeholder="e.g. React, WordPress, Figma, Python, SEO..." required/>
+          <div class="field-hint">List your key tools, frameworks, or technologies</div>
         </div>
+
         <div class="form-group">
-          <label>About You / Note to CEO</label>
-          <textarea name="note" placeholder="Tell us about yourself, your work style, and why you want to join MRK AGENCY..." required></textarea>
+          <label>Note to CEO</label>
+          <textarea name="note" placeholder="Tell us about yourself, your experience, work style, and why you want to join MRK AGENCY..." required></textarea>
         </div>
+
       </div>
     </div>
 
@@ -178,16 +244,19 @@
     <div class="form-card">
       <div class="form-card-title">Documents</div>
       <div class="form-card-body">
+
         <div class="form-group">
-          <label>CNIC Image</label>
-          <input type="file" name="cnic_image" accept="image/*" required/>
-          <div class="field-hint">Upload a clear photo of your national identity card</div>
+          <label id="id-doc-label">Government ID Image</label>
+          <input type="file" name="cnic_image" accept="image/*,.pdf" required/>
+          <div class="field-hint" id="id-doc-hint">Upload a clear photo or scan of your government-issued ID</div>
         </div>
+
         <div class="form-group">
           <label>CV / Resume</label>
           <input type="file" name="cv" accept=".pdf,.doc,.docx,image/*" required/>
-          <div class="field-hint">PDF, Word document, or image format accepted</div>
+          <div class="field-hint">PDF or Word format preferred</div>
         </div>
+
       </div>
     </div>
 
@@ -209,71 +278,114 @@
       </div>
     </div>
 
-    <button type="submit" class="submit-btn" id="submitBtn">Submit Application</button>
+    <button type="submit" class="submit-btn">Submit Application →</button>
 
   </form>
 </div>
 
 <script>
-  function toggleMenu() {
-    const m = document.getElementById('mobileMenu'); const b = document.getElementById('hamburger');
-    m.classList.toggle('open'); b.classList.toggle('open');
+  // ── Country data ──
+  const countries = [
+    { value:"Pakistan",    flag:"🇵🇰", code:"+92",  id:"CNIC (National ID Card)",        hint:"Format: XXXXX-XXXXXXX-X" },
+    { value:"Bangladesh",  flag:"🇧🇩", code:"+880", id:"NID (National Identity Card)",   hint:"Enter your 10 or 17-digit NID" },
+    { value:"India",       flag:"🇮🇳", code:"+91",  id:"Aadhaar / PAN Card",             hint:"Enter your 12-digit Aadhaar or 10-char PAN" },
+    { value:"Sri Lanka",   flag:"🇱🇰", code:"+94",  id:"NIC (National Identity Card)",   hint:"Enter your NIC number" },
+    { value:"Nepal",       flag:"🇳🇵", code:"+977", id:"Citizenship Certificate Number", hint:"Enter your citizenship certificate number" },
+    { value:"Philippines", flag:"🇵🇭", code:"+63",  id:"PhilSys / Passport Number",      hint:"Enter your PhilSys ID or passport number" },
+    { value:"Indonesia",   flag:"🇮🇩", code:"+62",  id:"KTP Number",                     hint:"Enter your 16-digit KTP number" },
+    { value:"Nigeria",     flag:"🇳🇬", code:"+234", id:"NIN (National ID Number)",       hint:"Enter your 11-digit NIN" },
+    { value:"Egypt",       flag:"🇪🇬", code:"+20",  id:"National ID Number",             hint:"Enter your 14-digit national ID" },
+    { value:"Kenya",       flag:"🇰🇪", code:"+254", id:"National ID Number",             hint:"Enter your national ID number" },
+    { value:"Ghana",       flag:"🇬🇭", code:"+233", id:"Ghana Card / Passport Number",   hint:"Enter your Ghana Card or passport number" },
+    { value:"Vietnam",     flag:"🇻🇳", code:"+84",  id:"CCCD Number",                    hint:"Enter your 12-digit CCCD number" },
+    { value:"Ukraine",     flag:"🇺🇦", code:"+380", id:"Passport / ID Number",           hint:"Enter your passport or ID card number" },
+    { value:"Other",       flag:"🌐",  code:"",     id:"Government-issued ID Number",    hint:"Enter your national ID, passport, or equivalent" },
+  ];
+
+  // Populate dial code dropdowns
+  function populateDialCodes() {
+    ['phoneCode','waCode'].forEach(id => {
+      const sel = document.getElementById(id);
+      countries.forEach(c => {
+        if (c.code) {
+          const opt = document.createElement('option');
+          opt.value = c.code;
+          opt.textContent = c.flag + ' ' + c.code;
+          sel.appendChild(opt);
+        }
+      });
+    });
+  }
+  populateDialCodes();
+
+  // When country changes
+  function onCountryChange() {
+    const sel = document.getElementById('countrySelect');
+    const val = sel.value;
+    const data = countries.find(c => c.value === val);
+    if (!data) return;
+
+    // Flag preview
+    document.getElementById('countryFlag').textContent = data.flag;
+
+    // Auto-select dial codes
+    setDialCode('phoneCode', 'phone', data.code);
+    setDialCode('waCode', 'whatsapp', data.code);
+
+    // Update ID label and hint
+    document.getElementById('id-label-text').textContent = data.id + ' *';
+    document.getElementById('id-hint').textContent = data.hint;
+    document.getElementById('id-doc-label').textContent = data.id + ' — Image / Scan *';
+    document.getElementById('nationalIdInput').placeholder = 'Enter your ' + data.id;
+
+    // CNIC auto-format for Pakistan
+    const idInput = document.getElementById('nationalIdInput');
+    if (val === 'Pakistan') {
+      idInput.addEventListener('input', formatCNIC);
+      idInput.placeholder = 'XXXXX-XXXXXXX-X';
+      idInput.maxLength = 15;
+    } else {
+      idInput.removeEventListener('input', formatCNIC);
+      idInput.maxLength = 30;
+    }
   }
 
-  // CNIC auto-format: XXXXX-XXXXXXX-X
-  const cnicInput = document.getElementById('cnic');
-  cnicInput.addEventListener('input', function() {
-    let v = this.value.replace(/[^0-9]/g, '');
+  function setDialCode(selectId, fieldName, code) {
+    const sel = document.getElementById(selectId);
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === code) {
+        sel.selectedIndex = i;
+        updatePhoneField(fieldName, code);
+        break;
+      }
+    }
+  }
+
+  function updatePhoneField(fieldName, code) {
+    // The actual value submitted includes the code prepended in JS on submit
+    // Just store code in a data attr for now
+    const input = document.getElementById(fieldName === 'phone' ? 'phoneInput' : 'waInput');
+    input.dataset.dialCode = code;
+  }
+
+  // CNIC auto-format XXXXX-XXXXXXX-X
+  function formatCNIC() {
+    let v = this.value.replace(/[^0-9]/g,'');
     if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
     if (v.length > 13) v = v.slice(0,13) + '-' + v.slice(13);
     this.value = v.slice(0,15);
-    validateCnic();
-  });
-
-  function validateCnic() {
-    const v = cnicInput.value;
-    const ok = /^\d{5}-\d{7}-\d$/.test(v);
-    cnicInput.classList.toggle('invalid', !ok && v.length > 0);
-    cnicInput.classList.toggle('valid', ok);
-    document.getElementById('cnic-error').style.display = (!ok && v.length > 0) ? 'block' : 'none';
-    return ok;
   }
 
-  // Phone validation
-  function validatePhone(fieldId, errorId) {
-    const input = document.getElementById(fieldId);
-    const v = input.value.replace(/\s/g,'');
-    const ok = /^\+?[0-9]{10,15}$/.test(v);
-    input.classList.toggle('invalid', !ok && v.length > 0);
-    input.classList.toggle('valid', ok);
-    document.getElementById(errorId).style.display = (!ok && v.length > 0) ? 'block' : 'none';
-    return ok;
-  }
-
-  document.getElementById('phone').addEventListener('blur', () => validatePhone('phone','phone-error'));
-  document.getElementById('whatsapp').addEventListener('blur', () => validatePhone('whatsapp','whatsapp-error'));
-
-  // Password match
-  document.getElementById('confirm_password').addEventListener('input', function() {
-    const match = this.value === document.getElementById('password').value;
-    document.getElementById('pw-error').style.display = (!match && this.value.length > 0) ? 'block' : 'none';
-    this.classList.toggle('invalid', !match && this.value.length > 0);
-    this.classList.toggle('valid', match && this.value.length > 0);
-  });
-
-  // Form submit validation
+  // On form submit — combine dial code + number into full phone fields
   document.getElementById('applyForm').addEventListener('submit', function(e) {
-    const cnicOk = validateCnic();
-    const phoneOk = validatePhone('phone','phone-error');
-    const waOk = validatePhone('whatsapp','whatsapp-error');
-    const pw = document.getElementById('password').value;
-    const cpw = document.getElementById('confirm_password').value;
-    const pwOk = pw === cpw && pw.length >= 6;
-    if (!cnicOk || !phoneOk || !waOk || !pwOk) {
-      e.preventDefault();
-      if (!pwOk) document.getElementById('pw-error').style.display = 'block';
+    // Combine dial code + number for phone
+    const phoneCode = document.getElementById('phoneCode').value;
+    const phoneNum  = document.getElementById('phoneInput').value.trim();
+    const waCode    = document.getElementById('waCode').value;
+    const waNum     = document.getElementById('waInput').value.trim();
+
+    if (phoneCode && phoneNum) {
+      document.getElementById('phoneInput').value = phoneCode + ' ' + phoneNum;
     }
-  });
-</script>
-</body>
-      </html>
+    if (waCode && waNum) {
+      doc
