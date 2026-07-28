@@ -388,4 +388,39 @@
       document.getElementById('phoneInput').value = phoneCode + ' ' + phoneNum;
     }
     if (waCode && waNum) {
-      doc
+      document.getElementById('waInput').value = waCode + ' ' + waNum;
+    }
+
+    // Password match check
+    const pw  = document.getElementById('password').value;
+    const cpw = document.getElementById('confirm_password').value;
+    if (pw !== cpw) {
+      e.preventDefault();
+      document.getElementById('pw-error').style.display = 'block';
+      document.getElementById('confirm_password').classList.add('input-invalid');
+      return;
+    }
+  });
+
+  // Password confirm live check
+  document.getElementById('confirm_password').addEventListener('input', function() {
+    const match = this.value === document.getElementById('password').value;
+    document.getElementById('pw-error').style.display = (!match && this.value) ? 'block' : 'none';
+    this.classList.toggle('input-invalid', !match && this.value.length > 0);
+    this.classList.toggle('input-valid', match && this.value.length > 0);
+  });
+
+  // Hamburger
+  function toggleMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+    document.getElementById('hamburger').classList.toggle('open');
+  }
+  document.querySelectorAll('.mobile-menu a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>
