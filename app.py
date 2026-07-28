@@ -757,6 +757,48 @@ def delete_customer(id):
     return redirect(url_for('ceo_dashboard'))
 
 
+@app.route('/ceo/team/add', methods=['POST'])
+@ceo_required
+def team_add():
+    name = request.form['name'].strip()
+    role = request.form.get('role','').strip()
+    specialties = request.form.get('specialties','').strip()
+    bio = request.form.get('bio','').strip()
+    projects_count = request.form.get('projects_count', 0)
+    photo_name = None
+    photo = request.files.get('photo')
+    if photo and allowed_file(photo.filename):
+        photo_name = secure_filename(f'team_{name}_{photo.filename}')
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_name))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO team_members (name,role,specialties,bio,projects_count,photo) VALUES (%s,%s,%s,%s,%s,%s)",
+              (name,role,specialties,bio,projects_count,photo_name))
+    conn.commit(); conn.close()
+    flash(f'{name} added to team.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/team/delete/<int:tid>')
+@ceo_required
+def team_delete(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s",(tid,))
+    conn.commit(); conn.close()
+    flash('Team member removed.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/api/team')
+def api_team():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id,name,role,specialties,bio,projects_count,photo FROM team_members ORDER BY created_at")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{'id':r[0],'name':r[1],'role':r[2],'specialties':r[3],'bio':r[4],'projects':r[5],'photo':r[6]} for r in rows])
+
 # ─── RUN ────────────────────────────────────────────────
 init_db()
 
