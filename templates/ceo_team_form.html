@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ 'Edit' if member else 'New' }} Team Member — CEO Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="ceo-dark">
+
+<div class="ceo-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
+    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
+    <a href="/ceo/team" style="font-size:13px;color:var(--text-dim);">← Back to team</a>
+  </div>
+  <h1 style="margin:0 0 28px;">{{ 'Edit team member' if member else 'New team member' }}</h1>
+
+  <form class="form-card" method="POST" enctype="multipart/form-data">
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" required value="{{ member.name if member else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Role / title</label>
+        <input type="text" name="role" required placeholder="Full-Stack Developer" value="{{ member.role if member else '' }}">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Bio <span class="form-hint">(optional)</span></label>
+      <textarea name="bio">{{ member.bio if member else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Skills <span class="form-hint">— comma-separated, e.g. Python, React, SEO</span></label>
+      <input type="text" name="skills" value="{{ member.skills|join(', ') if member and member.skills else '' }}">
+    </div>
+
+    <div class="form-group">
+      <label>Photo</label>
+      <input type="file" name="photo" accept="image/*">
+      {% if member and member.photo %}<p class="form-hint">Current photo is set — uploading a new one replaces it.</p>{% endif %}
+    </div>
+
+    <div class="form-group">
+      <label>Projects worked on <span class="form-hint">— shown on their public profile</span></label>
+      <div class="project-picker">
+        {% if all_projects and all_projects|length > 0 %}
+          {% for proj in all_projects %}
+          <label>
+            <input type="checkbox" name="project_ids" value="{{ proj.id }}"
+              {% if member and proj in member.projects %}checked{% endif %}>
+            {{ proj.title }}
+          </label>
+          {% endfor %}
+        {% else %}
+          <span class="form-hint">No portfolio projects exist yet — add some first.</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Display order <span class="form-hint">— lower numbers show first</span></label>
+      <input type="number" name="display_order" value="{{ member.display_order if member else 0 }}">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">{{ 'Save changes' if member else 'Save (unpublished)' }}</button>
+      <a href="/ceo/team" class="btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+</body>
+      </html>
