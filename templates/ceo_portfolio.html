@@ -11,8 +11,8 @@
 
 <div class="ceo-wrap">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
-    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
-    <a href="/ceo/dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
+    <div class="logo"><span>MRK</span> <span>AGENCY</span></div>
+    <a href="/ceo-dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
   </div>
 
   {% with messages = get_flashed_messages() %}
@@ -62,7 +62,7 @@
         <td><strong>{{ p.title }}</strong></td>
         <td>{{ p.category }}</td>
         <td>
-          {% if p.is_published %}<span class="badge badge-published">Published</span>
+          {% if p.status == 'published' %}<span class="badge badge-published">Published</span>
           {% else %}<span class="badge badge-draft">Draft</span>{% endif %}
         </td>
         <td>{% if p.is_featured %}<span class="badge badge-featured">★ Featured</span>{% endif %}</td>
@@ -71,7 +71,7 @@
           <div class="row-actions">
             <a href="/ceo/portfolio/{{ p.id }}/edit" class="btn-outline btn-sm">Edit</a>
             <form method="POST" action="/ceo/portfolio/{{ p.id }}/publish" class="inline-form">
-              <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if p.is_published else 'Publish' }}</button>
+              <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if p.status == 'published' else 'Publish' }}</button>
             </form>
             <form method="POST" action="/ceo/portfolio/{{ p.id }}/feature" class="inline-form">
               <button type="submit" class="btn-outline btn-sm">{{ 'Unfeature' if p.is_featured else 'Feature' }}</button>
@@ -94,4 +94,4 @@
 </div>
 
 </body>
-  </html>
+</html>
