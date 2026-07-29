@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — CEO Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="ceo-dark">
+
+<div class="ceo-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
+    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
+    <a href="/ceo/dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
+  </div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="ceo-topbar">
+    <div>
+      <h1>Portfolio</h1>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <form method="POST" action="/ceo/settings/toggle-portfolio-visibility" class="inline-form">
+        <button type="submit" class="visibility-toggle" style="border:none;cursor:pointer;">
+          <span class="label">Public portfolio page</span>
+          {% if site_settings.portfolio_section_visible %}
+            <span class="status status-on">● LIVE</span>
+          {% else %}
+            <span class="status status-off">○ HIDDEN</span>
+          {% endif %}
+        </button>
+      </form>
+      <a href="/ceo/portfolio/new" class="btn-primary">+ New project</a>
+    </div>
+  </div>
+
+  {% if not site_settings.portfolio_section_visible %}
+  <div class="flash warn">
+    The public portfolio page is currently hidden. Publishing projects below won't make anything visible until you switch it to LIVE above.
+  </div>
+  {% endif %}
+
+  {% if projects and projects|length > 0 %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Project</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Featured</th>
+        <th>Order</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in projects %}
+      <tr>
+        <td><strong>{{ p.title }}</strong></td>
+        <td>{{ p.category }}</td>
+        <td>
+          {% if p.is_published %}<span class="badge badge-published">Published</span>
+          {% else %}<span class="badge badge-draft">Draft</span>{% endif %}
+        </td>
+        <td>{% if p.is_featured %}<span class="badge badge-featured">★ Featured</span>{% endif %}</td>
+        <td>{{ p.display_order }}</td>
+        <td>
+          <div class="row-actions">
+            <a href="/ceo/portfolio/{{ p.id }}/edit" class="btn-outline btn-sm">Edit</a>
+            <form method="POST" action="/ceo/portfolio/{{ p.id }}/publish" class="inline-form">
+              <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if p.is_published else 'Publish' }}</button>
+            </form>
+            <form method="POST" action="/ceo/portfolio/{{ p.id }}/feature" class="inline-form">
+              <button type="submit" class="btn-outline btn-sm">{{ 'Unfeature' if p.is_featured else 'Feature' }}</button>
+            </form>
+            <form method="POST" action="/ceo/portfolio/{{ p.id }}/delete" class="inline-form" onsubmit="return confirm('Delete this project permanently?');">
+              <button type="submit" class="btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <h3>No projects yet</h3>
+    <p>Add your first project — it'll stay as a draft until you publish it.</p>
+  </div>
+  {% endif %}
+</div>
+
+</body>
+  </html>
