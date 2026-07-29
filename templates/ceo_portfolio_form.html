@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ 'Edit' if project else 'New' }} Project — CEO Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="ceo-dark">
+
+<div class="ceo-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
+    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
+    <a href="/ceo/portfolio" style="font-size:13px;color:var(--text-dim);">← Back to portfolio</a>
+  </div>
+  <h1 style="margin:0 0 28px;">{{ 'Edit project' if project else 'New project' }}</h1>
+
+  <form class="form-card" method="POST" enctype="multipart/form-data">
+
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" name="title" required value="{{ project.title if project else '' }}">
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Category</label>
+        <select name="category" required>
+          {% set cats = ['Web Development','SEO','Web Design','Graphic Design','UI/UX Design','Software Engineering'] %}
+          {% for c in cats %}
+            <option value="{{ c }}" {% if project and project.category==c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Package tier <span class="form-hint">(optional)</span></label>
+        <select name="package_tier">
+          <option value="">— None —</option>
+          {% for t in ['Bronze','Consular','Gold','Diamond','Custom Executive'] %}
+            <option value="{{ t }}" {% if project and project.package_tier==t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Short summary <span class="form-hint">— shown on the portfolio card, keep it to one line</span></label>
+      <input type="text" name="short_summary" maxlength="300" required value="{{ project.short_summary if project else '' }}">
+    </div>
+
+    <div class="form-group">
+      <label>Full description <span class="form-hint">— the case study body (challenge, solution, result)</span></label>
+      <textarea name="full_description" required>{{ project.full_description if project else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Tech stack <span class="form-hint">(optional, comma-separated)</span></label>
+      <input type="text" name="tech_stack" placeholder="Flask, PostgreSQL, React" value="{{ project.tech_stack if project else '' }}">
+    </div>
+
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Client name</label>
+        <input type="text" name="client_name" value="{{ project.client_name if project else '' }}">
+      </div>
+      <div class="form-group">
+        <label>Live project URL <span class="form-hint">(optional)</span></label>
+        <input type="url" name="live_url" placeholder="https://" value="{{ project.live_url if project else '' }}">
+      </div>
+    </div>
+
+    <div class="form-group checkbox-row">
+      <input type="checkbox" name="is_confidential" id="conf" {% if project and project.is_confidential %}checked{% endif %}>
+      <label for="conf" style="margin:0;">Client asked to stay confidential — show "Confidential Client" instead of their name</label>
+    </div>
+
+    <div class="form-group">
+      <label>Cover image</label>
+      <input type="file" name="cover_image" accept="image/*">
+      {% if project and project.cover_image %}<p class="form-hint">Current cover image is set — uploading a new one replaces it.</p>{% endif %}
+    </div>
+
+    <div class="form-group">
+      <label>Gallery images <span class="form-hint">(select multiple)</span></label>
+      <input type="file" name="gallery_images" accept="image/*" multiple>
+      {% if project and project.gallery_images %}<p class="form-hint">{{ project.gallery_images|length }} image(s) currently in the gallery — uploading new ones replaces the set.</p>{% endif %}
+    </div>
+
+    <div class="form-group">
+      <label>Display order <span class="form-hint">— lower numbers show first</span></label>
+      <input type="number" name="display_order" value="{{ project.display_order if project else 0 }}">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">{{ 'Save changes' if project else 'Save as draft' }}</button>
+      <a href="/ceo/portfolio" class="btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+</body>
+  </html>
