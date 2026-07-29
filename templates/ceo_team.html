@@ -11,8 +11,8 @@
 
 <div class="ceo-wrap">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
-    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
-    <a href="/ceo/dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
+    <div class="logo"><span>MRK</span> <span>AGENCY</span></div>
+    <a href="/ceo-dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
   </div>
 
   {% with messages = get_flashed_messages() %}
@@ -61,7 +61,7 @@
             <form method="POST" action="/ceo/team/{{ m.id }}/publish" class="inline-form">
               <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if m.is_published else 'Publish' }}</button>
             </form>
-            <form method="POST" action="/ceo/team/{{ m.id }}/delete" class="inline-form" onsubmit="return confirm('Remove this team member permanently?');">
+            <form method="POST" action="/ceo/team/{{ m.id }}/delete-full" class="inline-form" onsubmit="return confirm('Remove this team member permanently?');">
               <button type="submit" class="btn-danger">Delete</button>
             </form>
           </div>
@@ -79,4 +79,4 @@
 </div>
 
 </body>
-                      </html>
+</html>
