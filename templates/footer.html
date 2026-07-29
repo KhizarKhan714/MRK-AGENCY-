@@ -1,0 +1,33 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div style="max-width:320px;">
+        <div class="logo" style="margin-bottom:14px;"><span>MRK</span><span>AGENCY</span></div>
+        <p style="font-size:14px;line-height:1.6;">Where your brand achieves glory. A full-stack digital partner for web development, design, and software engineering.</p>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="/#services">Services</a></li>
+            <li><a href="/#pricing">Pricing</a></li>
+            <li><a href="/portfolio">Portfolio</a></li>
+            {% if site_settings.team_section_visible %}<li><a href="/team">Team</a></li>{% endif %}
+          </ul>
+        </div>
+        <div>
+          <h4>Get started</h4>
+          <ul>
+            <li><a href="/register">Start a project</a></li>
+            <li><a href="/login">Sign in</a></li>
+            <li><a href="/contractor-apply">Work with us</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© {{ current_year or '2026' }} MRK Agency. All rights reserved.</span>
+      <span>Web Development · SEO · Web Design · Graphic Design · UI/UX Design · Software Engineering</span>
+    </div>
+  </div>
+          </footer>
