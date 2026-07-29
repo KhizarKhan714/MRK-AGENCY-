@@ -939,3 +939,311 @@ def api_team():
 
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — PORTFOLIO & TEAM: CEO management + public pages
+# ═══════════════════════════════════════════════════════════════════════
+
+# ─── CEO: PORTFOLIO ─────────────────────────────────────
+@app.route('/ceo/portfolio')
+@ceo_required
+def ceo_portfolio_list():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY display_order")
+    projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_portfolio.html', projects=projects)
+
+
+@app.route('/ceo/portfolio/new', methods=['GET', 'POST'])
+@ceo_required
+def ceo_portfolio_new():
+    if request.method == 'POST':
+        cover_url = upload_image(request.files.get('cover_image'), folder="mrk_agency/portfolio")
+        gallery_urls = upload_multiple_images(request.files.getlist('gallery_images'), folder="mrk_agency/portfolio")
+        gallery_str = ','.join(gallery_urls) if gallery_urls else None
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO portfolio_projects
+            (title, category, package_tier, short_summary, full_description, tech_stack,
+             client_name, is_confidential, live_url, cover_image, gallery_images, display_order)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
+             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
+             request.form.get('client_name'), bool(request.form.get('is_confidential')),
+             request.form.get('live_url'), cover_url, gallery_str,
+             int(request.form.get('display_order') or 0)))
+        conn.commit()
+        conn.close()
+        flash('Project saved as draft. Publish it from the portfolio list when ready.')
+        return redirect(url_for('ceo_portfolio_list'))
+
+    return render_template('ceo_portfolio_form.html', project=None)
+
+
+@app.route('/ceo/portfolio/<int:project_id>/edit', methods=['GET', 'POST'])
+@ceo_required
+def ceo_portfolio_edit(project_id):
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE id=%s", (project_id,))
+    project = c.fetchone()
+    conn.close()
+    if not project:
+        return redirect(url_for('ceo_portfolio_list'))
+
+    if request.method == 'POST':
+        cover_url = project['cover_image']
+        new_cover = request.files.get('cover_image')
+        if new_cover and new_cover.filename:
+            cover_url = upload_image(new_cover, folder="mrk_agency/portfolio")
+
+        gallery_str = project['gallery_images']
+        new_gallery = request.files.getlist('gallery_images')
+        if new_gallery and any(f.filename for f in new_gallery):
+            gallery_urls = upload_multiple_images(new_gallery, folder="mrk_agency/portfolio")
+            gallery_str = ','.join(gallery_urls) if gallery_urls else None
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''UPDATE portfolio_projects SET
+            title=%s, category=%s, package_tier=%s, short_summary=%s, full_description=%s,
+            tech_stack=%s, client_name=%s, is_confidential=%s, live_url=%s,
+            cover_image=%s, gallery_images=%s, display_order=%s
+            WHERE id=%s''',
+            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
+             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
+             request.form.get('client_name'), bool(request.form.get('is_confidential')),
+             request.form.get('live_url'), cover_url, gallery_str,
+             int(request.form.get('display_order') or 0), project_id))
+        conn.commit()
+        conn.close()
+        flash('Project updated.')
+        return redirect(url_for('ceo_portfolio_list'))
+
+    return render_template('ceo_portfolio_form.html', project=project)
+
+
+@app.route('/ceo/portfolio/<int:project_id>/publish', methods=['POST'])
+@ceo_required
+def ceo_portfolio_publish(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE portfolio_projects SET is_published = NOT is_published WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/portfolio/<int:project_id>/feature', methods=['POST'])
+@ceo_required
+def ceo_portfolio_feature(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE portfolio_projects SET is_featured = NOT is_featured WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/portfolio/<int:project_id>/delete', methods=['POST'])
+@ceo_required
+def ceo_portfolio_delete(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM portfolio_projects WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    flash('Project deleted.')
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+# ─── CEO: TEAM (dedicated pages — separate from the quick-add form
+#     already on your CEO dashboard; both write to the same table) ──────
+@app.route('/ceo/team')
+@ceo_required
+def ceo_team_list():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members ORDER BY display_order")
+    members = c.fetchall()
+    conn.close()
+    return render_template('ceo_team.html', members=members)
+
+
+@app.route('/ceo/team/new', methods=['GET', 'POST'])
+@ceo_required
+def ceo_team_new():
+    if request.method == 'POST':
+        photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/team")
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO team_members (name, role, specialties, bio, photo, display_order)
+                     VALUES (%s,%s,%s,%s,%s,%s) RETURNING id''',
+                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
+                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0)))
+        new_id = c.fetchone()[0]
+
+        for pid in request.form.getlist('project_ids'):
+            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
+                      (new_id, pid))
+        conn.commit()
+        conn.close()
+        flash('Team member added (unpublished). Publish from the team list when ready.')
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
+    all_projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_team_form.html', member=None, all_projects=all_projects)
+
+
+@app.route('/ceo/team/<int:member_id>/edit', methods=['GET', 'POST'])
+@ceo_required
+def ceo_team_edit(member_id):
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members WHERE id=%s", (member_id,))
+    member = c.fetchone()
+    conn.close()
+    if not member:
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT portfolio_project_id FROM team_project_links WHERE team_member_id=%s", (member_id,))
+    linked = c.fetchall()
+    conn.close()
+    member['project_ids'] = [str(row['portfolio_project_id']) for row in linked]
+
+    if request.method == 'POST':
+        photo_url = member['photo']
+        new_photo = request.files.get('photo')
+        if new_photo and new_photo.filename:
+            photo_url = upload_image(new_photo, folder="mrk_agency/team")
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''UPDATE team_members SET name=%s, role=%s, specialties=%s, bio=%s, photo=%s, display_order=%s
+                     WHERE id=%s''',
+                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
+                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0), member_id))
+
+        c.execute("DELETE FROM team_project_links WHERE team_member_id=%s", (member_id,))
+        for pid in request.form.getlist('project_ids'):
+            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
+                      (member_id, pid))
+        conn.commit()
+        conn.close()
+        flash('Team member updated.')
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
+    all_projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_team_form.html', member=member, all_projects=all_projects)
+
+
+@app.route('/ceo/team/<int:member_id>/publish', methods=['POST'])
+@ceo_required
+def ceo_team_publish(member_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE team_members SET is_published = NOT is_published WHERE id=%s", (member_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_team_list'))
+
+
+@app.route('/ceo/team/<int:member_id>/delete', methods=['POST'])
+@ceo_required
+def ceo_team_remove(member_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s", (member_id,))
+    conn.commit()
+    conn.close()
+    flash('Team member removed.')
+    return redirect(url_for('ceo_team_list'))
+
+
+# ─── CEO: SITE-WIDE VISIBILITY TOGGLES ──────────────────
+@app.route('/ceo/settings/toggle-portfolio-visibility', methods=['POST'])
+@ceo_required
+def toggle_portfolio_visibility():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE site_settings SET portfolio_visible = NOT portfolio_visible WHERE id=1")
+    conn.commit()
+    conn.close()
+    flash('Portfolio visibility updated.')
+    return redirect(request.referrer or url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/settings/toggle-team-visibility', methods=['POST'])
+@ceo_required
+def toggle_team_visibility():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE site_settings SET team_visible = NOT team_visible WHERE id=1")
+    conn.commit()
+    conn.close()
+    flash('Team visibility updated.')
+    return redirect(request.referrer or url_for('ceo_team_list'))
+
+
+# ─── PUBLIC: PORTFOLIO & TEAM ────────────────────────────
+@app.route('/portfolio')
+def public_portfolio():
+    settings = get_site_settings()
+    if not settings['portfolio_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE is_published=TRUE ORDER BY is_featured DESC, display_order")
+    projects = c.fetchall()
+    conn.close()
+    return render_template('portfolio.html', projects=projects)
+
+
+@app.route('/portfolio/<int:project_id>')
+def public_portfolio_detail(project_id):
+    settings = get_site_settings()
+    if not settings['portfolio_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE id=%s AND is_published=TRUE", (project_id,))
+    project = c.fetchone()
+    conn.close()
+    if not project:
+        abort(404)
+
+    project['gallery_images'] = project['gallery_images'].split(',') if project['gallery_images'] else []
+    project['display_client_name'] = 'Confidential Client' if project['is_confidential'] else (project['client_name'] or '—')
+    return render_template('portfolio_detail.html', project=project)
+
+
+@app.route('/team')
+def public_team():
+    settings = get_site_settings()
+    if not settings['team_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order")
+    members = c.fetchall()
+    for m in members:
+        m['skills'] = [s.strip() for s in m['specialties'].split(',')] if m['specialties'] else []
+        c.execute('''SELECT p.id, p.title FROM portfolio_projects p
+                     JOIN team_project_links l ON p.id = l.portfolio_project_id
+                     WHERE l.team_member_id=%s''', (m['id'],))
+        m['projects'] = c.fetchall()
+    conn.close()
+    return render_template('team.html', members=members)
+
+
+# ─── RUN ────────────────────────────────────────────────
+init_db()
+
+if __name__ == '__main__':
+    app.run(debug=True)
