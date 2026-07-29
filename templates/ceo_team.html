@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team — CEO Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="ceo-dark">
+
+<div class="ceo-wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
+    <div class="logo"><span>MRK</span><span>AGENCY</span></div>
+    <a href="/ceo/dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
+  </div>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="ceo-topbar">
+    <div>
+      <h1>Team</h1>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+      <form method="POST" action="/ceo/settings/toggle-team-visibility" class="inline-form">
+        <button type="submit" class="visibility-toggle" style="border:none;cursor:pointer;">
+          <span class="label">Public team page</span>
+          {% if site_settings.team_section_visible %}
+            <span class="status status-on">● LIVE</span>
+          {% else %}
+            <span class="status status-off">○ HIDDEN</span>
+          {% endif %}
+        </button>
+      </form>
+      <a href="/ceo/team/new" class="btn-primary">+ Add team member</a>
+    </div>
+  </div>
+
+  <p class="form-hint" style="margin-bottom:24px;">Reminder: no contact fields exist on team profiles anywhere in this system — customers can never reach a contractor directly, even here.</p>
+
+  {% if members and members|length > 0 %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Name</th><th>Role</th><th>Status</th><th>Order</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for m in members %}
+      <tr>
+        <td><strong>{{ m.name }}</strong></td>
+        <td>{{ m.role }}</td>
+        <td>
+          {% if m.is_published %}<span class="badge badge-published">Published</span>
+          {% else %}<span class="badge badge-draft">Draft</span>{% endif %}
+        </td>
+        <td>{{ m.display_order }}</td>
+        <td>
+          <div class="row-actions">
+            <a href="/ceo/team/{{ m.id }}/edit" class="btn-outline btn-sm">Edit</a>
+            <form method="POST" action="/ceo/team/{{ m.id }}/publish" class="inline-form">
+              <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if m.is_published else 'Publish' }}</button>
+            </form>
+            <form method="POST" action="/ceo/team/{{ m.id }}/delete" class="inline-form" onsubmit="return confirm('Remove this team member permanently?');">
+              <button type="submit" class="btn-danger">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <h3>No team members added yet</h3>
+    <p>Add someone — profiles stay as drafts until you publish them.</p>
+  </div>
+  {% endif %}
+</div>
+
+</body>
+                      </html>
