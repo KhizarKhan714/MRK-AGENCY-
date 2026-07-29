@@ -648,3 +648,294 @@ def mark_complete(id):
     return redirect(url_for('contractor_dashboard'))
 
 
+# ─── CEO PORTAL ─────────────────────────────────────────
+@app.route('/mrkceokhan7')
+def ceo_portal():
+    return render_template('ceo_login.html')
+
+
+@app.route('/ceo-login', methods=['POST'])
+def ceo_login():
+    name = request.form['name'].strip()
+    pw = request.form['password'].strip()
+    sk = request.form['secret_key'].strip()
+    sa = request.form['security_answer'].strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM ceo WHERE name=%s', (name,))
+    ceo = c.fetchone()
+    conn.close()
+    if ceo and ceo[2] == pw and ceo[3] == sk and ceo[4] == sa:
+        session['ceo'] = True
+        return redirect(url_for('ceo_dashboard'))
+    return render_template('ceo_login.html', error='Invalid credentials. Access denied.')
+
+
+@app.route('/ceo-logout')
+def ceo_logout():
+    session.pop('ceo', None)
+    return redirect(url_for('ceo_portal'))
+
+
+# ─── CEO DASHBOARD ──────────────────────────────────────
+@app.route('/ceo-dashboard')
+def ceo_dashboard():
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM contractors WHERE status='pending'")
+    pending_contractors = c.fetchall()
+    c.execute("SELECT * FROM contractors WHERE status='approved' AND (suspended IS NULL OR suspended=FALSE)")
+    approved_contractors = c.fetchall()
+    c.execute("SELECT * FROM contractors WHERE status='rejected' OR suspended=TRUE")
+    rejected_contractors = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='pending'")
+    pending_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='approved'")
+    approved_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='completed'")
+    completed_projects = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE suspended=FALSE OR suspended IS NULL")
+    customers = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE suspended=TRUE")
+    suspended_customers = c.fetchall()
+    c.execute("SELECT * FROM team_members ORDER BY created_at")
+    team_members = c.fetchall()
+    # All contractors including banned
+    c.execute("SELECT * FROM contractors WHERE status='banned'")
+    banned_contractors = c.fetchall()
+
+    # Project counts per customer
+    c.execute("SELECT customer_id, COUNT(*) FROM projects GROUP BY customer_id")
+    project_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    # Revenue: sum budgets of completed projects
+    total_revenue = 0
+    for p in completed_projects:
+        try:
+            total_revenue += float(p[5]) if p[5] else 0
+        except:
+            pass
+
+    conn.close()
+    return render_template('ceo_dashboard.html',
+        pending_contractors=pending_contractors,
+        approved_contractors=approved_contractors,
+        rejected_contractors=rejected_contractors,
+        banned_contractors=banned_contractors,
+        pending_projects=pending_projects,
+        approved_projects=approved_projects,
+        completed_projects=completed_projects,
+        customers=customers,
+        suspended_customers=suspended_customers,
+        project_counts=project_counts,
+        total_revenue=total_revenue)
+
+
+# ─── CEO: CONTRACTOR ACTIONS ────────────────────────────
+@app.route('/approve-contractor/<int:id>')
+def approve_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='approved', cin=%s, suspended=FALSE WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reject-contractor/<int:id>')
+def reject_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/suspend-contractor/<int:id>')
+def suspend_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=TRUE, cin=NULL WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reinstate-contractor/<int:id>')
+def reinstate_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=FALSE, status='approved', cin=%s WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/delete-contractor/<int:id>')
+def delete_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM contractors WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ban-cin/<int:id>')
+def ban_cin(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET cin=NULL, status='banned', suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/award-badge/<int:id>', methods=['POST'])
+def award_badge(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    badge = request.form.get('badge', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET badge=%s WHERE id=%s", (badge, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ─── CEO: PROJECT ACTIONS ───────────────────────────────
+@app.route('/approve-project/<int:id>', methods=['GET', 'POST'])
+def approve_project(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    contractor_pay = request.form.get('contractor_pay', '0').strip()
+    if not contractor_pay:
+        contractor_pay = '0'
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE projects SET status='approved', contractor_pay=%s WHERE id=%s", (contractor_pay, id))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reject-project/<int:id>', methods=['GET', 'POST'])
+def reject_project(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    reason = request.form.get('rejection_reason', 'No reason provided.').strip()
+    if not reason:
+        reason = 'No reason provided.'
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE projects SET status='rejected', rejection_reason=%s WHERE id=%s", (reason, id))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
+@app.route('/suspend-customer/<int:id>')
+def suspend_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reinstate-customer/<int:id>')
+def reinstate_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=FALSE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/delete-customer/<int:id>')
+def delete_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM customers WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/team/add', methods=['POST'])
+@ceo_required
+def team_add():
+    name = request.form['name'].strip()
+    role = request.form.get('role','').strip()
+    specialties = request.form.get('specialties','').strip()
+    bio = request.form.get('bio','').strip()
+    projects_count = request.form.get('projects_count', 0)
+    photo_name = None
+    photo = request.files.get('photo')
+    if photo and allowed_file(photo.filename):
+        photo_name = secure_filename(f'team_{name}_{photo.filename}')
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_name))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO team_members (name,role,specialties,bio,projects_count,photo) VALUES (%s,%s,%s,%s,%s,%s)",
+              (name,role,specialties,bio,projects_count,photo_name))
+    conn.commit(); conn.close()
+    flash(f'{name} added to team.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/team/delete/<int:tid>')
+@ceo_required
+def team_delete(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s",(tid,))
+    conn.commit(); conn.close()
+    flash('Team member removed.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/api/team')
+def api_team():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id,name,role,specialties,bio,projects_count,photo FROM team_members ORDER BY created_at")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{'id':r[0],'name':r[1],'role':r[2],'specialties':r[3],'bio':r[4],'projects':r[5],'photo':r[6]} for r in rows])
+
+
+
