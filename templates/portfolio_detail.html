@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ project.title }} — MRK Agency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="/" class="logo"><span>MRK</span><span>AGENCY</span></a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="/#services">Services</a></li>
+        <li><a href="/portfolio">Portfolio</a></li>
+        {% if site_settings.team_section_visible %}<li><a href="/team">Team</a></li>{% endif %}
+        <li><a href="/#pricing">Pricing</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="/login" class="btn-ghost">Sign in</a>
+      <a href="/register" class="btn-primary">Start a project</a>
+    </div>
+  </div>
+</header>
+
+<section class="section" style="padding-top:56px;">
+  <div class="container" style="max-width:900px;">
+    <a href="/portfolio" style="font-size:13px;color:var(--text-muted);">← Back to portfolio</a>
+
+    <div style="margin-top:20px;margin-bottom:32px;">
+      <span class="card-tag">{{ project.category }}</span>
+      <h1 style="font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-0.02em;margin:14px 0;">{{ project.title }}</h1>
+      <p style="font-size:17px;color:var(--text-muted);max-width:640px;line-height:1.6;">{{ project.short_summary }}</p>
+    </div>
+
+    {% if project.cover_image %}
+    <img src="{{ project.cover_image }}" alt="{{ project.title }}" style="width:100%;border-radius:var(--radius);margin-bottom:40px;">
+    {% endif %}
+
+    <div class="form-row-2" style="margin-bottom:40px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Client</div>
+        <div style="font-weight:600;">{{ 'Confidential Client' if project.is_confidential else (project.client_name or '—') }}</div>
+      </div>
+      {% if project.tech_stack %}
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Tech stack</div>
+        <div style="font-weight:600;">{{ project.tech_stack }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="font-size:16px;line-height:1.8;color:var(--dark);white-space:pre-line;margin-bottom:40px;">{{ project.full_description }}</div>
+
+    {% if project.gallery_images %}
+    <div class="grid grid-2">
+      {% for img in project.gallery_images %}
+        <img src="{{ img }}" alt="{{ project.title }} gallery image" style="border-radius:var(--radius);">
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if project.live_url %}
+    <div style="margin-top:44px;">
+      <a href="{{ project.live_url }}" target="_blank" rel="noopener" class="btn-primary">Visit live project →</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% include 'footer.html' %}
+
+</body>
+  </html>
