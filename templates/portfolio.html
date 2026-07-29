@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — MRK Agency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="/" class="logo"><span>MRK</span> <span>AGENCY</span></a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="/#services">Services</a></li>
+        <li><a href="/portfolio">Portfolio</a></li>
+        {% if site_settings.team_section_visible %}<li><a href="/team">Team</a></li>{% endif %}
+        <li><a href="/#pricing">Pricing</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="/login" class="btn-ghost">Sign in</a>
+      <a href="/register" class="btn-primary">Start a project</a>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Selected work</span>
+      <h1 class="section-title">Proof, not promises.</h1>
+      <p class="section-sub">Every project here shipped and is live. Filter by service to see the kind of work closest to what you need.</p>
+    </div>
+
+    {% if projects and projects|length > 0 %}
+    <div class="grid grid-3">
+      {% for p in projects %}
+      <a href="/portfolio/{{ p.id }}" class="card">
+        {% if p.cover_image %}
+          <img src="{{ p.cover_image }}" alt="{{ p.title }}" class="card-img">
+        {% else %}
+          <div class="card-img"></div>
+        {% endif %}
+        <div class="card-body">
+          <span class="card-tag">{{ p.category }}</span>
+          <div class="card-title">{{ p.title }}</div>
+          <p class="card-text">{{ p.short_summary }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <h3>Nothing published yet</h3>
+      <p>Projects appear here as soon as they're published from the CEO portal.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% include 'footer.html' %}
+
+</body>
+      </html>
