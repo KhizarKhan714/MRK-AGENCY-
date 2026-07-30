@@ -233,10 +233,10 @@
     </div>
 
     <div class="stat-rail">
-      <div class="stat"><span class="num">6</span><span class="label">Service lines</span></div>
-      <div class="stat"><span class="num">5</span><span class="label">Package tiers</span></div>
-      <div class="stat"><span class="num">0</span><span class="label">Revision limits</span></div>
-      <div class="stat"><span class="num">8wk</span><span class="label">Max delivery</span></div>
+      <div class="stat"><span class="num">6 Services</span><span class="label">Service lines</span></div>
+      <div class="stat"><span class="num">5 Premium Packages</span><span class="label">Package tiers</span></div>
+      <div class="stat"><span class="num">Unlimited</span><span class="label">Revision limits</span></div>
+      <div class="stat"><span class="num">10 Weeks</span><span class="label">Max delivery</span></div>
     </div>
   </div>
 </section>
@@ -334,11 +334,11 @@
     </div>
     <div class="grid grid-3">
       {% set tiers = [
-        ('Bronze', '999', '5 pages · 2 weeks', false),
-        ('Consular', '1,499', '10 pages · 3 weeks', false),
-        ('Gold', '2,499', '20 pages · 5 weeks', true),
-        ('Diamond', '4,499', 'Unlimited pages · 8 weeks', false),
-        ('Custom Executive', '5,000+', 'Everything in Diamond + custom software + dedicated point of contact', false)
+        ('Bronze', '1499', '5 pages · 2 weeks', false),
+        ('Consular', '2,999', '10 pages · 3 weeks', false),
+        ('Gold', '4,499', '20 pages · 5 weeks', true),
+        ('Diamond', '8,499', 'Unlimited pages · 10 weeks', false),
+        ('Custom Executive', '10,000+', 'Everything in Diamond + custom software + dedicated point of contact', false)
       ] %}
       {% for name, price, spec, featured in tiers %}
       <div class="price-card {% if featured %}featured{% endif %}">
