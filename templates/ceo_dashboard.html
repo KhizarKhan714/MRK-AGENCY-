@@ -898,6 +898,32 @@
                 style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
                 onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
             </div>
+            <div style="grid-column:1/-1;padding-top:0.5rem;border-top:1px dashed var(--border);margin-top:0.5rem;">
+              <div class="note-label" style="color:var(--blue);">Payoneer Payment Details</div>
+            </div>
+            <div>
+              <div class="note-label">Payoneer Email</div>
+              <input type="email" name="payoneer_email"
+                value="{{ settings.get('payoneer_email', '') if settings else '' }}"
+                placeholder="payments@mrkagency.com"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div>
+              <div class="note-label">Payoneer Account Name</div>
+              <input type="text" name="payoneer_account_name"
+                value="{{ settings.get('payoneer_account_name', '') if settings else '' }}"
+                placeholder="Khizar Khan"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"/>
+            </div>
+            <div style="grid-column:1/-1;">
+              <div class="note-label">Payment Instructions (shown to clients)</div>
+              <textarea name="payment_instructions" rows="2"
+                style="width:100%;padding:0.6rem 0.85rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.85rem;font-family:'Inter',sans-serif;color:var(--text);background:#F8FAFB;outline:none;margin-top:0.25rem;resize:vertical;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
+                placeholder="e.g. Send payment via Payoneer to the email above, then message us on WhatsApp with the confirmation.">{{ settings.get('payment_instructions', '') if settings else '' }}</textarea>
+            </div>
           </div>
           <button type="submit" class="btn btn-blue">💾 Save Settings</button>
         </form>
