@@ -492,6 +492,16 @@
         </div>
         <div class="note-label" style="margin-top:0.75rem;">Description</div>
         <div class="note-box">{{ p[3] }}</div>
+
+        {% if payment_phases.get(p[0]) %}
+        <div class="note-label" style="margin-top:0.85rem;">Payment Plan</div>
+        {% for ph in payment_phases[p[0]] %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
+          <span>{{ ph.phase_label }} — ${{ '%.2f'|format(ph.amount) }}</span>
+          <span class="status-badge {{ 'badge-approved' if ph.is_paid else 'badge-pending' }}">{{ '✅ Paid' if ph.is_paid else '⏳ Unpaid' }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
       </div>
       <div class="card-foot">
         <!-- APPROVE: set contractor pay -->
