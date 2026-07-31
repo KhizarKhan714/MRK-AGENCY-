@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from psycopg2.extras import RealDictCursor
 from werkzeug.utils import secure_filename
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 import bcrypt
 import os
@@ -99,9 +99,53 @@ def get_site_settings():
     return {'portfolio_section_visible': row[0], 'team_section_visible': row[1]}
 
 
+# ─── ADDED: reads the editable "Site Manager" copy + Payoneer payment
+#     details the CEO sets from the dashboard. Powers the /ceo/site-settings
+#     form and is what makes payment details editable without touching code. ─
+def get_site_copy():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT hero_tagline, hero_subtext, agency_bio, contact_email,
+                        contact_phone, contact_whatsapp, payoneer_email,
+                        payoneer_account_name, payment_instructions
+                 FROM site_settings WHERE id=1''')
+    row = c.fetchone()
+    conn.close()
+    keys = ['hero_tagline', 'hero_subtext', 'agency_bio', 'contact_email',
+            'contact_phone', 'contact_whatsapp', 'payoneer_email',
+            'payoneer_account_name', 'payment_instructions']
+    return dict(zip(keys, row))
+
+
 @app.context_processor
 def inject_globals():
     return {'site_settings': get_site_settings(), 'current_year': datetime.utcnow().year}
+
+
+# ─── ADDED: single source of truth for package price, delivery time, and
+#     payment-phase split. Nothing else in the app should hardcode a price —
+#     everything reads from here, including the payment phases the client
+#     confirmed: Bronze=100% upfront, Consular=50/50, Gold/Diamond=30/20/50.
+#     Diamond is 10 weeks here because that's what's live in submit_project.html —
+#     flagged separately since earlier notes said 8 weeks; change the 'weeks'
+#     value below if 8 was correct. ────────────────────────────────────────
+PACKAGE_INFO = {
+    'Bronze':   {'price': 1499, 'weeks': 2,  'phases': [(1.00, 'Full payment')]},
+    'Consular': {'price': 2999, 'weeks': 3,  'phases': [(0.50, 'Upfront'), (0.50, 'On delivery')]},
+    'Gold':     {'price': 4999, 'weeks': 5,  'phases': [(0.30, 'Upfront'), (0.20, 'Midpoint review'), (0.50, 'On delivery')]},
+    'Diamond':  {'price': 8499, 'weeks': 10, 'phases': [(0.30, 'Upfront'), (0.20, 'Midpoint review'), (0.50, 'On delivery')]},
+}
+CUSTOM_EXECUTIVE_PHASES = [(0.30, 'Upfront'), (0.20, 'Midpoint review'), (0.50, 'On delivery')]
+
+
+def create_payment_phases(conn_cursor, project_id, total_amount, phases):
+    """Inserts one project_payments row per phase for a newly submitted project."""
+    for i, (pct, label) in enumerate(phases, start=1):
+        conn_cursor.execute(
+            '''INSERT INTO project_payments (project_id, phase_number, phase_label, amount)
+               VALUES (%s,%s,%s,%s)''',
+            (project_id, i, label, round(float(total_amount) * pct, 2))
+        )
 
 
 def init_db():
@@ -262,6 +306,36 @@ def init_db():
     if c.fetchone()[0] == 0:
         c.execute("INSERT INTO site_settings (portfolio_visible, team_visible) VALUES (FALSE, FALSE)")
 
+    # ─── ADDED: site copy + Payoneer payment details, editable from the CEO
+    #     dashboard's existing "Site Manager" form — no code changes needed
+    #     to update the account email/name the way the CEO asked for. ──────
+    for col, ddl in [
+        ('hero_tagline', "TEXT DEFAULT 'Where Your Brand Achieves Glory'"),
+        ('hero_subtext', 'TEXT'),
+        ('agency_bio', 'TEXT'),
+        ('contact_email', "TEXT DEFAULT 'ceo@mrkagency.com'"),
+        ('contact_phone', 'TEXT'),
+        ('contact_whatsapp', 'TEXT'),
+        ('payoneer_email', 'TEXT'),
+        ('payoneer_account_name', 'TEXT'),
+        ('payment_instructions', 'TEXT'),
+    ]:
+        try:
+            c.execute(f'ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED: tracks each client payment phase per project (auto-created
+    #     when a project is submitted, based on PACKAGE_INFO's phase split). ─
+    c.execute('''CREATE TABLE IF NOT EXISTS project_payments (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        phase_number INTEGER,
+        phase_label TEXT,
+        amount NUMERIC(10,2),
+        is_paid BOOLEAN DEFAULT FALSE,
+        paid_at TIMESTAMP,
+        payment_method TEXT DEFAULT 'Payoneer')''')
+
     conn.commit()
     conn.close()
 
@@ -411,839 +485,4 @@ def update_profile():
         if photo_file and photo_file.filename:
             photo_data = photo_file.read()
             b64 = base64.b64encode(photo_data).decode()
-            mime = photo_file.content_type
-            data_url = f'data:{mime};base64,{b64}'
-            c.execute('UPDATE customers SET photo=%s WHERE id=%s', (data_url, session['customer_id']))
-            conn.commit()
-        customer = get_customer()
-        conn.close()
-        return render_template('profile.html', customer=customer, success='Profile photo updated.')
-
-    conn.close()
-    return redirect(url_for('profile'))
-
-
-# ─── PROJECTS ───────────────────────────────────────────
-@app.route('/submit-project', methods=['GET', 'POST'])
-def submit_project():
-    if 'customer_id' not in session:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        try:
-            conn = get_db()
-            c = conn.cursor()
-            c.execute('''INSERT INTO projects
-                (customer_id,title,description,website_type,budget,deadline,package)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)''',
-                (session['customer_id'],
-                 request.form['title'],
-                 request.form['description'],
-                 request.form['website_type'],
-                 request.form.get('budget', '0'),
-                 request.form['deadline'],
-                 request.form['package']))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('my_projects'))
-        except Exception as e:
-            return render_template('submit_project.html', error=str(e))
-    return render_template('submit_project.html')
-
-
-@app.route('/my-projects')
-def my_projects():
-    if 'customer_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM projects WHERE customer_id=%s', (session['customer_id'],))
-    projects = c.fetchall()
-    conn.close()
-    return render_template('my_projects.html', projects=projects)
-
-
-# ─── INVOICE ────────────────────────────────────────────
-@app.route('/invoice/<int:project_id>')
-def invoice(project_id):
-    if 'customer_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM projects WHERE id=%s AND customer_id=%s', (project_id, session['customer_id']))
-    project = c.fetchone()
-    conn.close()
-    if not project:
-        return redirect(url_for('my_projects'))
-    return render_template('invoice.html', project=project)
-
-
-# ─── CONTRACTOR APPLY ───────────────────────────────────
-
-@app.route('/contractor-apply', methods=['GET', 'POST'])
-@app.route('/contractor/apply', methods=['GET', 'POST'])
-def contractor_apply():
-    if request.method == 'POST':
-        name        = request.form['name'].strip()
-        email       = request.form['email'].strip().lower()
-        country     = request.form.get('country', '').strip()
-        phone       = request.form.get('phone', '').strip()
-        whatsapp    = request.form.get('whatsapp', '').strip()
-        national_id = request.form.get('national_id', '').strip()
-        expertise   = request.form['expertise']
-        experience  = request.form.get('experience', '')
-        specialties = request.form.get('specialties', '')
-        note        = request.form.get('note', '')
-        password    = request.form['password']
-        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-        cnic_image_name = None
-        cv_name = None
-
-        if 'cnic_image' in request.files:
-            f = request.files['cnic_image']
-            if f and allowed_file(f.filename):
-                cnic_image_name = secure_filename(f'id_{name}_{f.filename}')
-                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cnic_image_name))
-
-        if 'cv' in request.files:
-            f = request.files['cv']
-            if f and allowed_file(f.filename):
-                cv_name = secure_filename(f'cv_{name}_{f.filename}')
-                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cv_name))
-
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('''INSERT INTO contractors
-            (name, email, phone, whatsapp, cnic, cnic_image, cv,
-             expertise, experience, specialties, note, password, status,
-             country, national_id)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s)
-            RETURNING id''',
-            (name, email, phone, whatsapp, national_id, cnic_image_name, cv_name,
-             expertise, experience, specialties, note, hashed,
-             country, national_id))
-        new_id = c.fetchone()[0]
-        conn.commit()
-        conn.close()
-
-        log_audit('contractor', new_id, name, 'CONTRACTOR_APPLIED',
-                  target_type='contractor', target_id=new_id)
-        send_notification('ceo', 1, f'New Contractor Application: {name}',
-                          f'{expertise} specialist from {country} applied.',
-                          '/mrkceokhan7/dashboard')
-        flash('Application submitted! You will receive your CIN upon approval.', 'success')
-        return redirect(url_for('contractor_login'))
-    return render_template('contractor_apply.html')
-
-# ─── CONTRACTOR LOGIN ────────────────────────────────────
-@app.route('/contractor-login', methods=['GET', 'POST'])
-def contractor_login():
-    if request.method == 'POST':
-        cin = request.form['cin'].strip()
-        pw = request.form['password'].encode()
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('SELECT * FROM contractors WHERE cin=%s', (cin,))
-        contractor = c.fetchone()
-        conn.close()
-        if contractor and bcrypt.checkpw(pw, contractor[2].encode()):
-            if contractor[15]:  # suspended
-                return render_template('contractor_login.html', error='Your account has been suspended. Contact MRK Agency.')
-            session['contractor_id'] = contractor[0]
-            session['contractor_name'] = contractor[1]
-            return redirect(url_for('contractor_dashboard'))
-        return render_template('contractor_login.html', error='Invalid CIN or password.')
-    return render_template('contractor_login.html')
-
-
-@app.route('/contractor-logout')
-def contractor_logout():
-    session.pop('contractor_id', None)
-    session.pop('contractor_name', None)
-    return redirect(url_for('contractor_login'))
-
-
-# ─── CONTRACTOR DASHBOARD ───────────────────────────────
-@app.route('/contractor-dashboard')
-def contractor_dashboard():
-    if 'contractor_id' not in session:
-        return redirect(url_for('contractor_login'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
-    contractor = c.fetchone()
-    c.execute("""SELECT * FROM projects
-                 WHERE status='approved' AND contractor_pay IS NOT NULL
-                 AND (accepted_by IS NULL OR accepted_by=%s)
-                 AND (completed IS NULL OR completed=FALSE)""",
-              (session['contractor_id'],))
-    projects = c.fetchall()
-    conn.close()
-    return render_template('contractor_dashboard.html',
-        contractor=contractor, projects=projects)
-
-
-@app.route('/contractor-change-password', methods=['POST'])
-def contractor_change_password():
-    if 'contractor_id' not in session:
-        return redirect(url_for('contractor_login'))
-    current_pw = request.form['current_password'].encode()
-    new_pw = request.form['new_password']
-    confirm_pw = request.form['confirm_password']
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
-    contractor = c.fetchone()
-    c.execute("""SELECT * FROM projects WHERE status='approved' AND contractor_pay IS NOT NULL
-                 AND (accepted_by IS NULL OR accepted_by=%s)
-                 AND (completed IS NULL OR completed=FALSE)""",
-              (session['contractor_id'],))
-    projects = c.fetchall()
-    if not bcrypt.checkpw(current_pw, contractor[2].encode()):
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='Current password is incorrect.')
-    if new_pw != confirm_pw:
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='New passwords do not match.')
-    if len(new_pw) < 6:
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='Password must be at least 6 characters.')
-    hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
-    c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, session['contractor_id']))
-    conn.commit()
-    conn.close()
-    return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                           success='Password changed successfully.')
-
-
-@app.route('/accept-project/<int:id>')
-def accept_project(id):
-    if 'contractor_id' not in session:
-        return redirect(url_for('contractor_login'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
-              (session['contractor_id'], session['contractor_id'], id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('contractor_dashboard'))
-
-
-@app.route('/mark-complete/<int:id>')
-def mark_complete(id):
-    if 'contractor_id' not in session:
-        return redirect(url_for('contractor_login'))
-    conn = get_db()
-    c = conn.cursor()
-    # Generate invoice reference
-    invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
-    c.execute("""UPDATE projects SET completed=TRUE, status='completed', invoice_ref=%s
-                 WHERE id=%s AND accepted_by=%s""",
-              (invoice_ref, id, session['contractor_id']))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('contractor_dashboard'))
-
-
-# ─── CEO PORTAL ─────────────────────────────────────────
-@app.route('/mrkceokhan7')
-def ceo_portal():
-    return render_template('ceo_login.html')
-
-
-@app.route('/ceo-login', methods=['POST'])
-def ceo_login():
-    name = request.form['name'].strip()
-    pw = request.form['password'].strip()
-    sk = request.form['secret_key'].strip()
-    sa = request.form['security_answer'].strip()
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM ceo WHERE name=%s', (name,))
-    ceo = c.fetchone()
-    conn.close()
-    if ceo and ceo[2] == pw and ceo[3] == sk and ceo[4] == sa:
-        session['ceo'] = True
-        return redirect(url_for('ceo_dashboard'))
-    return render_template('ceo_login.html', error='Invalid credentials. Access denied.')
-
-
-@app.route('/ceo-logout')
-def ceo_logout():
-    session.pop('ceo', None)
-    return redirect(url_for('ceo_portal'))
-
-
-# ─── CEO DASHBOARD ──────────────────────────────────────
-@app.route('/ceo-dashboard')
-def ceo_dashboard():
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM contractors WHERE status='pending'")
-    pending_contractors = c.fetchall()
-    c.execute("SELECT * FROM contractors WHERE status='approved' AND (suspended IS NULL OR suspended=FALSE)")
-    approved_contractors = c.fetchall()
-    c.execute("SELECT * FROM contractors WHERE status='rejected' OR suspended=TRUE")
-    rejected_contractors = c.fetchall()
-    c.execute("SELECT * FROM projects WHERE status='pending'")
-    pending_projects = c.fetchall()
-    c.execute("SELECT * FROM projects WHERE status='approved'")
-    approved_projects = c.fetchall()
-    c.execute("SELECT * FROM projects WHERE status='completed'")
-    completed_projects = c.fetchall()
-    c.execute("SELECT * FROM customers WHERE suspended=FALSE OR suspended IS NULL")
-    customers = c.fetchall()
-    c.execute("SELECT * FROM customers WHERE suspended=TRUE")
-    suspended_customers = c.fetchall()
-    c.execute("SELECT * FROM team_members ORDER BY created_at")
-    team_members = c.fetchall()
-    # All contractors including banned
-    c.execute("SELECT * FROM contractors WHERE status='banned'")
-    banned_contractors = c.fetchall()
-
-    # Project counts per customer
-    c.execute("SELECT customer_id, COUNT(*) FROM projects GROUP BY customer_id")
-    project_counts = {row[0]: row[1] for row in c.fetchall()}
-
-    # Revenue: sum budgets of completed projects
-    total_revenue = 0
-    for p in completed_projects:
-        try:
-            total_revenue += float(p[5]) if p[5] else 0
-        except:
-            pass
-
-    conn.close()
-    return render_template('ceo_dashboard.html',
-        pending_contractors=pending_contractors,
-        approved_contractors=approved_contractors,
-        rejected_contractors=rejected_contractors,
-        banned_contractors=banned_contractors,
-        pending_projects=pending_projects,
-        approved_projects=approved_projects,
-        completed_projects=completed_projects,
-        customers=customers,
-        suspended_customers=suspended_customers,
-        project_counts=project_counts,
-        total_revenue=total_revenue)
-
-
-# ─── CEO: CONTRACTOR ACTIONS ────────────────────────────
-@app.route('/approve-contractor/<int:id>')
-def approve_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    cin = 'MRK' + str(random.randint(10000, 99999))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET status='approved', cin=%s, suspended=FALSE WHERE id=%s", (cin, id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/reject-contractor/<int:id>')
-def reject_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/suspend-contractor/<int:id>')
-def suspend_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET suspended=TRUE, cin=NULL WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/reinstate-contractor/<int:id>')
-def reinstate_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    cin = 'MRK' + str(random.randint(10000, 99999))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET suspended=FALSE, status='approved', cin=%s WHERE id=%s", (cin, id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/delete-contractor/<int:id>')
-def delete_contractor(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM contractors WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/ban-cin/<int:id>')
-def ban_cin(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET cin=NULL, status='banned', suspended=TRUE WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/award-badge/<int:id>', methods=['POST'])
-def award_badge(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    badge = request.form.get('badge', '').strip()
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE contractors SET badge=%s WHERE id=%s", (badge, id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-# ─── CEO: PROJECT ACTIONS ───────────────────────────────
-@app.route('/approve-project/<int:id>', methods=['GET', 'POST'])
-def approve_project(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    contractor_pay = request.form.get('contractor_pay', '0').strip()
-    if not contractor_pay:
-        contractor_pay = '0'
-    conn = get_db()
-    c = conn.cursor()
-    try:
-        c.execute("UPDATE projects SET status='approved', contractor_pay=%s WHERE id=%s", (contractor_pay, id))
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/reject-project/<int:id>', methods=['GET', 'POST'])
-def reject_project(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    reason = request.form.get('rejection_reason', 'No reason provided.').strip()
-    if not reason:
-        reason = 'No reason provided.'
-    conn = get_db()
-    c = conn.cursor()
-    try:
-        c.execute("UPDATE projects SET status='rejected', rejection_reason=%s WHERE id=%s", (reason, id))
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-# ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
-@app.route('/suspend-customer/<int:id>')
-def suspend_customer(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE customers SET suspended=TRUE WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/reinstate-customer/<int:id>')
-def reinstate_customer(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE customers SET suspended=FALSE WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/delete-customer/<int:id>')
-def delete_customer(id):
-    if not session.get('ceo'):
-        return redirect(url_for('ceo_portal'))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM customers WHERE id=%s", (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/ceo/team/add', methods=['POST'])
-@ceo_required
-def team_add():
-    name = request.form['name'].strip()
-    role = request.form.get('role','').strip()
-    specialties = request.form.get('specialties','').strip()
-    bio = request.form.get('bio','').strip()
-    projects_count = request.form.get('projects_count', 0)
-    photo_name = None
-    photo = request.files.get('photo')
-    if photo and allowed_file(photo.filename):
-        photo_name = secure_filename(f'team_{name}_{photo.filename}')
-        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_name))
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("INSERT INTO team_members (name,role,specialties,bio,projects_count,photo) VALUES (%s,%s,%s,%s,%s,%s)",
-              (name,role,specialties,bio,projects_count,photo_name))
-    conn.commit(); conn.close()
-    flash(f'{name} added to team.','success')
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/ceo/team/delete/<int:tid>')
-@ceo_required
-def team_delete(tid):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM team_members WHERE id=%s",(tid,))
-    conn.commit(); conn.close()
-    flash('Team member removed.','success')
-    return redirect(url_for('ceo_dashboard'))
-
-
-@app.route('/api/team')
-def api_team():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT id,name,role,specialties,bio,projects_count,photo FROM team_members ORDER BY created_at")
-    rows = c.fetchall()
-    conn.close()
-    return jsonify([{'id':r[0],'name':r[1],'role':r[2],'specialties':r[3],'bio':r[4],'projects':r[5],'photo':r[6]} for r in rows])
-
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# ADDED — PORTFOLIO & TEAM: CEO management + public pages
-# ═══════════════════════════════════════════════════════════════════════
-
-# ─── CEO: PORTFOLIO ─────────────────────────────────────
-@app.route('/ceo/portfolio')
-@ceo_required
-def ceo_portfolio_list():
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects ORDER BY display_order")
-    projects = c.fetchall()
-    conn.close()
-    return render_template('ceo_portfolio.html', projects=projects)
-
-
-@app.route('/ceo/portfolio/new', methods=['GET', 'POST'])
-@ceo_required
-def ceo_portfolio_new():
-    if request.method == 'POST':
-        cover_url = upload_image(request.files.get('cover_image'), folder="mrk_agency/portfolio")
-        gallery_urls = upload_multiple_images(request.files.getlist('gallery_images'), folder="mrk_agency/portfolio")
-        gallery_str = ','.join(gallery_urls) if gallery_urls else None
-
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('''INSERT INTO portfolio_projects
-            (title, category, package_tier, short_summary, full_description, tech_stack,
-             client_name, is_confidential, live_url, cover_image, gallery_images, display_order)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
-            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
-             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
-             request.form.get('client_name'), bool(request.form.get('is_confidential')),
-             request.form.get('live_url'), cover_url, gallery_str,
-             int(request.form.get('display_order') or 0)))
-        conn.commit()
-        conn.close()
-        flash('Project saved as draft. Publish it from the portfolio list when ready.')
-        return redirect(url_for('ceo_portfolio_list'))
-
-    return render_template('ceo_portfolio_form.html', project=None)
-
-
-@app.route('/ceo/portfolio/<int:project_id>/edit', methods=['GET', 'POST'])
-@ceo_required
-def ceo_portfolio_edit(project_id):
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects WHERE id=%s", (project_id,))
-    project = c.fetchone()
-    conn.close()
-    if not project:
-        return redirect(url_for('ceo_portfolio_list'))
-
-    if request.method == 'POST':
-        cover_url = project['cover_image']
-        new_cover = request.files.get('cover_image')
-        if new_cover and new_cover.filename:
-            cover_url = upload_image(new_cover, folder="mrk_agency/portfolio")
-
-        gallery_str = project['gallery_images']
-        new_gallery = request.files.getlist('gallery_images')
-        if new_gallery and any(f.filename for f in new_gallery):
-            gallery_urls = upload_multiple_images(new_gallery, folder="mrk_agency/portfolio")
-            gallery_str = ','.join(gallery_urls) if gallery_urls else None
-
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('''UPDATE portfolio_projects SET
-            title=%s, category=%s, package_tier=%s, short_summary=%s, full_description=%s,
-            tech_stack=%s, client_name=%s, is_confidential=%s, live_url=%s,
-            cover_image=%s, gallery_images=%s, display_order=%s
-            WHERE id=%s''',
-            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
-             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
-             request.form.get('client_name'), bool(request.form.get('is_confidential')),
-             request.form.get('live_url'), cover_url, gallery_str,
-             int(request.form.get('display_order') or 0), project_id))
-        conn.commit()
-        conn.close()
-        flash('Project updated.')
-        return redirect(url_for('ceo_portfolio_list'))
-
-    return render_template('ceo_portfolio_form.html', project=project)
-
-
-@app.route('/ceo/portfolio/<int:project_id>/publish', methods=['POST'])
-@ceo_required
-def ceo_portfolio_publish(project_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE portfolio_projects SET is_published = NOT is_published WHERE id=%s", (project_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_portfolio_list'))
-
-
-@app.route('/ceo/portfolio/<int:project_id>/feature', methods=['POST'])
-@ceo_required
-def ceo_portfolio_feature(project_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE portfolio_projects SET is_featured = NOT is_featured WHERE id=%s", (project_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_portfolio_list'))
-
-
-@app.route('/ceo/portfolio/<int:project_id>/delete', methods=['POST'])
-@ceo_required
-def ceo_portfolio_delete(project_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM portfolio_projects WHERE id=%s", (project_id,))
-    conn.commit()
-    conn.close()
-    flash('Project deleted.')
-    return redirect(url_for('ceo_portfolio_list'))
-
-
-# ─── CEO: TEAM (dedicated pages — separate from the quick-add form
-#     already on your CEO dashboard; both write to the same table) ──────
-@app.route('/ceo/team')
-@ceo_required
-def ceo_team_list():
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM team_members ORDER BY display_order")
-    members = c.fetchall()
-    conn.close()
-    return render_template('ceo_team.html', members=members)
-
-
-@app.route('/ceo/team/new', methods=['GET', 'POST'])
-@ceo_required
-def ceo_team_new():
-    if request.method == 'POST':
-        photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/team")
-
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('''INSERT INTO team_members (name, role, specialties, bio, photo, display_order)
-                     VALUES (%s,%s,%s,%s,%s,%s) RETURNING id''',
-                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
-                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0)))
-        new_id = c.fetchone()[0]
-
-        for pid in request.form.getlist('project_ids'):
-            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
-                      (new_id, pid))
-        conn.commit()
-        conn.close()
-        flash('Team member added (unpublished). Publish from the team list when ready.')
-        return redirect(url_for('ceo_team_list'))
-
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
-    all_projects = c.fetchall()
-    conn.close()
-    return render_template('ceo_team_form.html', member=None, all_projects=all_projects)
-
-
-@app.route('/ceo/team/<int:member_id>/edit', methods=['GET', 'POST'])
-@ceo_required
-def ceo_team_edit(member_id):
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM team_members WHERE id=%s", (member_id,))
-    member = c.fetchone()
-    conn.close()
-    if not member:
-        return redirect(url_for('ceo_team_list'))
-
-    conn, c = get_dict_db()
-    c.execute("SELECT portfolio_project_id FROM team_project_links WHERE team_member_id=%s", (member_id,))
-    linked = c.fetchall()
-    conn.close()
-    member['project_ids'] = [str(row['portfolio_project_id']) for row in linked]
-
-    if request.method == 'POST':
-        photo_url = member['photo']
-        new_photo = request.files.get('photo')
-        if new_photo and new_photo.filename:
-            photo_url = upload_image(new_photo, folder="mrk_agency/team")
-
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('''UPDATE team_members SET name=%s, role=%s, specialties=%s, bio=%s, photo=%s, display_order=%s
-                     WHERE id=%s''',
-                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
-                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0), member_id))
-
-        c.execute("DELETE FROM team_project_links WHERE team_member_id=%s", (member_id,))
-        for pid in request.form.getlist('project_ids'):
-            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
-                      (member_id, pid))
-        conn.commit()
-        conn.close()
-        flash('Team member updated.')
-        return redirect(url_for('ceo_team_list'))
-
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
-    all_projects = c.fetchall()
-    conn.close()
-    return render_template('ceo_team_form.html', member=member, all_projects=all_projects)
-
-
-@app.route('/ceo/team/<int:member_id>/publish', methods=['POST'])
-@ceo_required
-def ceo_team_publish(member_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE team_members SET is_published = NOT is_published WHERE id=%s", (member_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('ceo_team_list'))
-
-
-@app.route('/ceo/team/<int:member_id>/delete', methods=['POST'])
-@ceo_required
-def ceo_team_remove(member_id):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("DELETE FROM team_members WHERE id=%s", (member_id,))
-    conn.commit()
-    conn.close()
-    flash('Team member removed.')
-    return redirect(url_for('ceo_team_list'))
-
-
-# ─── CEO: SITE-WIDE VISIBILITY TOGGLES ──────────────────
-@app.route('/ceo/settings/toggle-portfolio-visibility', methods=['POST'])
-@ceo_required
-def toggle_portfolio_visibility():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE site_settings SET portfolio_visible = NOT portfolio_visible WHERE id=1")
-    conn.commit()
-    conn.close()
-    flash('Portfolio visibility updated.')
-    return redirect(request.referrer or url_for('ceo_portfolio_list'))
-
-
-@app.route('/ceo/settings/toggle-team-visibility', methods=['POST'])
-@ceo_required
-def toggle_team_visibility():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE site_settings SET team_visible = NOT team_visible WHERE id=1")
-    conn.commit()
-    conn.close()
-    flash('Team visibility updated.')
-    return redirect(request.referrer or url_for('ceo_team_list'))
-
-
-# ─── PUBLIC: PORTFOLIO & TEAM ────────────────────────────
-@app.route('/portfolio')
-def public_portfolio():
-    settings = get_site_settings()
-    if not settings['portfolio_section_visible']:
-        abort(404)
-
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects WHERE is_published=TRUE ORDER BY is_featured DESC, display_order")
-    projects = c.fetchall()
-    conn.close()
-    return render_template('portfolio.html', projects=projects)
-
-
-@app.route('/portfolio/<int:project_id>')
-def public_portfolio_detail(project_id):
-    settings = get_site_settings()
-    if not settings['portfolio_section_visible']:
-        abort(404)
-
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM portfolio_projects WHERE id=%s AND is_published=TRUE", (project_id,))
-    project = c.fetchone()
-    conn.close()
-    if not project:
-        abort(404)
-
-    project['gallery_images'] = project['gallery_images'].split(',') if project['gallery_images'] else []
-    project['display_client_name'] = 'Confidential Client' if project['is_confidential'] else (project['client_name'] or '—')
-    return render_template('portfolio_detail.html', project=project)
-
-
-@app.route('/team')
-def public_team():
-    settings = get_site_settings()
-    if not settings['team_section_visible']:
-        abort(404)
-
-    conn, c = get_dict_db()
-    c.execute("SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order")
-    members = c.fetchall()
-    for m in members:
-        m['skills'] = [s.strip() for s in m['specialties'].split(',')] if m['specialties'] else []
-        c.execute('''SELECT p.id, p.title FROM portfolio_projects p
-                     JOIN team_project_links l ON p.id = l.portfolio_project_id
-                     WHERE l.team_member_id=%s''', (m['id'],))
-        m['projects'] = c.fetchall()
-    conn.close()
-    return render_template('team.html', members=members)
-
-
-# ─── RUN ────────────────────────────────────────────────
-init_db()
-
-if __name__ == '__main__':
-    app.run(debug=True)
+            mime = photo_file.co
