@@ -700,6 +700,25 @@
           <div class="info-item"><label>Accepted By</label><span>{% if p[11] %}#{{ p[11] }}{% else %}Awaiting{% endif %}</span></div>
           <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
         </div>
+
+        {% if payment_phases.get(p[0]) %}
+        <div class="note-label" style="margin-top:0.85rem;">Payment Phases</div>
+        {% for ph in payment_phases[p[0]] %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:0.82rem;">{{ ph.phase_label }} — ${{ '%.2f'|format(ph.amount) }}</span>
+          {% if ph.is_paid %}
+            <form action="/ceo/project/{{ p[0] }}/unmark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+              <button type="submit" class="status-badge badge-approved" style="border:none;cursor:pointer;">✅ Paid — undo</button>
+            </form>
+          {% else %}
+            <form action="/ceo/project/{{ p[0] }}/mark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+              <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+            </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
       </div>
     </div>
     {% endfor %}
@@ -725,6 +744,25 @@
           <div class="info-item"><label>Contractor</label><span>{% if p[11] %}#{{ p[11] }}{% else %}—{% endif %}</span></div>
           <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
         </div>
+
+        {% if payment_phases.get(p[0]) %}
+        <div class="note-label" style="margin-top:0.85rem;">Payment Phases</div>
+        {% for ph in payment_phases[p[0]] %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:0.82rem;">{{ ph.phase_label }} — ${{ '%.2f'|format(ph.amount) }}</span>
+          {% if ph.is_paid %}
+            <form action="/ceo/project/{{ p[0] }}/unmark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+              <button type="submit" class="status-badge badge-approved" style="border:none;cursor:pointer;">✅ Paid — undo</button>
+            </form>
+          {% else %}
+            <form action="/ceo/project/{{ p[0] }}/mark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+              <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+            </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+
       </div>
     </div>
     {% endfor %}
