@@ -240,6 +240,35 @@
       </div>
     </div>
 
+    <!-- PAYOUT DETAILS (ADDED) -->
+    <div class="form-card">
+      <div class="form-card-title">Payout Details</div>
+      <div class="form-card-body">
+        <div class="field-hint" style="margin-bottom:1rem;">This is where your pay will be sent once you complete work. Double-check it carefully — after approval, any change to these details needs CEO review before it takes effect.</div>
+
+        <div class="form-group">
+          <label>Bank Account Title (Account Holder Name)</label>
+          <input type="text" name="bank_account_title" placeholder="Full name as it appears on the account" required/>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>Bank Name</label>
+            <input type="text" name="bank_name" placeholder="e.g. HBL, Standard Chartered" required/>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" name="bank_account_number" placeholder="Account number" required/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>IBAN / SWIFT Code <span style="text-transform:none;font-weight:500;">(if applicable)</span></label>
+          <input type="text" name="bank_swift_iban" placeholder="Leave blank if not applicable"/>
+        </div>
+      </div>
+    </div>
+
     <!-- DOCUMENTS -->
     <div class="form-card">
       <div class="form-card-title">Documents</div>
