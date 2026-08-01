@@ -138,6 +138,25 @@
     }
     .meta-item span { font-size: 0.9rem; font-weight: 500; color: var(--dark); }
 
+    /* PAYMENT STATUS STRIP */
+    .payment-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.25rem;
+      font-size: 0.85rem;
+    }
+    .payment-strip.due  { background: #FEF3C7; }
+    .payment-strip.paid { background: #F0FDF4; }
+    .payment-strip .p-label { font-weight: 600; }
+    .payment-strip.due .p-label { color: #92400E; }
+    .payment-strip.paid .p-label { color: #166534; }
+    .payment-strip .p-amount { font-weight: 700; }
+    .payment-strip.due .p-amount { color: #92400E; }
+    .payment-strip.paid .p-amount { color: #166534; }
+
     /* REJECTION REASON */
     .rejection-box {
       background: #FEF2F2;
@@ -256,6 +275,7 @@
   {% else %}
   {% for p in projects %}
   {% set status = p[8] %}
+  {% set due = amount_due.get(p[0], 0) %}
 
   <!-- Determine timeline state -->
   {% if status == 'pending' %}
@@ -289,6 +309,40 @@
 
     <div class="card-body">
 
+      <!-- PAYMENT STATUS — always visible, not just at completion -->
+      {% if due > 0 %}
+      <div class="payment-strip due">
+        <span class="p-label">⏳ Payment due — work {% if status == 'pending' %}cannot start{% else %}cannot continue{% endif %} until this is received</span>
+        <span class="p-amount">${{ "%.2f"|format(due) }}</span>
+      </div>
+      {% else %}
+      <div class="payment-strip paid">
+        <span class="p-label">✅ Fully paid</span>
+        <span class="p-amount">$0.00 due</span>
+      </div>
+      {% endif %}
+
+      <!-- MILESTONE REVIEW — shown once the contractor has submitted proof for this phase -->
+      {% set rv = review_status.get(p[0]) %}
+      {% if rv %}
+      <div class="rejection-box" style="background:#EFF6FF;border-color:#BFDBFE;">
+        <strong style="color:#1E3A8A;">Ready for your review — {{ rv.phase_label }}</strong>
+        <p style="color:#1E3A8A;margin-bottom:0.85rem;">{{ rv.proof }}</p>
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+          <form action="/client/approve-milestone/{{ p[0] }}/{{ rv.phase_number }}" method="POST">
+            <button type="submit" class="btn btn-blue">✓ Approve</button>
+          </form>
+          <details>
+            <summary style="cursor:pointer;font-size:0.82rem;color:#1E3A8A;font-weight:600;align-self:center;">Request changes</summary>
+            <form action="/client/request-changes/{{ p[0] }}/{{ rv.phase_number }}" method="POST" style="margin-top:0.5rem;">
+              <textarea name="notes" placeholder="What needs to change?" required style="width:100%;min-height:70px;padding:0.6rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;margin-bottom:0.5rem;"></textarea>
+              <button type="submit" class="btn btn-outline">Send Back to Contractor</button>
+            </form>
+          </details>
+        </div>
+      </div>
+      {% endif %}
+
       <!-- META -->
       <div class="meta-grid">
         <div class="meta-item">
@@ -302,10 +356,6 @@
         <div class="meta-item">
           <label>Deadline</label>
           <span>{{ p[6] or '—' }}</span>
-        </div>
-        <div class="meta-item">
-          <label>Website Type</label>
-          <span>{{ p[4] or '—' }}</span>
         </div>
       </div>
 
@@ -331,7 +381,7 @@
               <div class="t-text done">Approved</div>
             {% else %}
               <div class="t-dot active">2</div>
-              <div class="t-text active">Under Review</div>
+              <div class="t-text active">{% if due > 0 %}Awaiting Payment{% else %}Under Review{% endif %}</div>
             {% endif %}
           </div>
 
@@ -376,12 +426,12 @@
 
     </div>
 
-    <!-- INVOICE BUTTON (only if completed and invoice_ref exists) -->
-    {% if status == 'completed' and p[13] %}
+    <!-- PAYMENT / INVOICE BUTTON — always available, not just when completed -->
     <div class="card-footer">
-      <a href="/invoice/{{ p[0] }}" class="btn btn-blue">View Invoice</a>
+      <a href="/invoice/{{ p[0] }}" class="btn btn-blue">
+        {% if due > 0 %}Pay Now / View Plan{% else %}View Payment Details{% endif %}
+      </a>
     </div>
-    {% endif %}
 
   </div>
   {% endfor %}
