@@ -336,9 +336,81 @@ def init_db():
         paid_at TIMESTAMP,
         payment_method TEXT DEFAULT 'Payoneer')''')
 
+    # ─── ADDED: contractor bank details (set at application, editable after
+    #     approval — but any edit after the first fill-in requires CEO
+    #     sign-off, handled via bank_edit_requests below) + profile photo
+    #     (self-service, no approval — CEO uses these on the public site). ──
+    for col, ddl in [
+        ('bank_account_title', 'TEXT'),
+        ('bank_account_number', 'TEXT'),
+        ('bank_name', 'TEXT'),
+        ('bank_swift_iban', 'TEXT'),
+        ('photo', 'TEXT'),
+    ]:
+        try:
+            c.execute(f'ALTER TABLE contractors ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED: pending bank-detail changes — a contractor's live bank
+    #     fields on `contractors` only change once the CEO approves the
+    #     request here. First-ever fill-in (fields currently blank) skips
+    #     this and writes directly — see /contractor/update-bank.
+    c.execute('''CREATE TABLE IF NOT EXISTS bank_edit_requests (
+        id SERIAL PRIMARY KEY,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        new_bank_account_title TEXT,
+        new_bank_account_number TEXT,
+        new_bank_name TEXT,
+        new_bank_swift_iban TEXT,
+        status TEXT DEFAULT 'pending',
+        requested_at TIMESTAMP DEFAULT NOW(),
+        decided_at TIMESTAMP)''')
+
+    # ─── ADDED: per-payment-phase work review. A contractor submits proof
+    #     for a phase; the client approves it or sends it back with notes.
+    #     Approving the LAST phase is what actually completes the project —
+    #     replaces the old one-click "Mark Complete" with real client sign-off.
+    for col, ddl in [
+        ('contractor_proof', 'TEXT'),
+        ('contractor_submitted_at', 'TIMESTAMP'),
+        ('client_approved', 'BOOLEAN DEFAULT FALSE'),
+        ('client_approved_at', 'TIMESTAMP'),
+        ('client_notes', 'TEXT'),
+    ]:
+        try:
+            c.execute(f'ALTER TABLE project_payments ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED: contractor payouts — separate from client payment phases.
+    #     An advance (25% of contractor_pay) and the remaining balance are
+    #     auto-created when the CEO approves a project; extra approved
+    #     advance requests add more rows here too. CEO marks each paid
+    #     manually, same pattern as client payments.
+    c.execute('''CREATE TABLE IF NOT EXISTS contractor_payouts (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        payout_type TEXT,
+        amount NUMERIC(10,2),
+        status TEXT DEFAULT 'pending',
+        paid_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED: contractor requests for extra funds beyond their advance —
+    #     always requires a reason; CEO approves (creates a payout row) or
+    #     rejects. Nothing moves without CEO sign-off.
+    c.execute('''CREATE TABLE IF NOT EXISTS advance_requests (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        amount_requested NUMERIC(10,2),
+        reason TEXT,
+        status TEXT DEFAULT 'pending',
+        requested_at TIMESTAMP DEFAULT NOW(),
+        decided_at TIMESTAMP)''')
+
     conn.commit()
     conn.close()
-
 
 # ─── HOME ───────────────────────────────────────────────
 @app.route('/')
@@ -549,7 +621,7 @@ def submit_project():
 
             conn.commit()
             conn.close()
-            return redirect(url_for('my_projects'))
+            return redirect(url_for('invoice', project_id=new_id))
         except Exception as e:
             return render_template('submit_project.html', error=str(e))
     return render_template('submit_project.html')
@@ -563,8 +635,28 @@ def my_projects():
     c = conn.cursor()
     c.execute('SELECT * FROM projects WHERE customer_id=%s', (session['customer_id'],))
     projects = c.fetchall()
+
+    # ADDED: amount still owed per project, so the payment status is visible
+    # on every card, not just after the project is marked complete
+    amount_due = {}
+    for p in projects:
+        c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                     WHERE project_id=%s AND is_paid=FALSE''', (p[0],))
+        amount_due[p[0]] = float(c.fetchone()[0])
+
+    # ADDED: the phase currently awaiting the client's review, if any —
+    # only shown once the contractor has actually submitted proof
+    review_status = {}
+    for p in projects:
+        phase = get_next_review_phase(c, p[0])
+        if phase and phase[3]:  # contractor_submitted_at is set
+            review_status[p[0]] = {
+                'phase_number': phase[0], 'phase_label': phase[1],
+                'proof': phase[2], 'submitted_at': phase[3]
+            }
+
     conn.close()
-    return render_template('my_projects.html', projects=projects)
+    return render_template('my_projects.html', projects=projects, amount_due=amount_due, review_status=review_status)
 
 
 # ─── INVOICE ────────────────────────────────────────────
@@ -576,14 +668,33 @@ def invoice(project_id):
     c = conn.cursor()
     c.execute('SELECT * FROM projects WHERE id=%s AND customer_id=%s', (project_id, session['customer_id']))
     project = c.fetchone()
-    conn.close()
     if not project:
+        conn.close()
         return redirect(url_for('my_projects'))
-    return render_template('invoice.html', project=project)
+
+    # ADDED: fetch the real payment plan instead of assuming one lump sum due at completion
+    c.execute('''SELECT phase_number, phase_label, amount, is_paid, paid_at
+                 FROM project_payments WHERE project_id=%s ORDER BY phase_number''', (project_id,))
+    phase_rows = c.fetchall()
+    conn.close()
+
+    phases = [{'number': r[0], 'label': r[1], 'amount': float(r[2]), 'is_paid': r[3], 'paid_at': r[4]} for r in phase_rows]
+    total_amount = sum(p['amount'] for p in phases)
+    total_paid = sum(p['amount'] for p in phases if p['is_paid'])
+    amount_due_now = sum(p['amount'] for p in phases if not p['is_paid'])
+    fully_paid = amount_due_now == 0 and len(phases) > 0
+    # The next unpaid phase, in order — this is what the payment instructions box should point at
+    next_due_phase = next((p for p in phases if not p['is_paid']), None)
+
+    settings = get_site_copy()
+
+    return render_template('invoice.html', project=project, phases=phases,
+                           total_amount=total_amount, total_paid=total_paid,
+                           amount_due_now=amount_due_now, fully_paid=fully_paid,
+                           next_due_phase=next_due_phase, settings=settings)
 
 
 # ─── CONTRACTOR APPLY ───────────────────────────────────
-
 @app.route('/contractor-apply', methods=['GET', 'POST'])
 @app.route('/contractor/apply', methods=['GET', 'POST'])
 def contractor_apply():
@@ -600,6 +711,12 @@ def contractor_apply():
         note        = request.form.get('note', '')
         password    = request.form['password']
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+        # ADDED: payout details, now collected on the application form
+        bank_account_title  = request.form.get('bank_account_title', '').strip()
+        bank_account_number = request.form.get('bank_account_number', '').strip()
+        bank_name            = request.form.get('bank_name', '').strip()
+        bank_swift_iban      = request.form.get('bank_swift_iban', '').strip()
 
         cnic_image_name = None
         cv_name = None
@@ -621,12 +738,14 @@ def contractor_apply():
         c.execute('''INSERT INTO contractors
             (name, email, phone, whatsapp, cnic, cnic_image, cv,
              expertise, experience, specialties, note, password, status,
-             country, national_id)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s)
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s,%s,%s,%s)
             RETURNING id''',
             (name, email, phone, whatsapp, national_id, cnic_image_name, cv_name,
              expertise, experience, specialties, note, hashed,
-             country, national_id))
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban))
         new_id = c.fetchone()[0]
         conn.commit()
         conn.close()
@@ -683,9 +802,36 @@ def contractor_dashboard():
                  AND (completed IS NULL OR completed=FALSE)""",
               (session['contractor_id'],))
     projects = c.fetchall()
+
+    # ADDED: for each accepted project, the next phase awaiting review —
+    # tells the template whether to show "Submit for Review", "Waiting on
+    # client", or "Changes requested" (with the client's notes)
+    review_status = {}
+    for p in projects:
+        if p[11] == session['contractor_id']:  # accepted_by
+            phase = get_next_review_phase(c, p[0])
+            if phase:
+                review_status[p[0]] = {
+                    'phase_number': phase[0], 'phase_label': phase[1],
+                    'proof': phase[2], 'submitted_at': phase[3],
+                    'client_approved': phase[4], 'client_notes': phase[5]
+                }
+
+    # ADDED: payout status per project (advance/remaining/extra), so the
+    # contractor can see what's been paid and what's still pending
+    c.execute('''SELECT project_id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts WHERE contractor_id=%s
+                 ORDER BY project_id, created_at''', (session['contractor_id'],))
+    payouts = {}
+    for row in c.fetchall():
+        payouts.setdefault(row[0], []).append(
+            {'payout_type': row[1], 'amount': row[2], 'status': row[3], 'paid_at': row[4]}
+        )
+
     conn.close()
     return render_template('contractor_dashboard.html',
-        contractor=contractor, projects=projects)
+        contractor=contractor, projects=projects,
+        review_status=review_status, payouts=payouts)
 
 
 @app.route('/contractor-change-password', methods=['POST'])
@@ -732,6 +878,14 @@ def accept_project(id):
     c = conn.cursor()
     c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
               (session['contractor_id'], session['contractor_id'], id))
+
+    # ADDED: now that we know who's doing the work, create their advance
+    # (25%) and remaining-balance payout rows
+    c.execute('SELECT contractor_pay FROM projects WHERE id=%s', (id,))
+    pay_row = c.fetchone()
+    if pay_row and pay_row[0]:
+        create_contractor_payouts(c, id, session['contractor_id'], pay_row[0])
+
     conn.commit()
     conn.close()
     return redirect(url_for('contractor_dashboard'))
@@ -753,8 +907,7 @@ def mark_complete(id):
     return redirect(url_for('contractor_dashboard'))
 
 
-# ─── CEO PORTAL ─────────────────────────────────────────
-@app.route('/mrkceokhan7')
+# ─── CEO PORTAL ─────────────────────────────────────────@app.route('/mrkceokhan7')
 def ceo_portal():
     return render_template('ceo_login.html')
 
@@ -835,6 +988,47 @@ def ceo_dashboard():
     #     exist, so `settings` was always undefined). ─────────────────────
     settings = get_site_copy()
 
+    # ─── ADDED: pending bank-edit requests, joined with contractor name
+    #     so the CEO doesn't have to cross-reference an ID by hand ────────
+    c.execute('''SELECT r.id, r.contractor_id, con.name, r.new_bank_account_title,
+                        r.new_bank_account_number, r.new_bank_name, r.new_bank_swift_iban, r.requested_at
+                 FROM bank_edit_requests r
+                 JOIN contractors con ON con.id = r.contractor_id
+                 WHERE r.status='pending' ORDER BY r.requested_at''')
+    pending_bank_requests = c.fetchall()
+
+    # ─── ADDED: pending advance requests, same join pattern ──────────────
+    c.execute('''SELECT a.id, a.project_id, a.contractor_id, con.name, p.title,
+                        a.amount_requested, a.reason, a.requested_at
+                 FROM advance_requests a
+                 JOIN contractors con ON con.id = a.contractor_id
+                 JOIN projects p ON p.id = a.project_id
+                 WHERE a.status='pending' ORDER BY a.requested_at''')
+    pending_advance_requests = c.fetchall()
+
+    # ─── ADDED: contractor payouts (advance/remaining/extra) per project ─
+    c.execute('''SELECT project_id, id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts ORDER BY project_id, created_at''')
+    contractor_payouts = {}
+    for row in c.fetchall():
+        contractor_payouts.setdefault(row[0], []).append(
+            {'id': row[1], 'payout_type': row[2], 'amount': row[3], 'status': row[4], 'paid_at': row[5]}
+        )
+
+    # ─── ADDED: milestone submissions awaiting client review, per project —
+    #     lets the CEO see what's been submitted without waiting on the client
+    c.execute('''SELECT project_id, phase_number, phase_label, contractor_proof,
+                        contractor_submitted_at, client_approved
+                 FROM project_payments
+                 WHERE contractor_proof IS NOT NULL
+                 ORDER BY project_id, phase_number''')
+    milestone_submissions = {}
+    for row in c.fetchall():
+        milestone_submissions.setdefault(row[0], []).append(
+            {'phase_number': row[1], 'phase_label': row[2], 'proof': row[3],
+             'submitted_at': row[4], 'client_approved': row[5]}
+        )
+
     conn.close()
     return render_template('ceo_dashboard.html',
         pending_contractors=pending_contractors,
@@ -849,7 +1043,11 @@ def ceo_dashboard():
         project_counts=project_counts,
         total_revenue=total_revenue,
         payment_phases=payment_phases,
-        settings=settings)
+        settings=settings,
+        pending_bank_requests=pending_bank_requests,
+        pending_advance_requests=pending_advance_requests,
+        contractor_payouts=contractor_payouts,
+        milestone_submissions=milestone_submissions)
 
 
 # ─── CEO: CONTRACTOR ACTIONS ────────────────────────────
@@ -945,11 +1143,23 @@ def award_badge(id):
 def approve_project(id):
     if not session.get('ceo'):
         return redirect(url_for('ceo_portal'))
+
+    # ADDED: real enforcement — can't approve until the upfront (phase 1)
+    # payment is marked paid. This is the actual "no unpaid work starts" rule,
+    # not just something the UI suggests.
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT is_paid FROM project_payments
+                 WHERE project_id=%s AND phase_number=1''', (id,))
+    row = c.fetchone()
+    if row and not row[0]:
+        conn.close()
+        flash('Cannot approve — the upfront payment for this project has not been marked as paid yet.')
+        return redirect(url_for('ceo_dashboard'))
+
     contractor_pay = request.form.get('contractor_pay', '0').strip()
     if not contractor_pay:
         contractor_pay = '0'
-    conn = get_db()
-    c = conn.cursor()
     try:
         c.execute("UPDATE projects SET status='approved', contractor_pay=%s WHERE id=%s", (contractor_pay, id))
         conn.commit()
@@ -976,8 +1186,7 @@ def reject_project(id):
     conn.close()
     return redirect(url_for('ceo_dashboard'))
 
-
-# ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
+            # ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
 @app.route('/suspend-customer/<int:id>')
 def suspend_customer(id):
     if not session.get('ceo'):
@@ -1408,6 +1617,258 @@ def public_team():
         m['projects'] = c.fetchall()
     conn.close()
     return render_template('team.html', members=members)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — CONTRACTOR BANK DETAILS + PROFILE PHOTO
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/contractor/update-bank', methods=['POST'])
+def contractor_update_bank():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    title = request.form.get('bank_account_title', '').strip()
+    number = request.form.get('bank_account_number', '').strip()
+    bank = request.form.get('bank_name', '').strip()
+    swift = request.form.get('bank_swift_iban', '').strip()
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT bank_account_number FROM contractors WHERE id=%s', (cid,))
+    row = c.fetchone()
+    is_first_time = not row[0]
+
+    if is_first_time:
+        # First-ever fill-in — write directly, nothing to protect yet
+        c.execute('''UPDATE contractors SET bank_account_title=%s, bank_account_number=%s,
+                     bank_name=%s, bank_swift_iban=%s WHERE id=%s''',
+                  (title, number, bank, swift, cid))
+        conn.commit()
+        conn.close()
+        flash('Bank details saved.')
+    else:
+        # Any change after that goes through CEO approval first
+        c.execute('''INSERT INTO bank_edit_requests
+            (contractor_id, new_bank_account_title, new_bank_account_number, new_bank_name, new_bank_swift_iban)
+            VALUES (%s,%s,%s,%s,%s)''', (cid, title, number, bank, swift))
+        conn.commit()
+        conn.close()
+        flash('Bank detail change submitted — pending CEO approval before it takes effect.')
+
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/contractor/update-photo', methods=['POST'])
+def contractor_update_photo():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/contractors")
+    if photo_url:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('UPDATE contractors SET photo=%s WHERE id=%s', (photo_url, session['contractor_id']))
+        conn.commit()
+        conn.close()
+        flash('Profile photo updated.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/ceo/bank-request/<int:req_id>/approve', methods=['POST'])
+@ceo_required
+def approve_bank_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM bank_edit_requests WHERE id=%s', (req_id,))
+    r = c.fetchone()
+    if r:
+        # columns: id0 contractor_id1 title2 number3 bank4 swift5 status6 ...
+        c.execute('''UPDATE contractors SET bank_account_title=%s, bank_account_number=%s,
+                     bank_name=%s, bank_swift_iban=%s WHERE id=%s''',
+                  (r[2], r[3], r[4], r[5], r[1]))
+        c.execute("UPDATE bank_edit_requests SET status='approved', decided_at=NOW() WHERE id=%s", (req_id,))
+        conn.commit()
+        flash('Bank detail change approved and applied.')
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/bank-request/<int:req_id>/reject', methods=['POST'])
+@ceo_required
+def reject_bank_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE bank_edit_requests SET status='rejected', decided_at=NOW() WHERE id=%s", (req_id,))
+    conn.commit()
+    conn.close()
+    flash('Bank detail change rejected.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — MILESTONE REVIEW: contractor submits proof, client approves
+# ═══════════════════════════════════════════════════════════════════════
+
+def get_next_review_phase(c, project_id):
+    """The earliest phase not yet approved by the client — what the
+    contractor can currently submit, and what the client currently reviews."""
+    c.execute('''SELECT phase_number, phase_label, contractor_proof, contractor_submitted_at,
+                        client_approved, client_notes
+                 FROM project_payments
+                 WHERE project_id=%s AND client_approved=FALSE
+                 ORDER BY phase_number LIMIT 1''', (project_id,))
+    return c.fetchone()
+
+
+@app.route('/contractor/submit-milestone/<int:project_id>', methods=['POST'])
+def contractor_submit_milestone(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    proof = request.form.get('proof', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    # Only the contractor actually assigned to this project can submit
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['contractor_id']:
+        conn.close()
+        return redirect(url_for('contractor_dashboard'))
+
+    phase = get_next_review_phase(c, project_id)
+    if phase:
+        c.execute('''UPDATE project_payments SET contractor_proof=%s, contractor_submitted_at=NOW(),
+                     client_notes=NULL WHERE project_id=%s AND phase_number=%s''',
+                  (proof, project_id, phase[0]))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/client/approve-milestone/<int:project_id>/<int:phase_number>', methods=['POST'])
+def client_approve_milestone(project_id, phase_number):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['customer_id']:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''UPDATE project_payments SET client_approved=TRUE, client_approved_at=NOW()
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+
+    # If this was the last phase, the project is genuinely done
+    c.execute('SELECT COUNT(*) FROM project_payments WHERE project_id=%s AND client_approved=FALSE', (project_id,))
+    remaining = c.fetchone()[0]
+    if remaining == 0:
+        invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+        c.execute("UPDATE projects SET status='completed', completed=TRUE, invoice_ref=%s WHERE id=%s",
+                  (invoice_ref, project_id))
+
+    conn.commit()
+    conn.close()
+    flash('Milestone approved.')
+    return redirect(url_for('my_projects'))
+
+
+@app.route('/client/request-changes/<int:project_id>/<int:phase_number>', methods=['POST'])
+def client_request_changes(project_id, phase_number):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    notes = request.form.get('notes', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['customer_id']:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''UPDATE project_payments SET client_notes=%s, contractor_submitted_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (notes, project_id, phase_number))
+    conn.commit()
+    conn.close()
+    flash('Changes requested — the contractor has been sent back to revise this milestone.')
+    return redirect(url_for('my_projects'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — CONTRACTOR PAYOUTS: 25% advance, requests, remaining balance
+# ═══════════════════════════════════════════════════════════════════════
+
+def create_contractor_payouts(c, project_id, contractor_id, contractor_pay):
+    """Called once, when the CEO approves a project and sets contractor_pay.
+    Auto-creates the 25% advance and the 75% remaining-balance payout rows."""
+    total = float(contractor_pay or 0)
+    advance = round(total * 0.25, 2)
+    remaining = round(total - advance, 2)
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'advance',%s)''', (project_id, contractor_id, advance))
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'remaining',%s)''', (project_id, contractor_id, remaining))
+
+
+@app.route('/contractor/request-advance/<int:project_id>', methods=['POST'])
+def contractor_request_advance(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    amount = request.form.get('amount', '').strip()
+    reason = request.form.get('reason', '').strip()
+    if not amount or not reason:
+        flash('An amount and a reason are both required to request an advance.')
+        return redirect(url_for('contractor_dashboard'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO advance_requests (project_id, contractor_id, amount_requested, reason)
+                 VALUES (%s,%s,%s,%s)''', (project_id, session['contractor_id'], amount, reason))
+    conn.commit()
+    conn.close()
+    flash('Advance request submitted for CEO review.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/approve', methods=['POST'])
+@ceo_required
+def approve_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT project_id, contractor_id, amount_requested FROM advance_requests WHERE id=%s', (req_id,))
+    r = c.fetchone()
+    if r:
+        c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                     VALUES (%s,%s,'extra',%s)''', (r[0], r[1], r[2]))
+        c.execute("UPDATE advance_requests SET status='approved', decided_at=NOW() WHERE id=%s", (req_id,))
+        conn.commit()
+        flash('Advance request approved.')
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/reject', methods=['POST'])
+@ceo_required
+def reject_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE advance_requests SET status='rejected', decided_at=NOW() WHERE id=%s", (req_id,))
+    conn.commit()
+    conn.close()
+    flash('Advance request rejected.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/payout/<int:payout_id>/mark-paid', methods=['POST'])
+@ceo_required
+def mark_payout_paid(payout_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractor_payouts SET status='paid', paid_at=NOW() WHERE id=%s", (payout_id,))
+    conn.commit()
+    conn.close()
+    flash('Payout marked as sent.')
+    return redirect(url_for('ceo_dashboard'))
 
 
 # ─── RUN ────────────────────────────────────────────────
