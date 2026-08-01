@@ -184,39 +184,60 @@
     <div class="empty-state">No projects available right now. Check back soon.</div>
     {% else %}
     {% for p in projects %}
+    {% set rs = review_status.get(p[0]) %}
     <div class="card">
       <h3>{{ p[2] }}</h3>
-      <p>{{ p[3][:100] }}{% if p[3]|length > 100 %}...{% endif %}</p>
+      <p>{{ p[3] }}</p>
 
       <div class="pay-badge">Your Pay: ${{ p[10] }}</div>
 
       <div class="meta-row">
         <div class="meta-item">
-          <label>Package</label>
-          <span>{{ p[7] or '—' }}</span>
-        </div>
-        <div class="meta-item">
-          <label>Budget</label>
-          <span>${{ p[5] or '—' }}</span>
-        </div>
-        <div class="meta-item">
           <label>Deadline</label>
           <span>{{ p[6] or '—' }}</span>
         </div>
-        <div class="meta-item">
-          <label>Website Type</label>
-          <span>{{ p[4] or '—' }}</span>
-        </div>
       </div>
+
+      {% if p[11] == contractor[0] and rs %}
+        {% if rs.client_notes %}
+        <div class="alert alert-error" style="margin-bottom:1rem;">
+          <strong>Client requested changes on {{ rs.phase_label }}:</strong><br/>{{ rs.client_notes }}
+        </div>
+        {% endif %}
+
+        {% if rs.submitted_at and not rs.client_approved %}
+        <div class="alert" style="background:#EFF6FF;color:#1E40AF;border:1px solid #BFDBFE;margin-bottom:1rem;">
+          ⏳ Waiting on client review for <strong>{{ rs.phase_label }}</strong> — submitted, nothing to do until they respond.
+        </div>
+        {% else %}
+        <form action="/contractor/submit-milestone/{{ p[0] }}" method="POST" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label>Submit proof for {{ rs.phase_label }}</label>
+            <input type="text" name="proof" placeholder="Link to preview, staging site, or a note describing what's done" required/>
+          </div>
+          <button type="submit" class="btn btn-blue">Submit for Client Review</button>
+        </form>
+        {% endif %}
+
+        <details style="margin-bottom:1rem;">
+          <summary style="cursor:pointer;font-size:0.85rem;color:var(--muted);">Request an advance</summary>
+          <form action="/contractor/request-advance/{{ p[0] }}" method="POST" style="margin-top:0.75rem;">
+            <div class="form-group">
+              <label>Amount (USD)</label>
+              <input type="number" name="amount" min="0" step="0.01" required/>
+            </div>
+            <div class="form-group">
+              <label>Reason</label>
+              <input type="text" name="reason" placeholder="Why you need this before completion" required/>
+            </div>
+            <button type="submit" class="btn btn-blue">Submit Request</button>
+          </form>
+        </details>
+      {% endif %}
 
       <div class="btn-row">
         {% if p[11] is none %}
           <a href="/accept-project/{{ p[0] }}" class="btn btn-blue">Accept Project</a>
-        {% elif p[11] == contractor[0] %}
-          <a href="/mark-complete/{{ p[0] }}" class="btn btn-green"
-             onclick="return confirm('Mark this project as complete? This cannot be undone.')">
-            Mark as Complete
-          </a>
         {% endif %}
       </div>
     </div>
@@ -277,6 +298,90 @@
         {% endif %}
       </div>
     </div>
+
+    <!-- PROFILE PHOTO — self-service, no approval needed -->
+    <div class="card">
+      <div class="section-title">Profile Photo</div>
+      {% if contractor[23] %}
+        <img src="{{ contractor[23] }}" alt="Profile photo" style="width:88px;height:88px;border-radius:50%;object-fit:cover;margin-bottom:1rem;display:block;"/>
+      {% endif %}
+      <form action="/contractor/update-photo" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label>{{ 'Replace photo' if contractor[23] else 'Upload a photo' }}</label>
+          <input type="file" name="photo" accept="image/*" required/>
+        </div>
+        <button type="submit" class="btn btn-blue">Save Photo</button>
+      </form>
+    </div>
+
+    <!-- PAYOUT DETAILS — first fill-in is instant, edits need CEO approval -->
+    <div class="card">
+      <div class="section-title">Payout Details</div>
+      <div class="profile-grid" style="margin-bottom:1.25rem;">
+        <div class="profile-item">
+          <label>Account Title</label>
+          <span>{{ contractor[19] or 'Not set' }}</span>
+        </div>
+        <div class="profile-item">
+          <label>Bank Name</label>
+          <span>{{ contractor[21] or 'Not set' }}</span>
+        </div>
+        <div class="profile-item">
+          <label>Account Number</label>
+          <span>{{ contractor[20] or 'Not set' }}</span>
+        </div>
+        <div class="profile-item">
+          <label>IBAN / SWIFT</label>
+          <span>{{ contractor[22] or '—' }}</span>
+        </div>
+      </div>
+      {% if contractor[20] %}
+      <p class="field-hint" style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--muted);">Changing these details requires CEO approval before they take effect.</p>
+      {% endif %}
+      <details>
+        <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue);font-weight:600;">{{ 'Update payout details' if contractor[20] else 'Add payout details' }}</summary>
+        <form action="/contractor/update-bank" method="POST" style="margin-top:1rem;">
+          <div class="form-group">
+            <label>Account Title</label>
+            <input type="text" name="bank_account_title" value="{{ contractor[19] or '' }}" required/>
+          </div>
+          <div class="form-group">
+            <label>Bank Name</label>
+            <input type="text" name="bank_name" value="{{ contractor[21] or '' }}" required/>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" name="bank_account_number" value="{{ contractor[20] or '' }}" required/>
+          </div>
+          <div class="form-group">
+            <label>IBAN / SWIFT (optional)</label>
+            <input type="text" name="bank_swift_iban" value="{{ contractor[22] or '' }}"/>
+          </div>
+          <button type="submit" class="btn btn-blue">Save</button>
+        </form>
+      </details>
+    </div>
+
+    <!-- PAYOUTS -->
+    {% if payouts %}
+    <div class="card">
+      <div class="section-title">Payouts</div>
+      {% for project_id, plist in payouts.items() %}
+        {% for po in plist %}
+        <div class="meta-row" style="border-bottom:1px solid var(--border);padding-bottom:0.75rem;margin-bottom:0.75rem;">
+          <div class="meta-item">
+            <label>{{ po.payout_type | capitalize }}</label>
+            <span>${{ '%.2f'|format(po.amount) }}</span>
+          </div>
+          <div class="meta-item">
+            <label>Status</label>
+            <span>{{ '✅ Paid' if po.status == 'paid' else '⏳ Pending' }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
 
   <!-- TAB: SECURITY -->
@@ -312,4 +417,4 @@
   }
 </script>
 </body>
-              </html>
+    </html>
