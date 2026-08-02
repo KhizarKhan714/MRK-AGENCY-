@@ -137,7 +137,7 @@
             <label for="pkg1">
               <div class="pkg-name">Bronze</div>
               <div class="pkg-price">$1,499</div>
-              <div class="pkg-desc">5 pages · 2 weeks · Basic SEO</div>
+              <div class="pkg-desc">5 pages · 2 weeks · Web Development, Web Design &amp; Basic SEO</div>
             </label>
           </div>
 
@@ -146,7 +146,7 @@
             <label for="pkg2">
               <div class="pkg-name">Consular</div>
               <div class="pkg-price">$2,999</div>
-              <div class="pkg-desc">10 pages · 3 weeks · Full SEO</div>
+              <div class="pkg-desc">10 pages · 3 weeks · Web Development, Web Design, Graphic Design &amp; Full SEO</div>
             </label>
           </div>
 
@@ -155,7 +155,7 @@
             <label for="pkg3">
               <div class="pkg-name">Gold</div>
               <div class="pkg-price">$4,999</div>
-              <div class="pkg-desc">20 pages · 5 weeks · Analytics</div>
+              <div class="pkg-desc">20 pages · 5 weeks · Everything in Consular, plus UI/UX Design &amp; Analytics Setup</div>
             </label>
           </div>
 
@@ -163,8 +163,8 @@
             <input class="pkg-option" type="radio" name="package" id="pkg4" value="Diamond" onchange="onPackageChange()"/>
             <label for="pkg4">
               <div class="pkg-name">Diamond</div>
-              <div class="pkg-price">$8,499</div>
-              <div class="pkg-desc">Unlimited · 10 weeks · Branding</div>
+              <div class="pkg-price">$8,599</div>
+              <div class="pkg-desc">40 pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
             </label>
           </div>
 
@@ -181,6 +181,62 @@
 
         <div id="fixed-package-note">
           ✓ This package includes every service — development, design, and SEO. Your delivery date and price are fixed by the package, so there's nothing else to choose there.
+        </div>
+      </div>
+    </div>
+
+    <!-- INDIVIDUAL SERVICES (ADDED) -->
+    <div class="form-card">
+      <div class="form-card-title">Or Order a Single Service</div>
+      <div class="form-card-body">
+        <div class="field-hint" style="margin-bottom:0.85rem;">Already have some of the pieces in place? Order just what you need instead of a full package. Starting prices — final cost depends on scope.</div>
+        <div class="pkg-grid">
+
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="svc1" value="Web Design (Service)" onchange="onPackageChange()"/>
+            <label for="svc1">
+              <div class="pkg-name">Web Design</div>
+              <div class="pkg-price">From $799</div>
+              <div class="pkg-desc">Design only, no build</div>
+            </label>
+          </div>
+
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="svc2" value="UI/UX Design (Service)" onchange="onPackageChange()"/>
+            <label for="svc2">
+              <div class="pkg-name">UI/UX Design</div>
+              <div class="pkg-price">From $999</div>
+              <div class="pkg-desc">Audit &amp; redesign</div>
+            </label>
+          </div>
+
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="svc3" value="Graphic Design (Service)" onchange="onPackageChange()"/>
+            <label for="svc3">
+              <div class="pkg-name">Graphic Design</div>
+              <div class="pkg-price">From $499</div>
+              <div class="pkg-desc">Logo &amp; brand assets</div>
+            </label>
+          </div>
+
+          <div>
+            <input class="pkg-option" type="radio" name="package" id="svc4" value="SEO (Service)" onchange="onPackageChange()"/>
+            <label for="svc4">
+              <div class="pkg-name">SEO</div>
+              <div class="pkg-price">From $599</div>
+              <div class="pkg-desc">One-time technical setup</div>
+            </label>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <input class="pkg-option" type="radio" name="package" id="svc5" value="Web Development (Service)" onchange="onPackageChange()"/>
+            <label for="svc5">
+              <div class="pkg-name">Web Development</div>
+              <div class="pkg-price">From $1,299</div>
+              <div class="pkg-desc">Add functionality to an existing site</div>
+            </label>
+          </div>
+
         </div>
       </div>
     </div>
@@ -279,4 +335,4 @@
   }
 </script>
 </body>
-    </html>
+  </html>
