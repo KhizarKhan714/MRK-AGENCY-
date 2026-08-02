@@ -324,6 +324,28 @@
 </section>
 {% endif %}
 
+  {% if testimonials %}
+<section class="section" id="testimonials">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">What clients say</span>
+      <h2 class="section-title">Real feedback, real work.</h2>
+    </div>
+    <div class="grid grid-3">
+      {% for t in testimonials %}
+      <div class="card">
+        <div class="card-body">
+          <div style="color:#F59E0B;font-size:18px;margin-bottom:10px;">{{ '★' * t.rating }}{{ '☆' * (5 - t.rating) }}</div>
+          <p class="card-text" style="margin-bottom:14px;">{{ t.review_text }}</p>
+          <div style="font-weight:600;font-size:14px;">{{ t.first_name }} {{ t.last_name }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- ===== PRICING ===== -->
 <section class="section" id="pricing">
   <div class="container">
