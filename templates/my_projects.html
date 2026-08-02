@@ -424,6 +424,30 @@
       </div>
       {% endif %}
 
+      <!-- LEAVE A REVIEW — completed projects only -->
+      {% if status == 'completed' %}
+      <details style="margin-top:1rem;">
+        <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue);font-weight:600;">Leave a review for MRK Agency</summary>
+        <form action="/submit-testimonial" method="POST" style="margin-top:0.85rem;">
+          <div class="meta-item" style="margin-bottom:0.75rem;">
+            <label>Rating</label>
+            <select name="rating" required style="padding:0.5rem 0.75rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;">
+              <option value="5">★★★★★ — Excellent</option>
+              <option value="4">★★★★☆ — Good</option>
+              <option value="3">★★★☆☆ — Okay</option>
+              <option value="2">★★☆☆☆ — Below expectations</option>
+              <option value="1">★☆☆☆☆ — Poor</option>
+            </select>
+          </div>
+          <div class="meta-item" style="margin-bottom:0.75rem;">
+            <label>Your Review</label>
+            <textarea name="review_text" required placeholder="How was your experience with MRK Agency?" style="width:100%;min-height:80px;padding:0.6rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;"></textarea>
+          </div>
+          <button type="submit" class="btn btn-blue">Submit Review</button>
+        </form>
+      </details>
+      {% endif %}
+
     </div>
 
     <!-- PAYMENT / INVOICE BUTTON — always available, not just when completed -->
