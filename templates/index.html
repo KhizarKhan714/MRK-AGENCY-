@@ -377,6 +377,13 @@
   </div>
 </section>
 
+  <div style="display:flex;gap:14px;margin-top:16px;">
+  {% if site_settings.get('linkedin_url') %}<a href="{{ site_settings.linkedin_url }}" target="_blank" style="color:var(--text-dim);">LinkedIn</a>{% endif %}
+  {% if site_settings.get('facebook_url') %}<a href="{{ site_settings.facebook_url }}" target="_blank" style="color:var(--text-dim);">Facebook</a>{% endif %}
+  {% if site_settings.get('instagram_url') %}<a href="{{ site_settings.instagram_url }}" target="_blank" style="color:var(--text-dim);">Instagram</a>{% endif %}
+  {% if site_settings.get('twitter_url') %}<a href="{{ site_settings.twitter_url }}" target="_blank" style="color:var(--text-dim);">X</a>{% endif %}
+  </div>
+  
 {% include 'footer.html' %}
 
 
