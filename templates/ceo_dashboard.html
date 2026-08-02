@@ -504,6 +504,29 @@
         {% endif %}
       </div>
       <div class="card-foot">
+
+        {% if pending_advance_requests %}
+<div class="sep"></div>
+<div class="section-head"><div class="section-title">Pending Advance Requests ({{ pending_advance_requests|length }})</div></div>
+{% for a in pending_advance_requests %}
+<div class="card">
+  <div class="card-body">
+    <h3 style="margin-bottom:0.25rem;">{{ a[3] }} — {{ a[4] }}</h3>
+    <p style="margin-bottom:0.75rem;">Requesting <strong>${{ '%.2f'|format(a[5]) }}</strong></p>
+    <div class="note-box">{{ a[6] }}</div>
+  </div>
+  <div class="card-foot">
+    <form action="/ceo/advance-request/{{ a[0] }}/approve" method="POST" class="inline-form">
+      <button type="submit" class="btn btn-green" onclick="return confirm('Approve this advance? It will be added to their payouts to send.')">✓ Approve</button>
+    </form>
+    <form action="/ceo/advance-request/{{ a[0] }}/reject" method="POST" class="inline-form">
+      <button type="submit" class="btn btn-red">✗ Reject</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+        
         <!-- APPROVE: set contractor pay -->
         <form action="/approve-project/{{ p[0] }}" method="POST" class="inline-form">
           <input type="number" name="contractor_pay" placeholder="Contractor Pay ($)" required min="0" step="0.01" style="width:185px;"/>
