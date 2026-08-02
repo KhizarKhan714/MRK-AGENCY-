@@ -978,7 +978,31 @@
       </div>
     </div>
 
-    <div class="sep"></div>
+    {% if pending_bank_requests %}
+<div class="sep"></div>
+<div class="section-head"><div class="section-title">Pending Bank Detail Changes ({{ pending_bank_requests|length }})</div></div>
+{% for r in pending_bank_requests %}
+<div class="card">
+  <div class="card-body">
+    <h3 style="margin-bottom:0.5rem;">{{ r[2] }}</h3>
+    <div class="info-grid">
+      <div class="info-item"><label>New Account Title</label><span>{{ r[3] }}</span></div>
+      <div class="info-item"><label>New Bank</label><span>{{ r[5] }}</span></div>
+      <div class="info-item"><label>New Account Number</label><span>{{ r[4] }}</span></div>
+      <div class="info-item"><label>IBAN/SWIFT</label><span>{{ r[6] or '—' }}</span></div>
+    </div>
+  </div>
+  <div class="card-foot">
+    <form action="/ceo/bank-request/{{ r[0] }}/approve" method="POST" class="inline-form">
+      <button type="submit" class="btn btn-green" onclick="return confirm('Apply this bank detail change?')">✓ Approve & Apply</button>
+    </form>
+    <form action="/ceo/bank-request/{{ r[0] }}/reject" method="POST" class="inline-form">
+      <button type="submit" class="btn btn-red">✗ Reject</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
 
     <!-- ── PORTFOLIO ── -->
     <div class="section-head"><div class="section-title">Portfolio Projects</div></div>
