@@ -833,6 +833,22 @@
   </div>
 
 
+  {% if contractor_payouts.get(p[0]) %}
+<div class="note-label" style="margin-top:0.85rem;">Contractor Payouts</div>
+{% for po in contractor_payouts[p[0]] %}
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
+  <span>{{ po.payout_type | capitalize }} — ${{ '%.2f'|format(po.amount) }}</span>
+  {% if po.status == 'paid' %}
+    <span class="status-badge badge-approved">✅ Paid</span>
+  {% else %}
+    <form action="/ceo/payout/{{ po.id }}/mark-paid" method="POST" class="inline-form">
+      <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+    </form>
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+  
   <!-- ══════════════ TAB: CUSTOMERS ══════════════ -->
   <div class="tab-content" id="tab-customers">
 
