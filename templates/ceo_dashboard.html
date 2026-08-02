@@ -830,10 +830,7 @@
     {% endfor %}
     {% endif %}
 
-  </div>
-
-
-  {% if contractor_payouts.get(p[0]) %}
+    {% if contractor_payouts.get(p[0]) %}
 <div class="note-label" style="margin-top:0.85rem;">Contractor Payouts</div>
 {% for po in contractor_payouts[p[0]] %}
 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
@@ -848,6 +845,7 @@
 </div>
 {% endfor %}
 {% endif %}
+  </div>
   
   <!-- ══════════════ TAB: CUSTOMERS ══════════════ -->
   <div class="tab-content" id="tab-customers">
