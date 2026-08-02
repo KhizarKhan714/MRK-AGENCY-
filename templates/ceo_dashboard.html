@@ -495,18 +495,7 @@
 
         {% if payment_phases.get(p[0]) %}
 
-        {% if milestone_submissions.get(p[0]) %}
-<div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
-{% for m in milestone_submissions[p[0]] %}
-<div class="note-box" style="margin-bottom:0.5rem;">
-  <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
-  <span style="font-size:0.72rem;color:var(--muted);">
-    {{ 'Approved by client' if m.client_approved else 'Awaiting client review' }}
-  </span>
-</div>
-{% endfor %}
-{% endif %}
-        
+
         <div class="note-label" style="margin-top:0.85rem;">Payment Plan</div>
         {% for ph in payment_phases[p[0]] %}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
@@ -737,8 +726,7 @@
           <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
         </div>
 
-        {% if payment_phases.get(p[0]) %}
-
+        
         {% if milestone_submissions.get(p[0]) %}
 <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
 {% for m in milestone_submissions[p[0]] %}
@@ -751,6 +739,7 @@
 {% endfor %}
 {% endif %}
         
+        {% if payment_phases.get(p[0]) %}
         <div class="note-label" style="margin-top:0.85rem;">Payment Phases</div>
         {% for ph in payment_phases[p[0]] %}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);">
@@ -793,9 +782,7 @@
           <div class="info-item"><label>Contractor</label><span>{% if p[11] %}#{{ p[11] }}{% else %}—{% endif %}</span></div>
           <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
         </div>
-
-        {% if payment_phases.get(p[0]) %}
-
+        
         {% if milestone_submissions.get(p[0]) %}
 <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
 {% for m in milestone_submissions[p[0]] %}
@@ -808,6 +795,7 @@
 {% endfor %}
 {% endif %}
         
+        {% if payment_phases.get(p[0]) %}
         <div class="note-label" style="margin-top:0.85rem;">Payment Phases</div>
         {% for ph in payment_phases[p[0]] %}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);">
