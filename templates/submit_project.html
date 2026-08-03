@@ -126,6 +126,25 @@
 
   <form action="/submit-project" method="POST">
 
+    {% set locked_service = request.args.get('service') %}
+
+    {% if locked_service %}
+    <!-- LOCKED SINGLE SERVICE — arrived from /services, nothing else to choose -->
+    <div class="form-card">
+      <div class="form-card-title">Your Service</div>
+      <div class="form-card-body">
+        <input type="hidden" name="package" value="{{ locked_service }}"/>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.9rem 1rem;border:1.5px solid var(--blue);border-radius:9px;background:#EFF6FF;">
+          <div>
+            <div class="pkg-name">{{ locked_service.replace(' (Service)', '') }}</div>
+            <div class="pkg-desc" style="margin-top:0.3rem;">Starting price — final cost depends on scope</div>
+          </div>
+        </div>
+        <div class="field-hint" style="margin-top:0.75rem;">Ordering something else instead? <a href="/services" style="color:var(--blue);">Browse services</a> or <a href="/submit-project" style="color:var(--blue);">see full packages</a>.</div>
+      </div>
+    </div>
+
+    {% else %}
     <!-- PACKAGE (moved first — everything below reacts to this choice) -->
     <div class="form-card">
       <div class="form-card-title">Choose a Package</div>
@@ -163,8 +182,8 @@
             <input class="pkg-option" type="radio" name="package" id="pkg4" value="Diamond" onchange="onPackageChange()"/>
             <label for="pkg4">
               <div class="pkg-name">Diamond</div>
-              <div class="pkg-price">$8,599</div>
-              <div class="pkg-desc">40 pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
+              <div class="pkg-price">$8,499</div>
+              <div class="pkg-desc">Unlimited pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
             </label>
           </div>
 
@@ -182,64 +201,11 @@
         <div id="fixed-package-note">
           ✓ This package includes every service — development, design, and SEO. Your delivery date and price are fixed by the package, so there's nothing else to choose there.
         </div>
+
+        <div class="field-hint" style="margin-top:1rem;">Only need one service, not a full site? <a href="/services" style="color:var(--blue);font-weight:600;">Browse individual services →</a></div>
       </div>
     </div>
-
-    <!-- INDIVIDUAL SERVICES (ADDED) -->
-    <div class="form-card">
-      <div class="form-card-title">Or Order a Single Service</div>
-      <div class="form-card-body">
-        <div class="field-hint" style="margin-bottom:0.85rem;">Already have some of the pieces in place? Order just what you need instead of a full package. Starting prices — final cost depends on scope.</div>
-        <div class="pkg-grid">
-
-          <div>
-            <input class="pkg-option" type="radio" name="package" id="svc1" value="Web Design (Service)" onchange="onPackageChange()"/>
-            <label for="svc1">
-              <div class="pkg-name">Web Design</div>
-              <div class="pkg-price">From $799</div>
-              <div class="pkg-desc">Design only, no build</div>
-            </label>
-          </div>
-
-          <div>
-            <input class="pkg-option" type="radio" name="package" id="svc2" value="UI/UX Design (Service)" onchange="onPackageChange()"/>
-            <label for="svc2">
-              <div class="pkg-name">UI/UX Design</div>
-              <div class="pkg-price">From $999</div>
-              <div class="pkg-desc">Audit &amp; redesign</div>
-            </label>
-          </div>
-
-          <div>
-            <input class="pkg-option" type="radio" name="package" id="svc3" value="Graphic Design (Service)" onchange="onPackageChange()"/>
-            <label for="svc3">
-              <div class="pkg-name">Graphic Design</div>
-              <div class="pkg-price">From $499</div>
-              <div class="pkg-desc">Logo &amp; brand assets</div>
-            </label>
-          </div>
-
-          <div>
-            <input class="pkg-option" type="radio" name="package" id="svc4" value="SEO (Service)" onchange="onPackageChange()"/>
-            <label for="svc4">
-              <div class="pkg-name">SEO</div>
-              <div class="pkg-price">From $599</div>
-              <div class="pkg-desc">One-time technical setup</div>
-            </label>
-          </div>
-
-          <div style="grid-column:1/-1;">
-            <input class="pkg-option" type="radio" name="package" id="svc5" value="Web Development (Service)" onchange="onPackageChange()"/>
-            <label for="svc5">
-              <div class="pkg-name">Web Development</div>
-              <div class="pkg-price">From $1,299</div>
-              <div class="pkg-desc">Add functionality to an existing site</div>
-            </label>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    {% endif %}
 
     <!-- PROJECT DETAILS -->
     <div class="form-card">
@@ -335,4 +301,4 @@
   }
 </script>
 </body>
-  </html>
+      </html>
