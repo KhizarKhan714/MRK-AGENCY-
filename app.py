@@ -806,3 +806,1201 @@ def contractor_apply():
     return render_template('contractor_apply.html')
 
 # ─── CONTRACTOR LOGIN ────────────────────────────────────
+@app.route('/contractor-login', methods=['GET', 'POST'])
+def contractor_login():
+    if request.method == 'POST':
+        cin = request.form['cin'].strip()
+        pw = request.form['password'].encode()
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM contractors WHERE cin=%s', (cin,))
+        contractor = c.fetchone()
+        conn.close()
+        if contractor and bcrypt.checkpw(pw, contractor[2].encode()):
+            if contractor[15]:  # suspended
+                return render_template('contractor_login.html', error='Your account has been suspended. Contact MRK Agency.')
+            session['contractor_id'] = contractor[0]
+            session['contractor_name'] = contractor[1]
+            return redirect(url_for('contractor_dashboard'))
+        return render_template('contractor_login.html', error='Invalid CIN or password.')
+    return render_template('contractor_login.html')
+
+
+@app.route('/contractor-logout')
+def contractor_logout():
+    session.pop('contractor_id', None)
+    session.pop('contractor_name', None)
+    return redirect(url_for('contractor_login'))
+
+
+# ─── CONTRACTOR DASHBOARD ───────────────────────────────
+@app.route('/contractor-dashboard')
+def contractor_dashboard():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
+    contractor = c.fetchone()
+    c.execute("""SELECT * FROM projects
+                 WHERE status='approved' AND contractor_pay IS NOT NULL
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""",
+              (session['contractor_id'],))
+    projects = c.fetchall()
+
+    # ADDED: for each accepted project, the next phase awaiting review —
+    # tells the template whether to show "Submit for Review", "Waiting on
+    # client", or "Changes requested" (with the client's notes)
+    review_status = {}
+    for p in projects:
+        if p[11] == session['contractor_id']:  # accepted_by
+            phase = get_next_review_phase(c, p[0])
+            if phase:
+                review_status[p[0]] = {
+                    'phase_number': phase[0], 'phase_label': phase[1],
+                    'proof': phase[2], 'submitted_at': phase[3],
+                    'client_approved': phase[4], 'client_notes': phase[5]
+                }
+
+    # ADDED: payout status per project (advance/remaining/extra), so the
+    # contractor can see what's been paid and what's still pending
+    c.execute('''SELECT project_id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts WHERE contractor_id=%s
+                 ORDER BY project_id, created_at''', (session['contractor_id'],))
+    payouts = {}
+    for row in c.fetchall():
+        payouts.setdefault(row[0], []).append(
+            {'payout_type': row[1], 'amount': row[2], 'status': row[3], 'paid_at': row[4]}
+        )
+
+    conn.close()
+    return render_template('contractor_dashboard.html',
+        contractor=contractor, projects=projects,
+        review_status=review_status, payouts=payouts)
+
+
+@app.route('/contractor-change-password', methods=['POST'])
+def contractor_change_password():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    current_pw = request.form['current_password'].encode()
+    new_pw = request.form['new_password']
+    confirm_pw = request.form['confirm_password']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
+    contractor = c.fetchone()
+    c.execute("""SELECT * FROM projects WHERE status='approved' AND contractor_pay IS NOT NULL
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""",
+              (session['contractor_id'],))
+    projects = c.fetchall()
+    if not bcrypt.checkpw(current_pw, contractor[2].encode()):
+        conn.close()
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='Current password is incorrect.')
+    if new_pw != confirm_pw:
+        conn.close()
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='New passwords do not match.')
+    if len(new_pw) < 6:
+        conn.close()
+        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                               error='Password must be at least 6 characters.')
+    hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+    c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, session['contractor_id']))
+    conn.commit()
+    conn.close()
+    return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
+                           success='Password changed successfully.')
+
+
+@app.route('/accept-project/<int:id>')
+def accept_project(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
+              (session['contractor_id'], session['contractor_id'], id))
+
+    # ADDED: now that we know who's doing the work, create their advance
+    # (25%) and remaining-balance payout rows
+    c.execute('SELECT contractor_pay FROM projects WHERE id=%s', (id,))
+    pay_row = c.fetchone()
+    if pay_row and pay_row[0]:
+        create_contractor_payouts(c, id, session['contractor_id'], pay_row[0])
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/mark-complete/<int:id>')
+def mark_complete(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    # Generate invoice reference
+    invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+    c.execute("""UPDATE projects SET completed=TRUE, status='completed', invoice_ref=%s
+                 WHERE id=%s AND accepted_by=%s""",
+              (invoice_ref, id, session['contractor_id']))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+# ─── CEO PORTAL ─────────────────────────────────────────
+@app.route('/mrkceokhan7')
+def ceo_portal():
+    return render_template('ceo_login.html')
+
+
+@app.route('/ceo-login', methods=['POST'])
+def ceo_login():
+    name = request.form['name'].strip()
+    pw = request.form['password'].strip()
+    sk = request.form['secret_key'].strip()
+    sa = request.form['security_answer'].strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM ceo WHERE name=%s', (name,))
+    ceo = c.fetchone()
+    conn.close()
+    if ceo and ceo[2] == pw and ceo[3] == sk and ceo[4] == sa:
+        session['ceo'] = True
+        return redirect(url_for('ceo_dashboard'))
+    return render_template('ceo_login.html', error='Invalid credentials. Access denied.')
+
+
+@app.route('/ceo-logout')
+def ceo_logout():
+    session.pop('ceo', None)
+    return redirect(url_for('ceo_portal'))
+
+
+# ─── CEO DASHBOARD ──────────────────────────────────────
+@app.route('/ceo-dashboard')
+def ceo_dashboard():
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM contractors WHERE status='pending'")
+    pending_contractors = c.fetchall()
+    c.execute("SELECT * FROM contractors WHERE status='approved' AND (suspended IS NULL OR suspended=FALSE)")
+    approved_contractors = c.fetchall()
+    c.execute("SELECT * FROM contractors WHERE status='rejected' OR suspended=TRUE")
+    rejected_contractors = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='pending'")
+    pending_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='approved'")
+    approved_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='completed'")
+    completed_projects = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE suspended=FALSE OR suspended IS NULL")
+    customers = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE suspended=TRUE")
+    suspended_customers = c.fetchall()
+    c.execute("SELECT * FROM team_members ORDER BY created_at")
+    team_members = c.fetchall()
+    # All contractors including banned
+    c.execute("SELECT * FROM contractors WHERE status='banned'")
+    banned_contractors = c.fetchall()
+
+    # Project counts per customer
+    c.execute("SELECT customer_id, COUNT(*) FROM projects GROUP BY customer_id")
+    project_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    # ─── ADDED: revenue now reflects actual payments received, not just
+    #     the total price of completed projects. ────────────────────────
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM project_payments WHERE is_paid=TRUE")
+    total_revenue = float(c.fetchone()[0])
+
+    # ─── ADDED: payment phases per project, keyed by project id, so the
+    #     Pending/Active/Completed project cards can show what's owed/paid. ─
+    c.execute('''SELECT project_id, phase_number, phase_label, amount, is_paid
+                 FROM project_payments ORDER BY project_id, phase_number''')
+    payment_phases = {}
+    for row in c.fetchall():
+        payment_phases.setdefault(row[0], []).append(
+            {'phase_number': row[1], 'phase_label': row[2], 'amount': row[3], 'is_paid': row[4]}
+        )
+
+    # ─── ADDED: editable site copy + Payoneer payment details for the
+    #     Site Manager form (was previously posting to a route that didn't
+    #     exist, so `settings` was always undefined). ─────────────────────
+    settings = get_site_copy()
+
+    # ─── ADDED: pending bank-edit requests, joined with contractor name
+    #     so the CEO doesn't have to cross-reference an ID by hand ────────
+    c.execute('''SELECT r.id, r.contractor_id, con.name, r.new_bank_account_title,
+                        r.new_bank_account_number, r.new_bank_name, r.new_bank_swift_iban, r.requested_at
+                 FROM bank_edit_requests r
+                 JOIN contractors con ON con.id = r.contractor_id
+                 WHERE r.status='pending' ORDER BY r.requested_at''')
+    pending_bank_requests = c.fetchall()
+
+    # ─── ADDED: all testimonials for moderation (both published and hidden) ─
+    c.execute('''SELECT t.id, t.rating, t.review_text, t.is_published, t.created_at,
+                        cu.first_name, cu.last_name
+                 FROM testimonials t JOIN customers cu ON cu.id = t.customer_id
+                 ORDER BY t.created_at DESC''')
+    all_testimonials = c.fetchall()
+
+    # ─── ADDED: pending advance requests, same join pattern ──────────────
+    c.execute('''SELECT a.id, a.project_id, a.contractor_id, con.name, p.title,
+                        a.amount_requested, a.reason, a.requested_at
+                 FROM advance_requests a
+                 JOIN contractors con ON con.id = a.contractor_id
+                 JOIN projects p ON p.id = a.project_id
+                 WHERE a.status='pending' ORDER BY a.requested_at''')
+    pending_advance_requests = c.fetchall()
+
+    # ─── ADDED: contractor payouts (advance/remaining/extra) per project ─
+    c.execute('''SELECT project_id, id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts ORDER BY project_id, created_at''')
+    contractor_payouts = {}
+    for row in c.fetchall():
+        contractor_payouts.setdefault(row[0], []).append(
+            {'id': row[1], 'payout_type': row[2], 'amount': row[3], 'status': row[4], 'paid_at': row[5]}
+        )
+
+    # ─── ADDED: milestone submissions awaiting client review, per project —
+    #     lets the CEO see what's been submitted without waiting on the client
+    c.execute('''SELECT project_id, phase_number, phase_label, contractor_proof,
+                        contractor_submitted_at, client_approved
+                 FROM project_payments
+                 WHERE contractor_proof IS NOT NULL
+                 ORDER BY project_id, phase_number''')
+    milestone_submissions = {}
+    for row in c.fetchall():
+        milestone_submissions.setdefault(row[0], []).append(
+            {'phase_number': row[1], 'phase_label': row[2], 'proof': row[3],
+             'submitted_at': row[4], 'client_approved': row[5]}
+        )
+
+    conn.close()
+    return render_template('ceo_dashboard.html',
+        pending_contractors=pending_contractors,
+        approved_contractors=approved_contractors,
+        rejected_contractors=rejected_contractors,
+        banned_contractors=banned_contractors,
+        pending_projects=pending_projects,
+        approved_projects=approved_projects,
+        completed_projects=completed_projects,
+        customers=customers,
+        suspended_customers=suspended_customers,
+        project_counts=project_counts,
+        total_revenue=total_revenue,
+        payment_phases=payment_phases,
+        settings=settings,
+        pending_bank_requests=pending_bank_requests,
+        pending_advance_requests=pending_advance_requests,
+        contractor_payouts=contractor_payouts,
+        milestone_submissions=milestone_submissions,
+        all_testimonials=all_testimonials)
+
+
+# ─── CEO: CONTRACTOR ACTIONS ────────────────────────────
+@app.route('/approve-contractor/<int:id>')
+def approve_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='approved', cin=%s, suspended=FALSE WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reject-contractor/<int:id>')
+def reject_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/suspend-contractor/<int:id>')
+def suspend_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=TRUE, cin=NULL WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reinstate-contractor/<int:id>')
+def reinstate_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=FALSE, status='approved', cin=%s WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/delete-contractor/<int:id>')
+def delete_contractor(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM contractors WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ban-cin/<int:id>')
+def ban_cin(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET cin=NULL, status='banned', suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/award-badge/<int:id>', methods=['POST'])
+def award_badge(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    badge = request.form.get('badge', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET badge=%s WHERE id=%s", (badge, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ─── CEO: PROJECT ACTIONS ───────────────────────────────
+@app.route('/approve-project/<int:id>', methods=['GET', 'POST'])
+def approve_project(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+
+    # ADDED: real enforcement — can't approve until the upfront (phase 1)
+    # payment is marked paid. This is the actual "no unpaid work starts" rule,
+    # not just something the UI suggests.
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT is_paid FROM project_payments
+                 WHERE project_id=%s AND phase_number=1''', (id,))
+    row = c.fetchone()
+    if row and not row[0]:
+        conn.close()
+        flash('Cannot approve — the upfront payment for this project has not been marked as paid yet.')
+        return redirect(url_for('ceo_dashboard'))
+
+    contractor_pay = request.form.get('contractor_pay', '0').strip()
+    if not contractor_pay:
+        contractor_pay = '0'
+    try:
+        c.execute("UPDATE projects SET status='approved', contractor_pay=%s WHERE id=%s", (contractor_pay, id))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reject-project/<int:id>', methods=['GET', 'POST'])
+def reject_project(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    reason = request.form.get('rejection_reason', 'No reason provided.').strip()
+    if not reason:
+        reason = 'No reason provided.'
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE projects SET status='rejected', rejection_reason=%s WHERE id=%s", (reason, id))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
+@app.route('/suspend-customer/<int:id>')
+def suspend_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/reinstate-customer/<int:id>')
+def reinstate_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=FALSE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/delete-customer/<int:id>')
+def delete_customer(id):
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_portal'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM customers WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/team/add', methods=['POST'])
+@ceo_required
+def team_add():
+    name = request.form['name'].strip()
+    role = request.form.get('role','').strip()
+    specialties = request.form.get('specialties','').strip()
+    bio = request.form.get('bio','').strip()
+    projects_count = request.form.get('projects_count', 0)
+    photo_name = None
+    photo = request.files.get('photo')
+    if photo and allowed_file(photo.filename):
+        photo_name = secure_filename(f'team_{name}_{photo.filename}')
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_name))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO team_members (name,role,specialties,bio,projects_count,photo) VALUES (%s,%s,%s,%s,%s,%s)",
+              (name,role,specialties,bio,projects_count,photo_name))
+    conn.commit(); conn.close()
+    flash(f'{name} added to team.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/team/delete/<int:tid>')
+@ceo_required
+def team_delete(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s",(tid,))
+    conn.commit(); conn.close()
+    flash('Team member removed.','success')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/api/team')
+def api_team():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id,name,role,specialties,bio,projects_count,photo FROM team_members ORDER BY created_at")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{'id':r[0],'name':r[1],'role':r[2],'specialties':r[3],'bio':r[4],'projects':r[5],'photo':r[6]} for r in rows])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — SITE COPY + PAYMENT SETTINGS + PAYMENT PHASE TRACKING
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/site-settings', methods=['POST'])
+@ceo_required
+def ceo_site_settings():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE site_settings SET
+        hero_tagline=%s, hero_subtext=%s, agency_bio=%s,
+        contact_email=%s, contact_phone=%s, contact_whatsapp=%s,
+        payoneer_email=%s, payoneer_account_name=%s, payment_instructions=%s,
+        linkedin_url=%s, facebook_url=%s, instagram_url=%s, twitter_url=%s
+        WHERE id=1''',
+        (request.form.get('hero_tagline'), request.form.get('hero_subtext'), request.form.get('agency_bio'),
+         request.form.get('contact_email'), request.form.get('contact_phone'), request.form.get('contact_whatsapp'),
+         request.form.get('payoneer_email'), request.form.get('payoneer_account_name'),
+         request.form.get('payment_instructions'),
+         request.form.get('linkedin_url'), request.form.get('facebook_url'),
+         request.form.get('instagram_url'), request.form.get('twitter_url')))
+    conn.commit()
+    conn.close()
+    flash('Settings updated.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/project/<int:project_id>/mark-phase-paid/<int:phase_number>', methods=['POST'])
+@ceo_required
+def mark_phase_paid(project_id, phase_number):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE project_payments SET is_paid=TRUE, paid_at=NOW()
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+    conn.commit()
+    conn.close()
+    flash('Payment marked as received.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/project/<int:project_id>/unmark-phase-paid/<int:phase_number>', methods=['POST'])
+@ceo_required
+def unmark_phase_paid(project_id, phase_number):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE project_payments SET is_paid=FALSE, paid_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+    conn.commit()
+    conn.close()
+    flash('Payment marking undone.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — PORTFOLIO & TEAM: CEO management + public pages
+# ═══════════════════════════════════════════════════════════════════════
+
+# ─── CEO: PORTFOLIO ─────────────────────────────────────
+@app.route('/ceo/portfolio')
+@ceo_required
+def ceo_portfolio_list():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY display_order")
+    projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_portfolio.html', projects=projects)
+
+
+@app.route('/ceo/portfolio/new', methods=['GET', 'POST'])
+@ceo_required
+def ceo_portfolio_new():
+    if request.method == 'POST':
+        cover_url = upload_image(request.files.get('cover_image'), folder="mrk_agency/portfolio")
+        gallery_urls = upload_multiple_images(request.files.getlist('gallery_images'), folder="mrk_agency/portfolio")
+        gallery_str = ','.join(gallery_urls) if gallery_urls else None
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO portfolio_projects
+            (title, category, package_tier, short_summary, full_description, tech_stack,
+             client_name, is_confidential, live_url, cover_image, gallery_images, display_order)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
+             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
+             request.form.get('client_name'), bool(request.form.get('is_confidential')),
+             request.form.get('live_url'), cover_url, gallery_str,
+             int(request.form.get('display_order') or 0)))
+        conn.commit()
+        conn.close()
+        flash('Project saved as draft. Publish it from the portfolio list when ready.')
+        return redirect(url_for('ceo_portfolio_list'))
+
+    return render_template('ceo_portfolio_form.html', project=None)
+
+
+@app.route('/ceo/portfolio/<int:project_id>/edit', methods=['GET', 'POST'])
+@ceo_required
+def ceo_portfolio_edit(project_id):
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE id=%s", (project_id,))
+    project = c.fetchone()
+    conn.close()
+    if not project:
+        return redirect(url_for('ceo_portfolio_list'))
+
+    if request.method == 'POST':
+        cover_url = project['cover_image']
+        new_cover = request.files.get('cover_image')
+        if new_cover and new_cover.filename:
+            cover_url = upload_image(new_cover, folder="mrk_agency/portfolio")
+
+        gallery_str = project['gallery_images']
+        new_gallery = request.files.getlist('gallery_images')
+        if new_gallery and any(f.filename for f in new_gallery):
+            gallery_urls = upload_multiple_images(new_gallery, folder="mrk_agency/portfolio")
+            gallery_str = ','.join(gallery_urls) if gallery_urls else None
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''UPDATE portfolio_projects SET
+            title=%s, category=%s, package_tier=%s, short_summary=%s, full_description=%s,
+            tech_stack=%s, client_name=%s, is_confidential=%s, live_url=%s,
+            cover_image=%s, gallery_images=%s, display_order=%s
+            WHERE id=%s''',
+            (request.form['title'], request.form['category'], request.form.get('package_tier') or None,
+             request.form['short_summary'], request.form['full_description'], request.form.get('tech_stack'),
+             request.form.get('client_name'), bool(request.form.get('is_confidential')),
+             request.form.get('live_url'), cover_url, gallery_str,
+             int(request.form.get('display_order') or 0), project_id))
+        conn.commit()
+        conn.close()
+        flash('Project updated.')
+        return redirect(url_for('ceo_portfolio_list'))
+
+    return render_template('ceo_portfolio_form.html', project=project)
+
+
+@app.route('/ceo/portfolio/<int:project_id>/publish', methods=['POST'])
+@ceo_required
+def ceo_portfolio_publish(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE portfolio_projects SET is_published = NOT is_published WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/portfolio/<int:project_id>/feature', methods=['POST'])
+@ceo_required
+def ceo_portfolio_feature(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE portfolio_projects SET is_featured = NOT is_featured WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/portfolio/<int:project_id>/delete', methods=['POST'])
+@ceo_required
+def ceo_portfolio_delete(project_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM portfolio_projects WHERE id=%s", (project_id,))
+    conn.commit()
+    conn.close()
+    flash('Project deleted.')
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+# ─── CEO: TEAM (dedicated pages — separate from the quick-add form
+#     already on your CEO dashboard; both write to the same table) ──────
+@app.route('/ceo/team')
+@ceo_required
+def ceo_team_list():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members ORDER BY display_order")
+    members = c.fetchall()
+    conn.close()
+    return render_template('ceo_team.html', members=members)
+
+
+@app.route('/ceo/team/new', methods=['GET', 'POST'])
+@ceo_required
+def ceo_team_new():
+    if request.method == 'POST':
+        photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/team")
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO team_members (name, role, specialties, bio, photo, display_order)
+                     VALUES (%s,%s,%s,%s,%s,%s) RETURNING id''',
+                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
+                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0)))
+        new_id = c.fetchone()[0]
+
+        for pid in request.form.getlist('project_ids'):
+            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
+                      (new_id, pid))
+        conn.commit()
+        conn.close()
+        flash('Team member added (unpublished). Publish from the team list when ready.')
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
+    all_projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_team_form.html', member=None, all_projects=all_projects)
+
+
+@app.route('/ceo/team/<int:member_id>/edit', methods=['GET', 'POST'])
+@ceo_required
+def ceo_team_edit(member_id):
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members WHERE id=%s", (member_id,))
+    member = c.fetchone()
+    conn.close()
+    if not member:
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT portfolio_project_id FROM team_project_links WHERE team_member_id=%s", (member_id,))
+    linked = c.fetchall()
+    conn.close()
+    member['project_ids'] = [str(row['portfolio_project_id']) for row in linked]
+
+    if request.method == 'POST':
+        photo_url = member['photo']
+        new_photo = request.files.get('photo')
+        if new_photo and new_photo.filename:
+            photo_url = upload_image(new_photo, folder="mrk_agency/team")
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''UPDATE team_members SET name=%s, role=%s, specialties=%s, bio=%s, photo=%s, display_order=%s
+                     WHERE id=%s''',
+                  (request.form['name'], request.form['role'], request.form.get('skills', ''),
+                   request.form.get('bio'), photo_url, int(request.form.get('display_order') or 0), member_id))
+
+        c.execute("DELETE FROM team_project_links WHERE team_member_id=%s", (member_id,))
+        for pid in request.form.getlist('project_ids'):
+            c.execute("INSERT INTO team_project_links (team_member_id, portfolio_project_id) VALUES (%s,%s)",
+                      (member_id, pid))
+        conn.commit()
+        conn.close()
+        flash('Team member updated.')
+        return redirect(url_for('ceo_team_list'))
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects ORDER BY title")
+    all_projects = c.fetchall()
+    conn.close()
+    return render_template('ceo_team_form.html', member=member, all_projects=all_projects)
+
+
+@app.route('/ceo/team/<int:member_id>/publish', methods=['POST'])
+@ceo_required
+def ceo_team_publish(member_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE team_members SET is_published = NOT is_published WHERE id=%s", (member_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_team_list'))
+
+
+@app.route('/ceo/team/<int:member_id>/delete', methods=['POST'])
+@ceo_required
+def ceo_team_remove(member_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s", (member_id,))
+    conn.commit()
+    conn.close()
+    flash('Team member removed.')
+    return redirect(url_for('ceo_team_list'))
+
+
+# ─── CEO: SITE-WIDE VISIBILITY TOGGLES ──────────────────
+@app.route('/ceo/settings/toggle-portfolio-visibility', methods=['POST'])
+@ceo_required
+def toggle_portfolio_visibility():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE site_settings SET portfolio_visible = NOT portfolio_visible WHERE id=1")
+    conn.commit()
+    conn.close()
+    flash('Portfolio visibility updated.')
+    return redirect(request.referrer or url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/settings/toggle-team-visibility', methods=['POST'])
+@ceo_required
+def toggle_team_visibility():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE site_settings SET team_visible = NOT team_visible WHERE id=1")
+    conn.commit()
+    conn.close()
+    flash('Team visibility updated.')
+    return redirect(request.referrer or url_for('ceo_team_list'))
+
+
+# ─── PUBLIC: PORTFOLIO & TEAM ────────────────────────────
+@app.route('/portfolio')
+def public_portfolio():
+    settings = get_site_settings()
+    if not settings['portfolio_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE is_published=TRUE ORDER BY is_featured DESC, display_order")
+    projects = c.fetchall()
+    conn.close()
+    return render_template('portfolio.html', projects=projects)
+
+
+@app.route('/portfolio/<int:project_id>')
+def public_portfolio_detail(project_id):
+    settings = get_site_settings()
+    if not settings['portfolio_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE id=%s AND is_published=TRUE", (project_id,))
+    project = c.fetchone()
+    conn.close()
+    if not project:
+        abort(404)
+
+    project['gallery_images'] = project['gallery_images'].split(',') if project['gallery_images'] else []
+    project['display_client_name'] = 'Confidential Client' if project['is_confidential'] else (project['client_name'] or '—')
+    return render_template('portfolio_detail.html', project=project)
+
+
+@app.route('/team')
+def public_team():
+    settings = get_site_settings()
+    if not settings['team_section_visible']:
+        abort(404)
+
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order")
+    members = c.fetchall()
+    for m in members:
+        m['skills'] = [s.strip() for s in m['specialties'].split(',')] if m['specialties'] else []
+        c.execute('''SELECT p.id, p.title FROM portfolio_projects p
+                     JOIN team_project_links l ON p.id = l.portfolio_project_id
+                     WHERE l.team_member_id=%s''', (m['id'],))
+        m['projects'] = c.fetchall()
+    conn.close()
+    return render_template('team.html', members=members)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — CONTRACTOR BANK DETAILS + PROFILE PHOTO
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/contractor/update-bank', methods=['POST'])
+def contractor_update_bank():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    title = request.form.get('bank_account_title', '').strip()
+    number = request.form.get('bank_account_number', '').strip()
+    bank = request.form.get('bank_name', '').strip()
+    swift = request.form.get('bank_swift_iban', '').strip()
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT bank_account_number FROM contractors WHERE id=%s', (cid,))
+    row = c.fetchone()
+    is_first_time = not row[0]
+
+    if is_first_time:
+        # First-ever fill-in — write directly, nothing to protect yet
+        c.execute('''UPDATE contractors SET bank_account_title=%s, bank_account_number=%s,
+                     bank_name=%s, bank_swift_iban=%s WHERE id=%s''',
+                  (title, number, bank, swift, cid))
+        conn.commit()
+        conn.close()
+        flash('Bank details saved.')
+    else:
+        # Any change after that goes through CEO approval first
+        c.execute('''INSERT INTO bank_edit_requests
+            (contractor_id, new_bank_account_title, new_bank_account_number, new_bank_name, new_bank_swift_iban)
+            VALUES (%s,%s,%s,%s,%s)''', (cid, title, number, bank, swift))
+        conn.commit()
+        conn.close()
+        flash('Bank detail change submitted — pending CEO approval before it takes effect.')
+
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/contractor/update-photo', methods=['POST'])
+def contractor_update_photo():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/contractors")
+    if photo_url:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('UPDATE contractors SET photo=%s WHERE id=%s', (photo_url, session['contractor_id']))
+        conn.commit()
+        conn.close()
+        flash('Profile photo updated.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/ceo/bank-request/<int:req_id>/approve', methods=['POST'])
+@ceo_required
+def approve_bank_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM bank_edit_requests WHERE id=%s', (req_id,))
+    r = c.fetchone()
+    if r:
+        # columns: id0 contractor_id1 title2 number3 bank4 swift5 status6 ...
+        c.execute('''UPDATE contractors SET bank_account_title=%s, bank_account_number=%s,
+                     bank_name=%s, bank_swift_iban=%s WHERE id=%s''',
+                  (r[2], r[3], r[4], r[5], r[1]))
+        c.execute("UPDATE bank_edit_requests SET status='approved', decided_at=NOW() WHERE id=%s", (req_id,))
+        conn.commit()
+        flash('Bank detail change approved and applied.')
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/bank-request/<int:req_id>/reject', methods=['POST'])
+@ceo_required
+def reject_bank_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE bank_edit_requests SET status='rejected', decided_at=NOW() WHERE id=%s", (req_id,))
+    conn.commit()
+    conn.close()
+    flash('Bank detail change rejected.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — MILESTONE REVIEW: contractor submits proof, client approves
+# ═══════════════════════════════════════════════════════════════════════
+
+def get_next_review_phase(c, project_id):
+    """The earliest phase not yet approved by the client — what the
+    contractor can currently submit, and what the client currently reviews."""
+    c.execute('''SELECT phase_number, phase_label, contractor_proof, contractor_submitted_at,
+                        client_approved, client_notes
+                 FROM project_payments
+                 WHERE project_id=%s AND client_approved=FALSE
+                 ORDER BY phase_number LIMIT 1''', (project_id,))
+    return c.fetchone()
+
+
+@app.route('/contractor/submit-milestone/<int:project_id>', methods=['POST'])
+def contractor_submit_milestone(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    proof = request.form.get('proof', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    # Only the contractor actually assigned to this project can submit
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['contractor_id']:
+        conn.close()
+        return redirect(url_for('contractor_dashboard'))
+
+    phase = get_next_review_phase(c, project_id)
+    if phase:
+        c.execute('''UPDATE project_payments SET contractor_proof=%s, contractor_submitted_at=NOW(),
+                     client_notes=NULL WHERE project_id=%s AND phase_number=%s''',
+                  (proof, project_id, phase[0]))
+        conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/client/approve-milestone/<int:project_id>/<int:phase_number>', methods=['POST'])
+def client_approve_milestone(project_id, phase_number):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['customer_id']:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''UPDATE project_payments SET client_approved=TRUE, client_approved_at=NOW()
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+
+    # If this was the last phase, the project is genuinely done
+    c.execute('SELECT COUNT(*) FROM project_payments WHERE project_id=%s AND client_approved=FALSE', (project_id,))
+    remaining = c.fetchone()[0]
+    if remaining == 0:
+        invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+        c.execute("UPDATE projects SET status='completed', completed=TRUE, invoice_ref=%s WHERE id=%s",
+                  (invoice_ref, project_id))
+
+    conn.commit()
+    conn.close()
+    flash('Milestone approved.')
+    return redirect(url_for('my_projects'))
+
+
+@app.route('/client/request-changes/<int:project_id>/<int:phase_number>', methods=['POST'])
+def client_request_changes(project_id, phase_number):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    notes = request.form.get('notes', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['customer_id']:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''UPDATE project_payments SET client_notes=%s, contractor_submitted_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (notes, project_id, phase_number))
+    conn.commit()
+    conn.close()
+    flash('Changes requested — the contractor has been sent back to revise this milestone.')
+    return redirect(url_for('my_projects'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — CONTRACTOR PAYOUTS: 25% advance, requests, remaining balance
+# ═══════════════════════════════════════════════════════════════════════
+
+def create_contractor_payouts(c, project_id, contractor_id, contractor_pay):
+    """Called once, when the CEO approves a project and sets contractor_pay.
+    Auto-creates the 25% advance and the 75% remaining-balance payout rows."""
+    total = float(contractor_pay or 0)
+    advance = round(total * 0.25, 2)
+    remaining = round(total - advance, 2)
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'advance',%s)''', (project_id, contractor_id, advance))
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'remaining',%s)''', (project_id, contractor_id, remaining))
+
+
+@app.route('/contractor/request-advance/<int:project_id>', methods=['POST'])
+def contractor_request_advance(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    amount = request.form.get('amount', '').strip()
+    reason = request.form.get('reason', '').strip()
+    if not amount or not reason:
+        flash('An amount and a reason are both required to request an advance.')
+        return redirect(url_for('contractor_dashboard'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO advance_requests (project_id, contractor_id, amount_requested, reason)
+                 VALUES (%s,%s,%s,%s)''', (project_id, session['contractor_id'], amount, reason))
+    conn.commit()
+    conn.close()
+    flash('Advance request submitted for CEO review.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/approve', methods=['POST'])
+@ceo_required
+def approve_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT project_id, contractor_id, amount_requested FROM advance_requests WHERE id=%s', (req_id,))
+    r = c.fetchone()
+    if r:
+        c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                     VALUES (%s,%s,'extra',%s)''', (r[0], r[1], r[2]))
+        c.execute("UPDATE advance_requests SET status='approved', decided_at=NOW() WHERE id=%s", (req_id,))
+        conn.commit()
+        flash('Advance request approved.')
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/reject', methods=['POST'])
+@ceo_required
+def reject_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE advance_requests SET status='rejected', decided_at=NOW() WHERE id=%s", (req_id,))
+    conn.commit()
+    conn.close()
+    flash('Advance request rejected.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/payout/<int:payout_id>/mark-paid', methods=['POST'])
+@ceo_required
+def mark_payout_paid(payout_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractor_payouts SET status='paid', paid_at=NOW() WHERE id=%s", (payout_id,))
+    conn.commit()
+    conn.close()
+    flash('Payout marked as sent.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ─── ADDED: branded 404 — replaces Flask's default error page, which is
+#     what was showing whenever /portfolio or /team was visited while hidden
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — TESTIMONIALS
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/submit-testimonial', methods=['POST'])
+def submit_testimonial():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    rating = request.form.get('rating', '').strip()
+    review_text = request.form.get('review_text', '').strip()
+    if not rating or not review_text:
+        flash('A rating and a review are both required.')
+        return redirect(url_for('my_projects'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO testimonials (customer_id, rating, review_text)
+                 VALUES (%s,%s,%s)''', (session['customer_id'], int(rating), review_text))
+    conn.commit()
+    conn.close()
+    flash('Thank you — your review has been posted.')
+    return redirect(url_for('my_projects'))
+
+
+@app.route('/ceo/testimonial/<int:tid>/toggle', methods=['POST'])
+@ceo_required
+def toggle_testimonial(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE testimonials SET is_published = NOT is_published WHERE id=%s', (tid,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_dashboard'))
+
+
+@app.route('/ceo/testimonial/<int:tid>/delete', methods=['POST'])
+@ceo_required
+def delete_testimonial(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM testimonials WHERE id=%s', (tid,))
+    conn.commit()
+    conn.close()
+    flash('Testimonial deleted.')
+    return redirect(url_for('ceo_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED — DEDICATED SERVICES PAGE (separate entry point from packages,
+# so a client picking one thing isn't shown 10 options at once)
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/services')
+def services_page():
+    services = [
+        {'key': k, 'name': k.replace(' (Service)', ''), 'price': v['price'],
+         'weeks': v['weeks'], 'desc': v.get('desc', '')}
+        for k, v in PACKAGE_INFO.items() if v.get('category') == 'service'
+    ]
+    return render_template('services.html', services=services)
+
+
+# ─── RUN ────────────────────────────────────────────────
+init_db()
+
+if __name__ == '__main__':
+    app.run(debug=True)
