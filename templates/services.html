@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Individual Services — MRK Agency</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="/" class="logo"><span>MRK</span> <span>AGENCY</span></a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="/#services">Full Packages</a></li>
+        <li><a href="/services" style="color:#fff;">Individual Services</a></li>
+        <li><a href="/#pricing">Pricing</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="/login" class="btn-ghost">Sign in</a>
+      <a href="/register" class="btn-primary">Start a project</a>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Just need one thing?</span>
+      <h1 class="section-title">Order a single service.</h1>
+      <p class="section-sub">Already have some of the pieces in place? Skip the full package — order exactly what you need. Looking for a complete website instead? <a href="/submit-project" style="color:var(--blue);">See our packages</a>.</p>
+    </div>
+
+    <div class="grid grid-3">
+      {% for s in services %}
+      <div class="card">
+        <div class="card-body">
+          <span class="card-tag">From ${{ '{:,}'.format(s.price) }}</span>
+          <div class="card-title">{{ s.name }}</div>
+          <p class="card-text" style="margin-bottom:18px;">{{ s.desc }}</p>
+          <a href="/submit-project?service={{ s.key | urlencode }}" class="btn-outline" style="display:block;text-align:center;">Order This Service →</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% include 'footer.html' %}
+
+</body>
+  </html>
