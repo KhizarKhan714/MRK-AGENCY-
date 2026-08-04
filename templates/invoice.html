@@ -15,6 +15,7 @@
       --text: #1E293B;
       --muted: #64748B;
       --green: #16A34A;
+      --orange: #D97706;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
@@ -61,14 +62,14 @@
 
     /* STATUS BANNER */
     .inv-status {
-      background: #D1FAE5;
-      color: #065F46;
       text-align: center;
       padding: 0.65rem;
       font-size: 0.85rem;
       font-weight: 700;
       letter-spacing: 0.03em;
     }
+    .inv-status.paid    { background: #D1FAE5; color: #065F46; }
+    .inv-status.due     { background: #FEF3C7; color: #92400E; }
 
     /* BODY */
     .inv-body { padding: 2rem; }
@@ -80,7 +81,9 @@
       letter-spacing: 0.07em;
       color: var(--muted);
       margin-bottom: 0.75rem;
+      margin-top: 1.5rem;
     }
+    .inv-section-title:first-child { margin-top: 0; }
 
     .inv-row {
       display: flex;
@@ -96,6 +99,26 @@
 
     .inv-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
 
+    /* PAYMENT PLAN */
+    .plan-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .plan-row:last-child { border-bottom: none; }
+    .plan-label { font-size: 0.88rem; font-weight: 600; color: var(--dark); }
+    .plan-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+    .plan-amount { font-size: 0.95rem; font-weight: 700; color: var(--dark); text-align: right; }
+    .plan-status {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.65rem;
+      border-radius: 999px; margin-top: 0.25rem;
+    }
+    .plan-status.paid { background: #D1FAE5; color: #065F46; }
+    .plan-status.due  { background: #FEF3C7; color: #92400E; }
+
     .inv-total {
       background: #F0F4FF;
       border: 1px solid #C7D7FF;
@@ -104,10 +127,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin: 1.5rem 0;
     }
+    .inv-total.zero { background: #F0FDF4; border-color: #BBF7D0; }
     .inv-total label { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
     .inv-total span { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
+    .inv-total.zero span { color: var(--green); }
 
     /* PAYMENT INSTRUCTIONS */
     .payment-box {
@@ -179,13 +204,17 @@
         <p>Where your brand achieves glory.</p>
       </div>
       <div class="inv-ref">
-        <h2>INVOICE</h2>
-        <p>{{ project[13] }}</p>
+        <h2>PAYMENT PLAN</h2>
+        <p>Project #{{ project[0] }}</p>
       </div>
     </div>
 
     <!-- STATUS -->
-    <div class="inv-status">✅ PROJECT COMPLETED — PAYMENT DUE</div>
+    {% if fully_paid %}
+    <div class="inv-status paid">✅ FULLY PAID</div>
+    {% else %}
+    <div class="inv-status due">⏳ PAYMENT DUE — ${{ "%.2f"|format(amount_due_now) }}</div>
+    {% endif %}
 
     <!-- BODY -->
     <div class="inv-body">
@@ -201,47 +230,69 @@
         <span>{{ project[7] or '—' }}</span>
       </div>
       <div class="inv-row">
-        <label>Website Type</label>
-        <span>{{ project[4] or '—' }}</span>
-      </div>
-      <div class="inv-row">
         <label>Deadline</label>
         <span>{{ project[6] or '—' }}</span>
       </div>
       <div class="inv-row">
         <label>Status</label>
-        <span>Completed ✓</span>
+        <span>{{ project[8] | capitalize }}</span>
       </div>
 
-      <div class="inv-divider"></div>
+      <!-- PAYMENT PLAN -->
+      <div class="inv-section-title">Payment Plan</div>
+      {% for ph in phases %}
+      <div class="plan-row">
+        <div>
+          <div class="plan-label">Phase {{ ph.number }} — {{ ph.label }}</div>
+          {% if ph.is_paid and ph.paid_at %}
+          <div class="plan-sub">Paid {{ ph.paid_at.strftime('%b %d, %Y') }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <div class="plan-amount">${{ "%.2f"|format(ph.amount) }}</div>
+          {% if ph.is_paid %}
+          <span class="plan-status paid">✓ Paid</span>
+          {% else %}
+          <span class="plan-status due">Due</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
 
       <!-- TOTAL -->
-      <div class="inv-total">
-        <label>Total Amount Due</label>
-        <span>${{ project[5] }}</span>
+      <div class="inv-total {% if fully_paid %}zero{% endif %}">
+        <label>{% if fully_paid %}Total Paid{% else %}Amount Due Now{% endif %}</label>
+        <span>${{ "%.2f"|format(0 if fully_paid else amount_due_now) }}</span>
       </div>
 
       <!-- PAYMENT INSTRUCTIONS -->
+      {% if not fully_paid %}
       <div class="payment-box">
         <h4>Payment Instructions</h4>
         <p>
-          Please send the payment via <strong>Payoneer</strong> to the following account:<br/><br/>
-          <strong>Account Name:</strong> Khizar Khan<br/>
-          <strong>Payoneer Email:</strong> mrkagency@payoneer.com<br/><br/>
-          Once payment is sent, please email us at <strong>ceo@mrkagency.com</strong> with your
-          invoice reference number <strong>{{ project[13] }}</strong> and payment confirmation screenshot.
+          Please send <strong>${{ "%.2f"|format(amount_due_now) }}</strong>
+          {% if next_due_phase %}(Phase {{ next_due_phase.number }} — {{ next_due_phase.label }}){% endif %}
+          via <strong>Payoneer</strong> to the following account:<br/><br/>
+          <strong>Account Name:</strong> {{ settings.payoneer_account_name or 'MRK Agency' }}<br/>
+          <strong>Payoneer Email:</strong> {{ settings.payoneer_email or 'Contact us for payment details' }}<br/><br/>
+          {% if settings.payment_instructions %}{{ settings.payment_instructions }}<br/><br/>{% endif %}
+          Once payment is sent, please email us at
+          <strong>{{ settings.contact_email or 'ceo@mrkagency.com' }}</strong>
+          with your project number and payment confirmation screenshot.
+          Work begins once your upfront payment is confirmed.
         </p>
       </div>
+      {% endif %}
 
       <div class="inv-section-title">Description</div>
-      <p style="font-size:0.88rem; color:var(--muted); line-height:1.6;">{{ project[3] }}</p>
+      <p style="font-size:0.88rem; color:var(--muted); line-height:1.6; white-space:pre-line;">{{ project[3] }}</p>
 
     </div>
 
     <!-- FOOTER -->
     <div class="inv-footer">
       Thank you for choosing <strong>MRK AGENCY</strong> — where your brand achieves glory.<br/>
-      For any queries, contact us at <strong>ceo@mrkagency.com</strong>
+      For any queries, contact us at <strong>{{ settings.contact_email or 'ceo@mrkagency.com' }}</strong>
     </div>
 
   </div>
