@@ -137,7 +137,9 @@
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0.9rem 1rem;border:1.5px solid var(--blue);border-radius:9px;background:#EFF6FF;">
           <div>
             <div class="pkg-name">{{ locked_service.replace(' (Service)', '') }}</div>
-            <div class="pkg-desc" style="margin-top:0.3rem;">Starting price — final cost depends on scope</div>
+            <div class="pkg-desc" style="margin-top:0.3rem;">
+              {% if locked_service_price %}Starting at <strong>${{ '{:,}'.format(locked_service_price) }}</strong> — final cost depends on scope{% else %}Starting price — final cost depends on scope{% endif %}
+            </div>
           </div>
         </div>
         <div class="field-hint" style="margin-top:0.75rem;">Ordering something else instead? <a href="/services" style="color:var(--blue);">Browse services</a> or <a href="/submit-project" style="color:var(--blue);">see full packages</a>.</div>
@@ -301,4 +303,4 @@
   }
 </script>
 </body>
-      </html>
+  </html>
