@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Projects — CEO Portal — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB; --dark: #0A0F1E; --bg: #F0F2F5; --white: #ffffff;
+      --border: #E2E8F0; --text: #1E293B; --muted: #64748B;
+      --green: #16A34A; --red: #DC2626; --orange: #D97706;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+    .page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+    .page-title { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1.25rem; }
+
+    .toolbar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .toolbar input, .toolbar select {
+      padding: 0.65rem 1rem; border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 0.88rem; font-family: 'Inter', sans-serif; outline: none;
+      background: var(--white); transition: border-color 0.2s;
+    }
+    .toolbar input { flex: 1; min-width: 220px; }
+    .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); }
+
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; margin-top: 0.25rem; }
+    .section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1.1rem; overflow: hidden; }
+    .card-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .card-head h3 { font-size: 0.95rem; font-weight: 700; color: var(--dark); }
+    .card-head p { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+    .card-body { padding: 1rem 1.25rem; }
+    .card-foot { padding: 0.8rem 1.25rem; border-top: 1px solid var(--border); background: #F8FAFB; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 0.8rem; }
+    .info-item label { display: block; font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+    .info-item span { font-size: 0.84rem; font-weight: 500; color: var(--dark); word-break: break-word; }
+
+    .status-badge { display: inline-block; padding: 0.22rem 0.7rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .badge-pending { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-completed { background: #DBEAFE; color: #1E40AF; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.95rem; border-radius: 7px; font-size: 0.78rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: opacity 0.2s; white-space: nowrap; font-family: 'Inter', sans-serif; }
+    .btn:hover { opacity: 0.82; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-red { background: var(--red); color: white; }
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    .inline-form { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; }
+    .inline-form input, .inline-form select, .inline-form textarea { padding: 0.42rem 0.7rem; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.8rem; font-family: 'Inter', sans-serif; outline: none; }
+    .inline-form input:focus, .inline-form select:focus, .inline-form textarea:focus { border-color: var(--blue); }
+    .inline-form textarea { resize: vertical; min-height: 58px; width: 100%; }
+    .reject-block { width: 100%; margin-top: 0.35rem; }
+
+    .note-box { background: #F8FAFB; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.83rem; color: var(--text); line-height: 1.55; margin-top: 0.75rem; }
+    .note-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.35rem; }
+
+    .sep { height: 1.5rem; }
+    .empty-state { text-align: center; padding: 2.25rem; color: var(--muted); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); border-radius: 12px; }
+    .project-row[data-hidden="true"] { display: none; }
+  </style>
+</head>
+<body>
+
+{% include "ceo_nav.html" %}
+
+<div class="page">
+  <div class="page-title">Project Management</div>
+
+  <div class="toolbar">
+    <input type="text" id="projectSearch" placeholder="Search by title, package, or customer #..." oninput="filterProjects()"/>
+    <select id="statusFilter" onchange="filterProjects()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Active</option>
+      <option value="completed">Completed</option>
+      <option value="rejected">Rejected / Cancelled</option>
+    </select>
+  </div>
+
+  <!-- PENDING -->
+  <div class="section-head"><div class="section-title">Pending Projects ({{ pending_projects|length }})</div></div>
+  {% if not pending_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No pending project submissions.</div>
+  {% else %}
+  {% for p in pending_projects %}
+  <div class="card project-row" data-status="pending" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
+    <div class="card-head">
+      <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or 'No package' }}</p></div>
+      <span class="status-badge badge-pending">⏳ Pending</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+        <div class="info-item"><label>Budget</label><span>${{ p[5] or '—' }}</span></div>
+        <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
+        <div class="info-item"><label>Website Type</label><span>{{ p[4] or '—' }}</span></div>
+      </div>
+      <div class="note-label" style="margin-top:0.75rem;">Description</div>
+      <div class="note-box">{{ p[3] }}</div>
+
+      {% if payment_phases.get(p[0]) %}
+      <div class="note-label" style="margin-top:0.85rem;">Payment Plan — must be paid before approval</div>
+      {% for ph in payment_phases[p[0]] %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
+        <span>{{ ph.phase_label }} — ${{ '%.2f'|format(ph.amount) }}</span>
+        {% if ph.is_paid %}
+          <form action="/ceo/project/{{ p[0] }}/unmark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+            <button type="submit" class="status-badge badge-approved" style="border:none;cursor:pointer;">✅ Paid — undo</button>
+          </form>
+        {% else %}
+          <form action="/ceo/project/{{ p[0] }}/mark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+          </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    <div class="card-foot">
+      <form action="/approve-project/{{ p[0] }}" method="POST" class="inline-form">
+        <input type="number" name="contractor_pay" placeholder="Contractor Pay ($)" required min="0" step="0.01" style="width:185px;"/>
+        <button type="submit" class="btn btn-green" onclick="return confirm('Approve this project?')">✓ Approve</button>
+      </form>
+      <div class="reject-block">
+        <form action="/reject-project/{{ p[0] }}" method="POST">
+          <div class="inline-form" style="flex-direction:column; align-items:flex-start;">
+            <textarea name="rejection_reason" placeholder="Reason for rejection (shown to the customer)..." required></textarea>
+            <button type="submit" class="btn btn-red" onclick="return confirm('Reject this project?')">✗ Reject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- ACTIVE -->
+  <div class="section-head"><div class="section-title">Active Projects ({{ approved_projects|length }})</div></div>
+  {% if not approved_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No active projects.</div>
+  {% else %}
+  {% for p in approved_projects %}
+  <div class="card project-row" data-status="approved" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
+    <div class="card-head">
+      <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or '—' }}</p></div>
+      <span class="status-badge badge-approved">✅ Active</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+        <div class="info-item"><label>Budget</label><span>${{ p[5] or '—' }}</span></div>
+        <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+        <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
+        <div class="info-item"><label>Assigned Contractor</label><span>{% if p[9] %}#{{ p[9] }}{% else %}Unassigned{% endif %}</span></div>
+        <div class="info-item"><label>Accepted By</label><span>{% if p[11] %}#{{ p[11] }}{% else %}Awaiting{% endif %}</span></div>
+      </div>
+
+      {% if not p[11] %}
+      <form action="/ceo/project/{{ p[0] }}/assign-contractor" method="POST" class="inline-form" style="margin-top:1rem;">
+        <select name="contractor_id" required>
+          <option value="">Assign a contractor...</option>
+          {% for ct in approved_contractors %}
+          <option value="{{ ct[0] }}">{{ ct[1] }} — {{ ct[3] or 'General' }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-blue">Assign</button>
+      </form>
+      {% endif %}
+
+      {% if milestone_submissions.get(p[0]) %}
+      <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
+      {% for m in milestone_submissions[p[0]] %}
+      <div class="note-box" style="margin-bottom:0.5rem;">
+        <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
+        <span style="font-size:0.72rem;color:var(--muted);">{{ 'Approved by client' if m.client_approved else 'Awaiting client review' }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if payment_phases.get(p[0]) %}
+      <div class="note-label" style="margin-top:0.85rem;">Payment Phases</div>
+      {% for ph in payment_phases[p[0]] %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:0.82rem;">{{ ph.phase_label }} — ${{ '%.2f'|format(ph.amount) }}</span>
+        {% if ph.is_paid %}
+          <form action="/ceo/project/{{ p[0] }}/unmark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+            <button type="submit" class="status-badge badge-approved" style="border:none;cursor:pointer;">✅ Paid — undo</button>
+          </form>
+        {% else %}
+          <form action="/ceo/project/{{ p[0] }}/mark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+          </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if contractor_payouts.get(p[0]) %}
+      <div class="note-label" style="margin-top:0.85rem;">Contractor Payouts</div>
+      {% for po in contractor_payouts[p[0]] %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
+        <span>{{ po.payout_type | capitalize }} — ${{ '%.2f'|format(po.amount) }}</span>
+        {% if po.status == 'paid' %}<span class="status-badge badge-approved">✅ Paid</span>
+        {% else %}
+          <form action="/ceo/payout/{{ po.id }}/mark-paid" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-blue" style="padding:0.3rem 0.75rem;font-size:0.72rem;">Mark Paid</button>
+          </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- COMPLETED -->
+  <div class="section-head"><div class="section-title">Completed Projects ({{ completed_projects|length }})</div></div>
+  {% if not completed_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No completed projects yet.</div>
+  {% else %}
+  {% for p in completed_projects %}
+  <div class="card project-row" data-status="completed" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
+    <div class="card-head">
+      <div><h3>{{ p[2] }}</h3><p>Invoice: {{ p[13] or '—' }}</p></div>
+      <span class="status-badge badge-completed">🏁 Completed</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+        <div class="info-item"><label>Revenue</label><span>${{ p[5] or '—' }}</span></div>
+        <div class="info-item"><label>Contractor Pay</label><span>${{ p[10] or '—' }}</span></div>
+        <div class="info-item"><label>Contractor</label><span>{% if p[11] %}#{{ p[11] }}{% else %}—{% endif %}</span></div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- REJECTED / CANCELLED -->
+  <div class="section-head"><div class="section-title">Rejected / Cancelled ({{ rejected_projects|length }})</div></div>
+  {% if not rejected_projects %}
+  <div class="empty-state">None.</div>
+  {% else %}
+  {% for p in rejected_projects %}
+  <div class="card project-row" data-status="rejected" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
+    <div class="card-head">
+      <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or '—' }}</p></div>
+      <span class="status-badge badge-rejected">✗ Rejected</span>
+    </div>
+    <div class="card-body">
+      {% if p[12] %}
+      <div class="note-label">Reason</div>
+      <div class="note-box">{{ p[12] }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+
+<script>
+  function filterProjects() {
+    const q = document.getElementById('projectSearch').value.trim().toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    document.querySelectorAll('.project-row').forEach(row => {
+      const hay = row.getAttribute('data-search') || '';
+      const st = row.getAttribute('data-status');
+      const matchesSearch = !q || hay.includes(q);
+      const matchesStatus = !status || st === status;
+      row.setAttribute('data-hidden', (matchesSearch && matchesStatus) ? 'false' : 'true');
+    });
+  }
+</script>
+</body>
+  </html>
