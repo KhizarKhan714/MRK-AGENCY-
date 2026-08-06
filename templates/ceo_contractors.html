@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contractors — CEO Portal — MRK AGENCY</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue: #1A56DB; --dark: #0A0F1E; --bg: #F0F2F5; --white: #ffffff;
+      --border: #E2E8F0; --text: #1E293B; --muted: #64748B;
+      --green: #16A34A; --red: #DC2626; --orange: #D97706; --purple: #7C3AED;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
+    .page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+
+    .page-title { font-size: 1.4rem; font-weight: 700; color: var(--dark); margin-bottom: 1.25rem; }
+
+    .search-bar { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .search-bar input {
+      flex: 1; min-width: 220px; padding: 0.65rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 9px;
+      font-size: 0.88rem; font-family: 'Inter', sans-serif; outline: none;
+      background: var(--white); transition: border-color 0.2s;
+    }
+    .search-bar input:focus { border-color: var(--blue); }
+
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; margin-top: 0.25rem; }
+    .section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+
+    .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 1.1rem; overflow: hidden; }
+    .card-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .card-head-left { display: flex; align-items: center; gap: 0.85rem; }
+    .card-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #6366F1);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1rem; font-weight: 700; flex-shrink: 0;
+    }
+    .card-head h3 { font-size: 0.95rem; font-weight: 700; color: var(--dark); }
+    .card-head p { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+    .card-body { padding: 1rem 1.25rem; }
+    .card-foot { padding: 0.8rem 1.25rem; border-top: 1px solid var(--border); background: #F8FAFB; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 0.8rem; }
+    .info-item label { display: block; font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.15rem; }
+    .info-item span { font-size: 0.84rem; font-weight: 500; color: var(--dark); word-break: break-word; }
+    .info-item a { font-size: 0.84rem; font-weight: 500; color: var(--blue); text-decoration: none; }
+
+    .status-badge { display: inline-block; padding: 0.22rem 0.7rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .badge-pending { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-suspended { background: #FFF1F2; color: #9F1239; }
+    .badge-banned { background: #1F2937; color: #F87171; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.95rem; border-radius: 7px; font-size: 0.78rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: opacity 0.2s; white-space: nowrap; font-family: 'Inter', sans-serif; }
+    .btn:hover { opacity: 0.82; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-red { background: var(--red); color: white; }
+    .btn-blue { background: var(--blue); color: white; }
+    .btn-orange { background: var(--orange); color: white; }
+    .btn-dark { background: #1F2937; color: #F87171; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+    .inline-form { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; }
+    .inline-form input, .inline-form select { padding: 0.42rem 0.7rem; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.8rem; font-family: 'Inter', sans-serif; outline: none; }
+    .inline-form input:focus, .inline-form select:focus { border-color: var(--blue); }
+
+    .expand-toggle { font-size: 0.75rem; color: var(--blue); cursor: pointer; text-decoration: none; display: inline-block; margin-top: 0.5rem; user-select: none; }
+    .expand-section { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+    .expand-section.open { display: block; }
+    .doc-preview { max-width: 220px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; display: block; margin-bottom: 0.5rem; }
+    .note-box { background: #F8FAFB; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.83rem; color: var(--text); line-height: 1.55; margin-top: 0.75rem; }
+    .note-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.35rem; }
+    .badge-chip { display: inline-block; background: linear-gradient(135deg, #1A56DB, #6366F1); color: white; padding: 0.18rem 0.65rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 0.4rem; }
+
+    .sep { height: 1.5rem; }
+    .empty-state { text-align: center; padding: 2.25rem; color: var(--muted); font-size: 0.86rem; background: var(--white); border: 1px solid var(--border); border-radius: 12px; }
+
+    .avail-select-form { display: flex; align-items: center; gap: 0.4rem; }
+    .avail-select-form select { padding: 0.35rem 0.6rem; border: 1.5px solid var(--border); border-radius: 7px; font-size: 0.78rem; font-family: 'Inter', sans-serif; }
+
+    .contractor-row[data-hidden="true"] { display: none; }
+  </style>
+</head>
+<body>
+
+{% include "ceo_nav.html" %}
+
+<div class="page">
+  <div class="page-title">Contractor Management</div>
+
+  <div class="search-bar">
+    <input type="text" id="contractorSearch" placeholder="Search by name, CIN, expertise, or email..." oninput="filterContractors()"/>
+  </div>
+
+  <!-- ASSIGN PROJECTS -->
+  <div class="section-head"><div class="section-title">Assign Projects ({{ unassigned_projects|length }})</div></div>
+  {% if not unassigned_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No approved projects waiting for a contractor.</div>
+  {% else %}
+  {% for up in unassigned_projects %}
+  <div class="card">
+    <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h3 style="font-size:0.92rem;font-weight:700;color:var(--dark);">{{ up.title }}</h3>
+        <p style="font-size:0.78rem;color:var(--muted);">{{ up.package }} · Pay: ${{ up.contractor_pay }}</p>
+      </div>
+      <form action="/ceo/project/{{ up.id }}/assign-contractor" method="POST" class="inline-form">
+        <select name="contractor_id" required>
+          <option value="">Select contractor...</option>
+          {% for ct in approved_contractors %}
+          <option value="{{ ct[0] }}">{{ ct[1] }} — {{ ct[3] or 'General' }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-blue">Assign</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- ACTIVE -->
+  <div class="section-head"><div class="section-title">Active Contractors ({{ approved_contractors|length }})</div></div>
+  {% if not approved_contractors %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No active contractors.</div>
+  {% else %}
+  {% for ct in approved_contractors %}
+  <div class="card contractor-row" data-search="{{ (ct[1] ~ ' ' ~ (ct[6] or '') ~ ' ' ~ (ct[3] or '') ~ ' ' ~ (ct[8] or ''))|lower }}">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="card-avatar">{{ ct[1][0]|upper }}</div>
+        <div>
+          <h3>{{ ct[1] }}{% if ct[16] %}<span class="badge-chip">{{ ct[16] }}</span>{% endif %}</h3>
+          <p>{{ ct[3] or '—' }} · CIN: <strong>{{ ct[6] or '—' }}</strong></p>
+        </div>
+      </div>
+      <span class="status-badge badge-approved">✅ Active</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+        <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+        <div class="info-item">
+          <label>WhatsApp</label>
+          {% if ct[10] %}<a href="https://wa.me/{{ ct[10]|replace('+','') }}" target="_blank">{{ ct[10] }}</a>{% else %}<span>—</span>{% endif %}
+        </div>
+        <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+        <div class="info-item"><label>Expertise</label><span>{{ ct[3] or '—' }}</span></div>
+        <div class="info-item"><label>Experience</label><span>{{ ct[4] or '—' }}</span></div>
+        <div class="info-item"><label>Specialties</label><span>{{ ct[14] or '—' }}</span></div>
+        <div class="info-item"><label>Availability</label><span>{{ contractor_availability.get(ct[0], 'Available') }}</span></div>
+      </div>
+
+      <span class="expand-toggle" onclick="toggleExpand('act-{{ ct[0] }}', this)">▸ View Documents & Note</span>
+      <div class="expand-section" id="act-{{ ct[0] }}">
+        {% if ct[5] %}<div class="note-label">Note</div><div class="note-box">{{ ct[5] }}</div>{% endif %}
+        {% if ct[12] %}<div class="note-label" style="margin-top:0.85rem;">CNIC Image</div>
+        <img src="{{ ct[12] }}" class="doc-preview" onclick="window.open(this.src)" title="Click to open full size"/>{% endif %}
+        {% if ct[13] %}<div class="note-label">CV / Resume</div>
+        <a href="{{ ct[13] }}" download="CV_{{ ct[1] }}" class="btn btn-outline" style="margin-bottom:0.5rem;">⬇ Download CV</a>{% endif %}
+      </div>
+    </div>
+    <div class="card-foot">
+      <form action="/ceo/contractor/{{ ct[0] }}/set-availability" method="POST" class="avail-select-form">
+        <select name="availability_status">
+          <option value="Available" {% if contractor_availability.get(ct[0]) == 'Available' %}selected{% endif %}>🟢 Available</option>
+          <option value="Busy" {% if contractor_availability.get(ct[0]) == 'Busy' %}selected{% endif %}>🟡 Busy</option>
+          <option value="Offline" {% if contractor_availability.get(ct[0]) == 'Offline' %}selected{% endif %}>🔴 Offline</option>
+        </select>
+        <button type="submit" class="btn btn-outline">Update</button>
+      </form>
+      <a href="/suspend-contractor/{{ ct[0] }}" class="btn btn-orange" onclick="return confirm('Suspend {{ ct[1] }}? Their CIN will be revoked.')">⏸ Suspend</a>
+      <a href="/ban-cin/{{ ct[0] }}" class="btn btn-dark" onclick="return confirm('BAN {{ ct[1] }} permanently?')">⛔ Ban CIN</a>
+      <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-outline" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}? Cannot be undone.')" style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+      <form action="/award-badge/{{ ct[0] }}" method="POST" class="inline-form" style="margin-left:auto;">
+        <input type="text" name="badge" placeholder="Award badge..." style="width:140px;" value="{{ ct[16] or '' }}"/>
+        <button type="submit" class="btn btn-blue">🏅 Award</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- PENDING -->
+  <div class="section-head"><div class="section-title">Pending Applications ({{ pending_contractors|length }})</div></div>
+  {% if not pending_contractors %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No pending contractor applications.</div>
+  {% else %}
+  {% for ct in pending_contractors %}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="card-avatar">{{ ct[1][0]|upper }}</div>
+        <div><h3>{{ ct[1] }}</h3><p>{{ ct[3] or '—' }} · {{ ct[4] or '—' }} experience</p></div>
+      </div>
+      <span class="status-badge badge-pending">⏳ Pending</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+        <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+        <div class="info-item"><label>WhatsApp</label><span>{{ ct[10] or '—' }}</span></div>
+        <div class="info-item"><label>CNIC</label><span>{{ ct[11] or '—' }}</span></div>
+        <div class="info-item"><label>Expertise</label><span>{{ ct[3] or '—' }}</span></div>
+        <div class="info-item"><label>Specialties</label><span>{{ ct[14] or '—' }}</span></div>
+      </div>
+      <span class="expand-toggle" onclick="toggleExpand('pct-{{ ct[0] }}', this)">▸ View Full Application</span>
+      <div class="expand-section" id="pct-{{ ct[0] }}">
+        {% if ct[5] %}<div class="note-label">Note from Applicant</div><div class="note-box">{{ ct[5] }}</div>{% endif %}
+        {% if ct[12] %}<div class="note-label" style="margin-top:0.85rem;">CNIC Image</div>
+        <img src="{{ ct[12] }}" class="doc-preview" onclick="window.open(this.src)" title="Click to open full size"/>{% endif %}
+        {% if ct[13] %}<div class="note-label">CV / Resume</div>
+        <a href="{{ ct[13] }}" download="CV_{{ ct[1] }}" class="btn btn-outline" style="margin-bottom:0.5rem;">⬇ Download CV</a>{% endif %}
+      </div>
+    </div>
+    <div class="card-foot">
+      <a href="/approve-contractor/{{ ct[0] }}" class="btn btn-green" onclick="return confirm('Approve {{ ct[1] }}? A CIN will be auto-generated.')">✓ Approve</a>
+      <a href="/reject-contractor/{{ ct[0] }}" class="btn btn-red" onclick="return confirm('Reject {{ ct[1] }}?')">✗ Reject</a>
+      <a href="/ban-cin/{{ ct[0] }}" class="btn btn-dark" onclick="return confirm('BAN {{ ct[1] }} permanently?')">⛔ Ban</a>
+      <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-outline" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}?')" style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- SUSPENDED / REJECTED -->
+  <div class="section-head"><div class="section-title">Suspended / Rejected ({{ rejected_contractors|length }})</div></div>
+  {% if not rejected_contractors %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">None.</div>
+  {% else %}
+  {% for ct in rejected_contractors %}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        <div class="card-avatar" style="background:#94A3B8;">{{ ct[1][0]|upper }}</div>
+        <div><h3>{{ ct[1] }}</h3><p>{{ ct[3] or '—' }} · {{ ct[8] or 'No email' }}</p></div>
+      </div>
+      {% if ct[15] %}<span class="status-badge badge-suspended">⛔ Suspended</span>{% else %}<span class="status-badge badge-rejected">✗ Rejected</span>{% endif %}
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Email</label><span>{{ ct[8] or '—' }}</span></div>
+        <div class="info-item"><label>Phone</label><span>{{ ct[9] or '—' }}</span></div>
+        <div class="info-item"><label>Expertise</label><span>{{ ct[3] or '—' }}</span></div>
+        <div class="info-item"><label>CIN</label><span>{{ ct[6] or 'Revoked' }}</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <a href="/reinstate-contractor/{{ ct[0] }}" class="btn btn-green" onclick="return confirm('Reinstate {{ ct[1] }}?')">↩ Reinstate</a>
+      <a href="/ban-cin/{{ ct[0] }}" class="btn btn-dark" onclick="return confirm('Permanently BAN {{ ct[1] }}?')">⛔ Ban</a>
+      <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-outline" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }}?')" style="color:var(--red);border-color:var(--red);">🗑 Delete</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- BANNED -->
+  <div class="section-head"><div class="section-title">Banned Contractors ({{ banned_contractors|length }})</div></div>
+  {% if not banned_contractors %}
+  <div class="empty-state">No banned contractors.</div>
+  {% else %}
+  {% for ct in banned_contractors %}
+  <div class="card" style="border-color:#FCA5A5;">
+    <div class="card-head" style="background:#FFF5F5;">
+      <div class="card-head-left">
+        <div class="card-avatar" style="background:#DC2626;">{{ ct[1][0]|upper }}</div>
+        <div><h3>{{ ct[1] }}</h3><p>{{ ct[8] or '—' }} · CNIC: {{ ct[11] or '—' }}</p></div>
+      </div>
+      <span class="status-badge badge-banned">⛔ BANNED</span>
+    </div>
+    <div class="card-foot">
+      <a href="/delete-contractor/{{ ct[0] }}" class="btn btn-red" onclick="return confirm('PERMANENTLY DELETE {{ ct[1] }} from database?')">🗑 Delete from Database</a>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+
+<script>
+  function toggleExpand(id, el) {
+    const sec = document.getElementById(id);
+    sec.classList.toggle('open');
+    el.textContent = sec.classList.contains('open') ? '▾ Hide Details' : '▸ View Documents & Note';
+  }
+  function filterContractors() {
+    const q = document.getElementById('contractorSearch').value.trim().toLowerCase();
+    document.querySelectorAll('.contractor-row').forEach(row => {
+      const hay = row.getAttribute('data-search') || '';
+      row.setAttribute('data-hidden', q && !hay.includes(q) ? 'true' : 'false');
+    });
+  }
+</script>
+</body>
+  </html>
