@@ -862,12 +862,64 @@ def contractor_dashboard():
     c = conn.cursor()
     c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
     contractor = c.fetchone()
+
+    c.execute('SELECT availability_status, last_login FROM contractors WHERE id=%s', (session['contractor_id'],))
+    avail_row = c.fetchone()
+    availability_status = avail_row[0] or 'Available'
+    last_login = avail_row[1]
+
     c.execute("""SELECT * FROM projects
                  WHERE status='approved' AND contractor_pay IS NOT NULL
                  AND (accepted_by IS NULL OR accepted_by=%s)
                  AND (completed IS NULL OR completed=FALSE)""",
               (session['contractor_id'],))
     projects = c.fetchall()
+
+    review_status = {}
+    for p in projects:
+        if p[11] == session['contractor_id']:
+            phase = get_next_review_phase(c, p[0])
+            if phase:
+                review_status[p[0]] = {
+                    'phase_number': phase[0], 'phase_label': phase[1],
+                    'proof': phase[2], 'submitted_at': phase[3],
+                    'client_approved': phase[4], 'client_notes': phase[5]
+                }
+
+    c.execute('''SELECT project_id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts WHERE contractor_id=%s
+                 ORDER BY project_id, created_at''', (session['contractor_id'],))
+    payouts = {}
+    for row in c.fetchall():
+        payouts.setdefault(row[0], []).append(
+            {'payout_type': row[1], 'amount': row[2], 'status': row[3], 'paid_at': row[4]})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND (completed IS NULL OR completed=FALSE)",
+              (session['contractor_id'],))
+    assigned_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND completed=TRUE", (session['contractor_id'],))
+    completed_count = c.fetchone()[0]
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE contractor_id=%s AND status='paid'",
+              (session['contractor_id'],))
+    current_earnings = float(c.fetchone()[0])
+    performance_rating = 'New' if completed_count == 0 else 'Good Standing'
+
+    c.execute("SELECT message, created_at FROM announcements ORDER BY created_at DESC LIMIT 10")
+    announcements = c.fetchall()
+    c.execute("SELECT action, created_at FROM contractor_activity WHERE contractor_id=%s ORDER BY created_at DESC LIMIT 6",
+              (session['contractor_id'],))
+    recent_activity = c.fetchall()
+
+    site_copy = get_site_copy()
+
+    conn.close()
+    return render_template('contractor_dashboard.html',
+        contractor=contractor, projects=projects, review_status=review_status, payouts=payouts,
+        availability_status=availability_status, last_login=last_login,
+        assigned_count=assigned_count, completed_count=completed_count,
+        current_earnings=current_earnings, performance_rating=performance_rating,
+        announcements=announcements, recent_activity=recent_activity,
+        contact_whatsapp=site_copy.get('contact_whatsapp'))
 
     # ADDED: for each accepted project, the next phase awaiting review —
     # tells the template whether to show "Submit for Review", "Waiting on
