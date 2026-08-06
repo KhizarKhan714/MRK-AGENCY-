@@ -837,6 +837,10 @@ def contractor_login():
                 return render_template('contractor_login.html', error='Your account has been suspended. Contact MRK Agency.')
             session['contractor_id'] = contractor[0]
             session['contractor_name'] = contractor[1]
+            conn2 = get_db(); c2 = conn2.cursor()
+c2.execute("UPDATE contractors SET last_login=NOW() WHERE id=%s", (contractor[0],))
+c2.execute("INSERT INTO contractor_activity (contractor_id, action) VALUES (%s,'Logged in')", (contractor[0],))
+conn2.commit(); conn2.close()
             return redirect(url_for('contractor_dashboard'))
         return render_template('contractor_login.html', error='Invalid CIN or password.')
     return render_template('contractor_login.html')
