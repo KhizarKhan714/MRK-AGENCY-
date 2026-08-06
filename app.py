@@ -963,29 +963,18 @@ def contractor_change_password():
     c = conn.cursor()
     c.execute('SELECT * FROM contractors WHERE id=%s', (session['contractor_id'],))
     contractor = c.fetchone()
-    c.execute("""SELECT * FROM projects WHERE status='approved' AND contractor_pay IS NOT NULL
-                 AND (accepted_by IS NULL OR accepted_by=%s)
-                 AND (completed IS NULL OR completed=FALSE)""",
-              (session['contractor_id'],))
-    projects = c.fetchall()
     if not bcrypt.checkpw(current_pw, contractor[2].encode()):
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='Current password is incorrect.')
+        conn.close(); flash('Current password is incorrect.'); return redirect(url_for('contractor_dashboard'))
     if new_pw != confirm_pw:
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='New passwords do not match.')
+        conn.close(); flash('New passwords do not match.'); return redirect(url_for('contractor_dashboard'))
     if len(new_pw) < 6:
-        conn.close()
-        return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                               error='Password must be at least 6 characters.')
+        conn.close(); flash('Password must be at least 6 characters.'); return redirect(url_for('contractor_dashboard'))
     hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
     c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, session['contractor_id']))
-    conn.commit()
-    conn.close()
-    return render_template('contractor_dashboard.html', contractor=contractor, projects=projects,
-                           success='Password changed successfully.')
+    c.execute("INSERT INTO contractor_activity (contractor_id, action) VALUES (%s,'Password changed')", (session['contractor_id'],))
+    conn.commit(); conn.close()
+    flash('Password changed successfully.')
+    return redirect(url_for('contractor_dashboard'))
 
 
 @app.route('/accept-project/<int:id>')
