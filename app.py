@@ -229,7 +229,23 @@ def init_db():
     try:
         c.execute("ALTER TABLE contractors ADD COLUMN IF NOT EXISTS national_id TEXT")
     except: conn.rollback()
+    try:
+    c.execute("ALTER TABLE contractors ADD COLUMN IF NOT EXISTS availability_status TEXT DEFAULT 'Available'")
+except: conn.rollback()
+try:
+    c.execute("ALTER TABLE contractors ADD COLUMN IF NOT EXISTS last_login TIMESTAMP")
+except: conn.rollback()
 
+c.execute('''CREATE TABLE IF NOT EXISTS announcements (
+    id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW())''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS contractor_activity (
+    id SERIAL PRIMARY KEY,
+    contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+    action TEXT,
+    created_at TIMESTAMP DEFAULT NOW())''')
     # PROJECTS
     c.execute('''CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
