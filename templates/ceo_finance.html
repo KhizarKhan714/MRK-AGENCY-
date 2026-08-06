@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Finance — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1100px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; }
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+  .stat-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; }
+  .stat-card label { display:block; font-size:0.7rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem; }
+  .stat-val { font-size:1.55rem; font-weight:700; }
+  .stat-val.green { color:var(--green); } .stat-val.blue { color:var(--blue); } .stat-val.orange { color:var(--orange); } .stat-val.red { color:var(--red); }
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; margin-top:0.25rem; }
+  .section-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.1rem; overflow:hidden; }
+  .card-body { padding:1.1rem 1.25rem; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:0.65rem 0; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+  .row:last-child { border-bottom:none; }
+  .row .r-title { font-size:0.87rem; font-weight:600; color:var(--dark); }
+  .row .r-sub { font-size:0.75rem; color:var(--muted); }
+  .row .r-amount { font-size:0.92rem; font-weight:700; color:var(--dark); }
+  .status-badge { display:inline-block; padding:0.22rem 0.7rem; border-radius:999px; font-size:0.72rem; font-weight:600; white-space:nowrap; }
+  .badge-paid { background:#D1FAE5; color:#065F46; }
+  .badge-pending { background:#FEF3C7; color:#92400E; }
+  .btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.4rem 0.85rem; border-radius:7px; font-size:0.76rem; font-weight:600; text-decoration:none; cursor:pointer; border:none; font-family:'Inter',sans-serif; }
+  .btn-blue { background:var(--blue); color:white; }
+  .inline-form { display:inline; }
+  .sep { height:1.5rem; }
+  .empty-state { text-align:center; padding:2.25rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+  .placeholder-card { text-align:center; padding:2.25rem 1.5rem; }
+  .placeholder-card .icon { font-size:1.75rem; margin-bottom:0.6rem; }
+  .placeholder-card h3 { font-size:0.95rem; color:var(--dark); margin-bottom:0.4rem; }
+  .placeholder-card p { font-size:0.84rem; color:var(--muted); max-width:420px; margin:0 auto; }
+  .month-bar-row { display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0; }
+  .month-bar-label { width:70px; font-size:0.78rem; color:var(--muted); font-weight:600; flex-shrink:0; }
+  .month-bar-track { flex:1; height:10px; background:#F1F5F9; border-radius:6px; overflow:hidden; }
+  .month-bar-fill { height:100%; background:var(--blue); border-radius:6px; }
+  .month-bar-val { width:80px; text-align:right; font-size:0.82rem; font-weight:700; color:var(--dark); flex-shrink:0; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+  @media (max-width:760px) { .two-col { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Financial Center</div>
+
+  <!-- TOP STATS -->
+  <div class="stats-grid">
+    <div class="stat-card"><label>Total Revenue</label><div class="stat-val green">${{ "%.2f"|format(total_revenue) }}</div></div>
+    <div class="stat-card"><label>Pending Client Payments</label><div class="stat-val orange">${{ "%.2f"|format(pending_payments_total) }}</div></div>
+    <div class="stat-card"><label>Contractor Payouts Paid</label><div class="stat-val blue">${{ "%.2f"|format(payouts_paid_total) }}</div></div>
+    <div class="stat-card"><label>Contractor Payouts Pending</label><div class="stat-val orange">${{ "%.2f"|format(payouts_pending_total) }}</div></div>
+    <div class="stat-card"><label>Net Profit (est.)</label><div class="stat-val green">${{ "%.2f"|format(net_profit) }}</div></div>
+  </div>
+
+  <!-- INVOICES / CLIENT PAYMENTS -->
+  <div class="section-head"><div class="section-title">Client Invoices & Payments ({{ payment_phases_list|length }})</div></div>
+  {% if not payment_phases_list %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No invoices yet.</div>
+  {% else %}
+  <div class="card"><div class="card-body">
+    {% for ph in payment_phases_list %}
+    <div class="row">
+      <div>
+        <div class="r-title">{{ ph.project_title }} — {{ ph.phase_label }}</div>
+        <div class="r-sub">Customer #{{ ph.customer_id }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="r-amount">${{ '%.2f'|format(ph.amount) }}</span>
+        {% if ph.is_paid %}
+          <span class="status-badge badge-paid">✅ Paid</span>
+        {% else %}
+          <form action="/ceo/project/{{ ph.project_id }}/mark-phase-paid/{{ ph.phase_number }}" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-blue">Mark Paid</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div></div>
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- CONTRACTOR PAYOUTS -->
+  <div class="section-head"><div class="section-title">Contractor Payouts ({{ contractor_payouts_list|length }})</div></div>
+  {% if not contractor_payouts_list %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No contractor payouts yet.</div>
+  {% else %}
+  <div class="card"><div class="card-body">
+    {% for po in contractor_payouts_list %}
+    <div class="row">
+      <div>
+        <div class="r-title">{{ po.contractor_name }} — {{ po.payout_type|capitalize }}</div>
+        <div class="r-sub">{{ po.project_title }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="r-amount">${{ '%.2f'|format(po.amount) }}</span>
+        {% if po.status == 'paid' %}
+          <span class="status-badge badge-paid">✅ Paid</span>
+        {% else %}
+          <form action="/ceo/payout/{{ po.id }}/mark-paid" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-blue">Mark Paid</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div></div>
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <div class="two-col">
+    <!-- REFUNDS PLACEHOLDER -->
+    <div class="card">
+      <div class="card-body placeholder-card">
+        <div class="icon">↩️</div>
+        <h3>Refunds</h3>
+        <p>Refund policy hasn't been finalized yet. Once decided, refund requests and processing will appear here.</p>
+      </div>
+    </div>
+
+    <!-- EXPENSES PLACEHOLDER -->
+    <div class="card">
+      <div class="card-body placeholder-card">
+        <div class="icon">🧾</div>
+        <h3>Expenses</h3>
+        <p>No expense tracking set up yet. This is reserved for logging business costs (tools, subscriptions, ads) once you're ready to track them.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- MONTHLY REPORTS -->
+  <div class="section-head"><div class="section-title">Monthly Revenue</div></div>
+  <div class="card"><div class="card-body">
+    {% if not monthly_revenue %}
+    <p style="font-size:0.85rem;color:var(--muted);">No paid invoices yet — monthly figures will appear here as payments come in.</p>
+    {% else %}
+    {% set max_val = (monthly_revenue|map(attribute='amount')|max) or 1 %}
+    {% for m in monthly_revenue %}
+    <div class="month-bar-row">
+      <div class="month-bar-label">{{ m.month }}</div>
+      <div class="month-bar-track"><div class="month-bar-fill" style="width:{{ (m.amount / max_val * 100)|round(1) }}%;"></div></div>
+      <div class="month-bar-val">${{ '%.0f'|format(m.amount) }}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div></div>
+</div>
+</body>
+  </html>
