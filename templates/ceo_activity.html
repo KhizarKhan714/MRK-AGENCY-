@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Activity — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:800px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .day-group-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); padding:0.85rem 1.25rem 0.4rem; background:#F8FAFB; }
+  .activity-item { display:flex; gap:1rem; padding:0.75rem 1.25rem; border-bottom:1px solid var(--border); align-items:flex-start; }
+  .activity-item:last-child { border-bottom:none; }
+  .activity-time { font-size:0.76rem; color:var(--muted); font-weight:600; min-width:54px; flex-shrink:0; padding-top:0.1rem; }
+  .activity-text { font-size:0.88rem; color:var(--text); }
+  .empty-state { text-align:center; padding:2.5rem; color:var(--muted); font-size:0.88rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Activity Center</div>
+  <div class="card">
+    {% if not activity_feed %}
+    <div class="empty-state">No activity yet. Every submission, approval, and payment will show up here as it happens.</div>
+    {% else %}
+    {% set ns = namespace(last_day='') %}
+    {% for act in activity_feed %}
+      {% if act.day != ns.last_day %}
+        <div class="day-group-label">{{ act.day }}</div>
+        {% set ns.last_day = act.day %}
+      {% endif %}
+      <div class="activity-item">
+        <div class="activity-time">{{ act.time }}</div>
+        <div class="activity-text">{{ act.text }}</div>
+      </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+</body>
+  </html>
