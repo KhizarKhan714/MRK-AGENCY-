@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Assistant — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --purple:#7C3AED; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1000px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .hero-banner {
+    background:linear-gradient(135deg,var(--dark) 0%,#241a44 100%);
+    border-radius:14px; padding:2rem; color:white; margin-bottom:1.5rem;
+    display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;
+  }
+  .hero-banner .icon { font-size:2.5rem; }
+  .hero-banner h2 { font-size:1.15rem; font-weight:700; margin-bottom:0.3rem; }
+  .hero-banner p { font-size:0.85rem; color:#C4B5FD; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1.1rem; }
+  .feature-card {
+    background:var(--white); border:1px solid var(--border); border-radius:12px;
+    padding:1.25rem; position:relative; overflow:hidden;
+  }
+  .feature-card .f-icon { font-size:1.5rem; margin-bottom:0.75rem; }
+  .feature-card h3 { font-size:0.92rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .feature-card p { font-size:0.8rem; color:var(--muted); line-height:1.5; margin-bottom:0.85rem; }
+  .soon-tag {
+    display:inline-block; background:#F3E8FF; color:var(--purple);
+    font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    padding:0.25rem 0.7rem; border-radius:999px;
+  }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">AI Assistant</div>
+  <div class="page-sub">MRK AI is on the roadmap. This page previews what's coming.</div>
+
+  <div class="hero-banner">
+    <div class="icon">🤖</div>
+    <div>
+      <h2>MRK AI — Coming Soon</h2>
+      <p>Your business assistant, built directly into the CEO portal.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="feature-card">
+      <div class="f-icon">💬</div>
+      <h3>Imagine</h3>
+      <p>Generate creative and marketing assets on demand.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🗨️</div>
+      <h3>MRK AI Chat</h3>
+      <p>Ask questions about your business and get instant answers.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📚</div>
+      <h3>Knowledge Base</h3>
+      <p>A searchable archive of your policies, pricing, and processes.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🎯</div>
+      <h3>Lead Analysis</h3>
+      <p>Detects high-intent potential clients and flags them for you personally.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">💡</div>
+      <h3>Project Suggestions</h3>
+      <p>Recommends the best-fit package or service based on a client's needs.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📊</div>
+      <h3>Business Reports</h3>
+      <p>AI-generated summaries of revenue, demand, and growth trends.</p>
+      <span class="soon-tag">Coming Soon</span>
+    </div>
+  </div>
+</div>
+</body>
+  </html>
