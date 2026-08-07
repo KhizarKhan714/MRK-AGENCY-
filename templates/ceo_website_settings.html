@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Website CMS — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:900px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.25rem; padding:1.5rem; }
+  .card h2 { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--blue); margin-bottom:1.1rem; }
+  .sm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; margin-bottom:1rem; }
+  .sm-full { grid-column:1/-1; }
+  .sm-label { display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.25rem; }
+  .sm-input, .sm-textarea { width:100%; padding:0.6rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:'Inter',sans-serif; color:var(--text); background:#F8FAFB; outline:none; transition:border-color 0.2s; }
+  .sm-input:focus, .sm-textarea:focus { border-color:var(--blue); background:var(--white); }
+  .sm-textarea { resize:vertical; min-height:75px; }
+  .divider-label { grid-column:1/-1; padding-top:0.5rem; border-top:1px dashed var(--border); margin-top:0.5rem; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--blue); }
+  .btn { display:inline-block; padding:0.65rem 1.5rem; border-radius:8px; font-size:0.85rem; font-weight:700; text-decoration:none; cursor:pointer; border:none; background:var(--blue); color:white; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Website Settings</div>
+  <div class="page-sub">Public-facing site copy and payment details. Updates go live on the homepage instantly — no code changes needed.</div>
+
+  <form action="/ceo/site-settings" method="POST">
+    <div class="card">
+      <h2>Hero & Bio</h2>
+      <div class="sm-grid">
+        <div class="sm-full">
+          <span class="sm-label">Hero Tagline</span>
+          <input class="sm-input" type="text" name="hero_tagline" value="{{ settings.get('hero_tagline', 'Where Your Brand Achieves Glory') if settings else 'Where Your Brand Achieves Glory' }}"/>
+        </div>
+        <div class="sm-full">
+          <span class="sm-label">Hero Sub-text</span>
+          <input class="sm-input" type="text" name="hero_subtext" value="{{ settings.get('hero_subtext', '') if settings else '' }}" placeholder="e.g. Web Development · SEO · UI/UX Design"/>
+        </div>
+        <div class="sm-full">
+          <span class="sm-label">Agency Bio</span>
+          <textarea class="sm-textarea" name="agency_bio" placeholder="A short bio about MRK AGENCY shown on the homepage...">{{ settings.get('agency_bio', '') if settings else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Contact Information</h2>
+      <div class="sm-grid">
+        <div><span class="sm-label">Contact Email</span><input class="sm-input" type="email" name="contact_email" value="{{ settings.get('contact_email', 'ceo@mrkagency.com') if settings else 'ceo@mrkagency.com' }}"/></div>
+        <div><span class="sm-label">Contact Phone</span><input class="sm-input" type="tel" name="contact_phone" value="{{ settings.get('contact_phone', '') if settings else '' }}" placeholder="+92 300 0000000"/></div>
+        <div><span class="sm-label">WhatsApp Number</span><input class="sm-input" type="tel" name="contact_whatsapp" value="{{ settings.get('contact_whatsapp', '') if settings else '' }}" placeholder="+92 300 0000000"/></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Payoneer Payment Details</h2>
+      <div class="sm-grid">
+        <div><span class="sm-label">Payoneer Email</span><input class="sm-input" type="email" name="payoneer_email" value="{{ settings.get('payoneer_email', '') if settings else '' }}" placeholder="payments@mrkagency.com"/></div>
+        <div><span class="sm-label">Payoneer Account Name</span><input class="sm-input" type="text" name="payoneer_account_name" value="{{ settings.get('payoneer_account_name', '') if settings else '' }}" placeholder="Khizar Khan"/></div>
+        <div class="sm-full">
+          <span class="sm-label">Payment Instructions (shown to clients)</span>
+          <textarea class="sm-textarea" name="payment_instructions" placeholder="e.g. Send payment via Payoneer to the email above, then message us on WhatsApp with the confirmation.">{{ settings.get('payment_instructions', '') if settings else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Social Media Links</h2>
+      <div class="sm-grid">
+        <div><span class="sm-label">LinkedIn</span><input class="sm-input" type="url" name="linkedin_url" value="{{ settings.get('linkedin_url', '') if settings else '' }}" placeholder="https://linkedin.com/company/..."/></div>
+        <div><span class="sm-label">Facebook</span><input class="sm-input" type="url" name="facebook_url" value="{{ settings.get('facebook_url', '') if settings else '' }}" placeholder="https://facebook.com/..."/></div>
+        <div><span class="sm-label">Instagram</span><input class="sm-input" type="url" name="instagram_url" value="{{ settings.get('instagram_url', '') if settings else '' }}" placeholder="https://instagram.com/..."/></div>
+        <div><span class="sm-label">Twitter / X</span><input class="sm-input" type="url" name="twitter_url" value="{{ settings.get('twitter_url', '') if settings else '' }}" placeholder="https://x.com/..."/></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">💾 Save Settings</button>
+  </form>
+</div>
+</body>
+  </html>
