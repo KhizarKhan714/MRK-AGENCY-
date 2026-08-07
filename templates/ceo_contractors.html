@@ -96,6 +96,27 @@
     <input type="text" id="contractorSearch" placeholder="Search by name, CIN, expertise, or email..." oninput="filterContractors()"/>
   </div>
 
+  <!-- COMPANY ANNOUNCEMENTS (shown on every contractor's Overview tab) -->
+  <div class="section-head"><div class="section-title">Company Announcements ({{ announcements|length }})</div></div>
+  <div class="card">
+    <div class="card-body">
+      <form action="/ceo/announcements/add" method="POST" class="inline-form" style="margin-bottom:{{ '1rem' if announcements else '0' }};">
+        <input type="text" name="message" placeholder="Post a new announcement to all contractors..." style="flex:1;min-width:240px;" required/>
+        <button type="submit" class="btn btn-blue">Post</button>
+      </form>
+      {% for a in announcements %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.85rem;">
+        <span>{{ a[1] }}</span>
+        <form action="/ceo/announcements/{{ a[0] }}/delete" method="POST" class="inline-form">
+          <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);padding:0.3rem 0.65rem;">🗑</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
   <!-- ASSIGN PROJECTS -->
   <div class="section-head"><div class="section-title">Assign Projects ({{ unassigned_projects|length }})</div></div>
   {% if not unassigned_projects %}
@@ -303,4 +324,4 @@
   }
 </script>
 </body>
-  </html>
+    </html>
