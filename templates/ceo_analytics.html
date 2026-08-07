@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --purple:#7C3AED; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1100px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem; }
+  @media (max-width:760px) { .two-col { grid-template-columns:1fr; } }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1.25rem 1.5rem; }
+  .card h3 { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:1rem; }
+  .big-num { font-size:1.9rem; font-weight:700; color:var(--dark); }
+  .big-num-sub { font-size:0.78rem; color:var(--muted); margin-top:0.2rem; }
+  .bar-row { display:flex; align-items:center; gap:0.75rem; padding:0.4rem 0; }
+  .bar-label { width:75px; font-size:0.76rem; color:var(--muted); font-weight:600; flex-shrink:0; }
+  .bar-track { flex:1; height:10px; background:#F1F5F9; border-radius:6px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:6px; }
+  .bar-val { width:50px; text-align:right; font-size:0.78rem; font-weight:700; color:var(--dark); flex-shrink:0; }
+  .empty-note { font-size:0.82rem; color:var(--muted); text-align:center; padding:1.5rem 0; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Analytics</div>
+
+  <div class="two-col">
+    <!-- REVENUE -->
+    <div class="card">
+      <h3>Revenue</h3>
+      {% if monthly_revenue %}
+        {% set max_val = (monthly_revenue|map(attribute='amount')|max) or 1 %}
+        {% for m in monthly_revenue %}
+        <div class="bar-row">
+          <div class="bar-label">{{ m.month }}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ (m.amount / max_val * 100)|round(1) }}%;background:var(--green);"></div></div>
+          <div class="bar-val">${{ '%.0f'|format(m.amount) }}</div>
+        </div>
+        {% endfor %}
+      {% else %}<div class="empty-note">No revenue data yet.</div>{% endif %}
+    </div>
+
+    <!-- PROJECTS BY STATUS -->
+    <div class="card">
+      <h3>Projects by Status</h3>
+      {% if project_status_breakdown %}
+        {% set max_val = (project_status_breakdown|map(attribute='count')|max) or 1 %}
+        {% for s in project_status_breakdown %}
+        <div class="bar-row">
+          <div class="bar-label">{{ s.label }}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ (s.count / max_val * 100)|round(1) }}%;background:var(--blue);"></div></div>
+          <div class="bar-val">{{ s.count }}</div>
+        </div>
+        {% endfor %}
+      {% else %}<div class="empty-note">No projects yet.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- CLIENT GROWTH -->
+    <div class="card">
+      <h3>Client Growth</h3>
+      <div class="big-num">{{ total_clients }}</div>
+      <div class="big-num-sub">Total registered clients</div>
+      {% if new_clients_this_month is not none %}
+      <div class="big-num-sub" style="margin-top:0.5rem;">{{ new_clients_this_month }} new this month</div>
+      {% endif %}
+    </div>
+
+    <!-- CONVERSION -->
+    <div class="card">
+      <h3>Conversion Rate</h3>
+      <div class="big-num">{{ conversion_rate }}</div>
+      <div class="big-num-sub">Submitted projects that were approved</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- MONTHLY SALES (projects approved per month) -->
+    <div class="card">
+      <h3>Monthly Sales (Projects Approved)</h3>
+      {% if monthly_sales %}
+        {% set max_val = (monthly_sales|map(attribute='count')|max) or 1 %}
+        {% for m in monthly_sales %}
+        <div class="bar-row">
+          <div class="bar-label">{{ m.month }}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{ (m.count / max_val * 100)|round(1) }}%;background:var(--purple);"></div></div>
+          <div class="bar-val">{{ m.count }}</div>
+        </div>
+        {% endfor %}
+      {% else %}<div class="empty-note">No approved projects yet.</div>{% endif %}
+    </div>
+
+    <!-- TRAFFIC -->
+    <div class="card">
+      <h3>Traffic</h3>
+      <div class="empty-note">No traffic tracking connected yet. Hook up an analytics provider (e.g. Plausible, GA4) to populate this.</div>
+    </div>
+  </div>
+</div>
+</body>
+  </html>
