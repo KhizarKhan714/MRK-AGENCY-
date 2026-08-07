@@ -176,6 +176,21 @@
       </form>
       {% endif %}
 
+      {% set stage_info = project_stage_info.get(p[0]) if project_stage_info else None %}
+      {% if stage_info and stage_info.pending %}
+      <div class="note-box" style="margin-top:0.85rem;background:#EFF6FF;border-color:#BFDBFE;">
+        <strong>Contractor proposed stage:</strong> {{ stage_info.pending }} <span style="color:var(--muted);">(current: {{ stage_info.current }})</span>
+        <div style="display:flex;gap:0.5rem;margin-top:0.6rem;">
+          <form action="/ceo/project/{{ p[0] }}/approve-stage" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-green">✓ Approve — client will see it</button>
+          </form>
+          <form action="/ceo/project/{{ p[0] }}/reject-stage" method="POST" class="inline-form">
+            <button type="submit" class="btn btn-outline">✗ Reject</button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
       {% if milestone_submissions.get(p[0]) %}
       <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
       {% for m in milestone_submissions[p[0]] %}
@@ -287,4 +302,4 @@
   }
 </script>
 </body>
-  </html>
+                                                                                                               </html>
