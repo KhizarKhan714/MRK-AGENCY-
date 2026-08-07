@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Notifications — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:800px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .notif-item { display:flex; align-items:flex-start; gap:0.85rem; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+  .notif-item:last-child { border-bottom:none; }
+  .notif-dot { font-size:0.85rem; margin-top:0.15rem; }
+  .notif-text { font-size:0.9rem; color:var(--text); font-weight:500; }
+  .notif-sub { font-size:0.76rem; color:var(--muted); margin-top:0.15rem; }
+  .notif-link { margin-left:auto; font-size:0.78rem; font-weight:600; color:var(--blue); text-decoration:none; white-space:nowrap; }
+  .empty-state { text-align:center; padding:2.5rem; color:var(--muted); font-size:0.88rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Notifications Center</div>
+  <div class="card">
+    {% if not notifications %}
+    <div class="empty-state">You're all caught up — no notifications right now.</div>
+    {% else %}
+    {% for n in notifications %}
+    <div class="notif-item">
+      <span class="notif-dot">{{ n.dot }}</span>
+      <div>
+        <div class="notif-text">{{ n.text }}</div>
+        {% if n.sub %}<div class="notif-sub">{{ n.sub }}</div>{% endif %}
+      </div>
+      {% if n.link %}<a href="{{ n.link }}" class="notif-link">View →</a>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>
