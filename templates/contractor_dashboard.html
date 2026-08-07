@@ -464,6 +464,33 @@
         </div>
       </div>
 
+      {% if p[11] == contractor[0] %}
+        {% set stage_info = project_stage_info.get(p[0]) if project_stage_info else None %}
+        <div class="meta-row" style="margin-bottom:1rem;">
+          <div class="meta-item">
+            <label>Current Stage (client-visible)</label>
+            <span>{{ stage_info.current if stage_info else 'Submitted' }}</span>
+          </div>
+        </div>
+        {% if stage_info and stage_info.pending %}
+        <div class="alert alert-info" style="margin-bottom:1rem;">
+          ⏳ Stage update to <strong>{{ stage_info.pending }}</strong> submitted — waiting on CEO approval before the client sees it.
+        </div>
+        {% else %}
+        <form action="/contractor/update-stage/{{ p[0] }}" method="POST" style="margin-bottom:1rem;display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;">
+          <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
+            <label>Update project stage</label>
+            <select name="new_stage" style="width:100%;padding:0.65rem 0.9rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;">
+              {% for stage in ['Submitted','Planning','Design','Development','Testing','Delivered'] %}
+              <option value="{{ stage }}" {% if stage_info and stage_info.current == stage %}selected{% endif %}>{{ stage }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-blue">Submit for CEO Approval</button>
+        </form>
+        {% endif %}
+      {% endif %}
+
       {% if p[11] == contractor[0] and rs %}
         {% if rs.client_notes %}
         <div class="alert alert-error" style="margin-bottom:1rem;">
@@ -482,6 +509,21 @@
             <input type="text" name="proof" placeholder="Link to preview, staging site, or a note describing what's done" required/>
           </div>
           <button type="submit" class="btn btn-blue">Submit for Client Review</button>
+        </form>
+        {% endif %}
+
+        <details style="margin-bottom:1rem;">
+          <summary style="cursor:pointer;font-size:0.85rem;color:var(--muted);">Request an advance</summary>
+          <form action="/contractor/request-advance/{{ p[0] }}" method="POST" style="margin-top:0.75rem;">
+            <div class="form-group">
+              <label>Amount (USD)</label>
+              <input type="number" name="amount" min="0" step="0.01" required/>
+            </div>
+            <div class="form-group">
+              <label>Reason</label>
+              <input type="text" name="reason" placeholder="Why you need this before completion" required/>
+            </div>
+            <button type="submit" class="btn btn-blue">Submit for Client Review</button>
         </form>
         {% endif %}
 
@@ -519,34 +561,6 @@
         <div class="profile-item">
           <label>Full Name</label>
           <span>{{ contractor[1] }}</span>
-        </div>
-        <div class="profile-item">
-          <label>CIN</label>
-          <span>{{ contractor[6] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Email</label>
-          <span>{{ contractor[8] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Phone</label>
-          <span>{{ contractor[9] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>WhatsApp</label>
-          <span>{{ contractor[10] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>CNIC</label>
-          <span>{{ contractor[11] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Expertise</label>
-          <span>{{ contractor[3] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Experience</label>
-          <span>{{ contractor[4] or '—' }}</span>
         </div>
         <div class="profile-item">
           <label>CIN</label>
@@ -713,4 +727,4 @@
   }
 </script>
 </body>
-          </html>
+  </html>
