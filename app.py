@@ -467,4 +467,224 @@ def get_ceo_notifications(c, limit=None):
         notifs.append({'dot': '🔴', 'text': f'{n} new project submission(s) waiting', 'sub': 'Review and approve or reject', 'link': '/ceo/projects'})
 
     c.execute('''SELECT COUNT(*) FROM project_payments
-                 WHERE contractor_proof IS NO
+                 WHERE contractor_proof IS NOT NULL AND client_approved=FALSE''')
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔵', 'text': f'{n} milestone submission(s) awaiting client review', 'sub': 'Contractor has submitted proof', 'link': '/ceo/projects'})
+
+    c.execute("SELECT COUNT(*) FROM bank_edit_requests WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟡', 'text': f'{n} bank detail change request(s) pending', 'sub': 'Contractor payout details', 'link': '/ceo/contractors'})
+
+    c.execute("SELECT COUNT(*) FROM advance_requests WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟡', 'text': f'{n} advance payment request(s) pending', 'sub': 'Contractor requesting funds', 'link': '/ceo/finance'})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE stage_pending_approval=TRUE")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔵', 'text': f'{n} project stage update(s) proposed by contractors', 'sub': 'Awaiting your approval', 'link': '/ceo/projects'})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='completed'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟢', 'text': f'{n} project(s) completed', 'sub': 'All-time', 'link': '/ceo/projects'})
+
+    return notifs[:limit] if limit else notifs
+
+
+def get_pending_approvals(c, limit=None):
+    approvals = []
+    c.execute("SELECT id, name, expertise FROM contractors WHERE status='pending' ORDER BY id DESC")
+    for row in c.fetchall():
+        approvals.append({'text': f'Contractor application — {row[1]}', 'sub': row[2] or 'General', 'link': '/ceo/contractors'})
+    c.execute("SELECT id, title FROM projects WHERE status='pending' ORDER BY id DESC")
+    for row in c.fetchall():
+        approvals.append({'text': f'Project submission — {row[1]}', 'sub': f'Project #{row[0]}', 'link': '/ceo/projects'})
+    return approvals[:limit] if limit else approvals
+
+
+def get_monthly_revenue(months=6):
+    conn = get_db(); c = conn.cursor()
+    c.execute('''SELECT TO_CHAR(paid_at, 'Mon YYYY') AS month, SUM(amount)
+                 FROM project_payments WHERE is_paid=TRUE AND paid_at IS NOT NULL
+                 GROUP BY TO_CHAR(paid_at, 'Mon YYYY'), DATE_TRUNC('month', paid_at)
+                 ORDER BY DATE_TRUNC('month', paid_at) DESC LIMIT %s''', (months,))
+    rows = c.fetchall()
+    conn.close()
+    return [{'month': r[0], 'amount': float(r[1])} for r in reversed(rows)]
+
+
+def get_business_health():
+    conn = get_db(); c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE status IN ('approved','completed')")
+    total_started = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='completed'")
+    completed = c.fetchone()[0]
+    completion_rate = f"{round(completed/total_started*100)}%" if total_started else "No Data Yet"
+
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW())''')
+    this_month = float(c.fetchone()[0])
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+                 AND paid_at < DATE_TRUNC('month', NOW())''')
+    last_month = float(c.fetchone()[0])
+    if this_month == 0 and last_month == 0:
+        revenue_trend = "No Data Yet"
+    elif this_month > last_month:
+        revenue_trend = "Growing"
+    elif this_month < last_month:
+        revenue_trend = "Declining"
+    else:
+        revenue_trend = "Stable"
+
+    c.execute("SELECT AVG(rating) FROM testimonials WHERE is_published=TRUE")
+    avg_rating = c.fetchone()[0]
+    satisfaction = f"{round(float(avg_rating),1)} / 5" if avg_rating else "No Data Yet"
+
+    c.execute('''SELECT AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/86400.0)
+                 FROM projects WHERE status='completed' AND created_at IS NOT NULL''')
+    avg_days = c.fetchone()[0]
+    avg_delivery = f"{round(float(avg_days),1)} Days" if avg_days else "No Data Yet"
+
+    try:
+        c.execute('''SELECT COUNT(*) FROM projects p
+                     WHERE p.status='approved' AND p.deadline IS NOT NULL
+                     AND p.deadline != '' AND p.deadline::date < CURRENT_DATE''')
+        overdue = c.fetchone()[0]
+    except Exception:
+        conn.rollback()
+        overdue = 0
+    status = "Healthy" if overdue == 0 else "Needs Attention"
+
+    conn.close()
+    return {'status': status, 'revenue_trend': revenue_trend, 'completion_rate': completion_rate,
+            'satisfaction': satisfaction, 'avg_delivery': avg_delivery}
+
+
+def get_morning_brief():
+    conn = get_db(); c = conn.cursor()
+    hour = datetime.utcnow().hour
+    time_of_day = 'Morning' if hour < 12 else ('Afternoon' if hour < 18 else 'Evening')
+
+    summary = []
+    c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n: summary.append(f"{n} contractor(s) awaiting approval")
+
+    try:
+        c.execute('''SELECT COUNT(*) FROM projects WHERE status='approved' AND deadline IS NOT NULL
+                     AND deadline != '' AND deadline::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days' ''')
+        n = c.fetchone()[0]
+    except Exception:
+        conn.rollback(); n = 0
+    if n: summary.append(f"{n} project(s) nearing deadline")
+
+    c.execute('''SELECT COUNT(*) FROM project_payments WHERE is_paid=FALSE''')
+    n = c.fetchone()[0]
+    summary.append(f"{n} invoice(s) still unpaid" if n else "No overdue invoices")
+
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW())''')
+    month_rev = float(c.fetchone()[0])
+    summary.append(f"Revenue this month: ${month_rev:,.2f}")
+
+    c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
+    pending_ct = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='pending'")
+    pending_pr = c.fetchone()[0]
+    if pending_ct:
+        focus = "Approve contractor applications."
+    elif pending_pr:
+        focus = "Review pending project submissions."
+    else:
+        focus = "You're all caught up — great time to plan ahead."
+
+    conn.close()
+    return time_of_day, summary, focus
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# RESERVED — MRK AI (future division). Not implemented yet.
+# When the AI product is ready, build it as its own Flask Blueprint
+# (e.g. ai_bp = Blueprint('mrk_ai', __name__, url_prefix='/ai'),
+# registered with app.register_blueprint(ai_bp)) so it shares this same
+# database connection and CEO session without touching any route above
+# or below. /ceo/ai-center already exists as the UI placeholder — swap
+# its "Coming Soon" cards for real links into the blueprint's routes
+# once it exists.
+# ═══════════════════════════════════════════════════════════════════════
+
+
+# ─── HOME ───────────────────────────────────────────────
+@app.route('/')
+def home():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE is_published=TRUE AND is_featured=TRUE ORDER BY display_order LIMIT 3")
+    featured_projects = c.fetchall()
+    c.execute("SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order LIMIT 3")
+    featured_team = c.fetchall()
+    c.execute('''SELECT t.rating, t.review_text, t.created_at, cu.first_name, cu.last_name
+                 FROM testimonials t JOIN customers cu ON cu.id = t.customer_id
+                 WHERE t.is_published=TRUE ORDER BY t.created_at DESC LIMIT 12''')
+    testimonials = c.fetchall()
+    conn.close()
+    return render_template('index.html', featured_projects=featured_projects,
+                           featured_team=featured_team, testimonials=testimonials)
+
+
+# ─── CUSTOMER AUTH ──────────────────────────────────────
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        try:
+            fn = request.form['first_name'].strip()
+            ln = request.form['last_name'].strip()
+            email = request.form['email'].strip()
+            phone = request.form.get('phone', '').strip()
+            whatsapp = request.form.get('whatsapp', '').strip()
+            pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('INSERT INTO customers (first_name,last_name,email,password,phone,whatsapp) VALUES (%s,%s,%s,%s,%s,%s)',
+                      (fn, ln, email, pw.decode(), phone, whatsapp))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
+        except:
+            return render_template('register.html', error='Email already exists or invalid data.')
+    return render_template('register.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email'].strip()
+        pw = request.form['password'].encode()
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM customers WHERE email=%s', (email,))
+        user = c.fetchone()
+        conn.close()
+        if user and bcrypt.checkpw(pw, user[4].encode()):
+            if user[6]:
+                return render_template('login.html', error='Your account has been suspended. Contact MRK Agency.')
+            session['customer_id'] = user[0]
+            session['customer_name'] = user[1]
+            return redirect(url_for('dashboard'))
+        return render_template('login.html', error='Invalid email or password.')
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('customer_id', None)
+    session.pop('customer_name', None)
+    return redirect(url_for('login'))
+
+
+# ─── CLIENT DASHBOARD (Workplace home) ──────────────────
