@@ -292,7 +292,6 @@
     <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
     <button class="tab-btn" onclick="showTab('projects')">Projects</button>
     <button class="tab-btn" onclick="showTab('profile')">My Profile</button>
-    <button class="tab-btn" onclick="showTab('security')">Security</button>
   </div>
 
   <!-- TAB: OVERVIEW -->
@@ -351,7 +350,7 @@
     </div>
     {% endif %}
 
-    <!-- 5. Company Announcements -->
+    <!-- 4. Company Announcements -->
     <div class="card">
       <div class="section-title">Company Announcements</div>
       {% if announcements %}
@@ -368,7 +367,7 @@
       {% endif %}
     </div>
 
-    <!-- 6. Recent Activity -->
+    <!-- 5. Recent Activity -->
     <div class="card">
       <div class="section-title">Recent Activity</div>
       {% if recent_activity %}
@@ -385,12 +384,12 @@
       {% endif %}
     </div>
 
-    <!-- 9. Quick Actions -->
+    <!-- 6. Quick Actions -->
     <div class="card">
       <div class="section-title">Quick Actions</div>
       <div class="quick-actions-grid">
         <button class="btn btn-outline" onclick="showTab('profile')">Update Profile</button>
-        <button class="btn btn-outline" onclick="showTab('security')">Change Password</button>
+        <button class="btn btn-outline" onclick="showTab('profile')">Change Password</button>
         {% if contact_whatsapp %}
         <a href="https://wa.me/{{ contact_whatsapp }}" target="_blank" class="btn btn-blue">Contact CEO</a>
         {% else %}
@@ -540,6 +539,27 @@
 
   <!-- TAB: PROFILE -->
   <div class="tab-content" id="tab-profile">
+
+    <!-- IDENTITY CARD — avatar (tap to change photo), name, email, role badge -->
+    <div class="card" style="display:flex;align-items:center;gap:1.1rem;">
+      <form action="/contractor/update-photo" method="POST" enctype="multipart/form-data" id="photoForm">
+        <label for="contractorPhotoInput" style="cursor:pointer;display:block;position:relative;width:88px;height:88px;flex-shrink:0;">
+          {% if contractor[23] %}
+          <img src="{{ contractor[23] }}" alt="Profile photo" style="width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;"/>
+          {% else %}
+          <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#1A56DB,#6366F1);display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:700;">{{ contractor[1][0]|upper }}</div>
+          {% endif %}
+          <span style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--blue);border:2.5px solid white;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:white;">✎</span>
+        </label>
+        <input type="file" name="photo" id="contractorPhotoInput" accept="image/*" required style="display:none;" onchange="document.getElementById('photoForm').submit();"/>
+      </form>
+      <div>
+        <h3 style="font-size:1.05rem;font-weight:700;color:var(--dark);margin-bottom:0.2rem;">{{ contractor[1] }}</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">{{ contractor[8] or '—' }}</p>
+        <span class="badge-chip">CONTRACTOR</span>
+      </div>
+    </div>
+
     <div class="card">
       <div class="section-title">My Information</div>
       <div class="profile-grid">
@@ -590,21 +610,6 @@
         </div>
         {% endif %}
       </div>
-    </div>
-
-    <!-- PROFILE PHOTO — self-service, no approval needed -->
-    <div class="card">
-      <div class="section-title">Profile Photo</div>
-      {% if contractor[23] %}
-        <img src="{{ contractor[23] }}" alt="Profile photo" style="width:88px;height:88px;border-radius:50%;object-fit:cover;margin-bottom:1rem;display:block;"/>
-      {% endif %}
-      <form action="/contractor/update-photo" method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-          <label>{{ 'Replace photo' if contractor[23] else 'Upload a photo' }}</label>
-          <input type="file" name="photo" accept="image/*" required/>
-        </div>
-        <button type="submit" class="btn btn-blue">Save Photo</button>
-      </form>
     </div>
 
     <!-- PAYOUT DETAILS — first fill-in is instant, edits need CEO approval -->
@@ -675,10 +680,6 @@
       {% endfor %}
     </div>
     {% endif %}
-  </div>
-
-  <!-- TAB: SECURITY -->
-  <div class="tab-content" id="tab-security">
     <div class="card">
       <div class="section-title">Change Password</div>
       <form action="/contractor-change-password" method="POST">
@@ -712,4 +713,4 @@
   }
 </script>
 </body>
-        </html>
+  </html>
