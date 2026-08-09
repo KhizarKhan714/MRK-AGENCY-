@@ -568,8 +568,8 @@ def get_business_health():
 
 def get_morning_brief():
     conn = get_db(); c = conn.cursor()
-    hour = datetime.utcnow().hour
-    time_of_day = 'Morning' if hour < 12 else ('Afternoon' if hour < 18 else 'Evening')
+    local_hour = (datetime.utcnow() + timedelta(hours=5)).hour
+    time_of_day = 'Morning' if local_hour < 12 else ('Afternoon' if local_hour < 18 else 'Evening')
 
     summary = []
     c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
