@@ -1,97 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — CEO Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portfolio — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1100px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .visibility-bar { display:flex; gap:0.75rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .visibility-pill { display:flex; align-items:center; gap:0.6rem; background:var(--white); border:1px solid var(--border); border-radius:10px; padding:0.6rem 1rem; font-size:0.82rem; font-weight:600; }
+  .visibility-pill form { display:inline; }
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; margin-top:0.25rem; }
+  .section-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+  .section-title a { font-size:0.76rem; font-weight:600; color:var(--blue); text-transform:none; letter-spacing:0; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.1rem; overflow:hidden; }
+  .card-head { padding:1rem 1.25rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+  .card-head-left { display:flex; align-items:center; gap:0.85rem; }
+  .card-avatar { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,var(--blue),#6366F1); display:flex; align-items:center; justify-content:center; color:white; font-size:1rem; font-weight:700; flex-shrink:0; overflow:hidden; }
+  .card-avatar img { width:100%; height:100%; object-fit:cover; }
+  .card-head h3 { font-size:0.95rem; font-weight:700; color:var(--dark); }
+  .card-head p { font-size:0.78rem; color:var(--muted); margin-top:0.1rem; }
+  .card-body { padding:1rem 1.25rem; }
+  .card-foot { padding:0.8rem 1.25rem; border-top:1px solid var(--border); background:#F8FAFB; display:flex; flex-wrap:wrap; gap:0.55rem; align-items:center; }
+  .status-badge { display:inline-block; padding:0.22rem 0.7rem; border-radius:999px; font-size:0.72rem; font-weight:600; white-space:nowrap; }
+  .badge-approved { background:#D1FAE5; color:#065F46; }
+  .badge-pending { background:#FEF3C7; color:#92400E; }
+  .btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.42rem 0.85rem; border-radius:7px; font-size:0.76rem; font-weight:600; text-decoration:none; cursor:pointer; border:none; font-family:'Inter',sans-serif; }
+  .btn-blue { background:var(--blue); color:white; }
+  .btn-green { background:var(--green); color:white; }
+  .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+  .inline-form { display:inline; }
+  .sep { height:1.5rem; }
+  .empty-state { text-align:center; padding:2.25rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+  .note-box { background:#F8FAFB; border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem; font-size:0.83rem; color:var(--text); line-height:1.55; margin-top:0.75rem; }
+  .stars { color:#F59E0B; font-size:0.95rem; margin-bottom:0.4rem; }
+  .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:0.6rem; }
+  .media-thumb { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; border:1px solid var(--border); cursor:pointer; }
+  .media-thumb:hover { opacity:0.85; }
+</style>
 </head>
-<body class="ceo-dark">
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Portfolio Management</div>
+  <div class="page-sub">Portfolio, case studies, testimonials, featured contractors, and media all live here.</div>
 
-<div class="ceo-wrap">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);">
-    <div class="logo"><span>MRK</span> <span>AGENCY</span></div>
-    <a href="/ceo-dashboard" style="font-size:13px;color:var(--text-dim);">← Dashboard</a>
-  </div>
-
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}{% for msg in messages %}<div class="flash">{{ msg }}</div>{% endfor %}{% endif %}
-  {% endwith %}
-
-  <div class="ceo-topbar">
-    <div>
-      <h1>Portfolio</h1>
-    </div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
-      <form method="POST" action="/ceo/settings/toggle-portfolio-visibility" class="inline-form">
-        <button type="submit" class="visibility-toggle" style="border:none;cursor:pointer;">
-          <span class="label">Public portfolio page</span>
-          {% if site_settings.portfolio_section_visible %}
-            <span class="status status-on">● LIVE</span>
-          {% else %}
-            <span class="status status-off">○ HIDDEN</span>
-          {% endif %}
-        </button>
+  <div class="visibility-bar">
+    <div class="visibility-pill">
+      Public portfolio page: {{ 'Visible' if site_settings.portfolio_section_visible else 'Hidden' }}
+      <form action="/ceo/settings/toggle-portfolio-visibility" method="POST">
+        <button type="submit" class="btn {{ 'btn-outline' if site_settings.portfolio_section_visible else 'btn-green' }}">{{ 'Hide' if site_settings.portfolio_section_visible else 'Make Visible' }}</button>
       </form>
-      <a href="/ceo/portfolio/new" class="btn-primary">+ New project</a>
+    </div>
+    <div class="visibility-pill">
+      Public team page: {{ 'Visible' if site_settings.team_section_visible else 'Hidden' }}
+      <form action="/ceo/settings/toggle-team-visibility" method="POST">
+        <button type="submit" class="btn {{ 'btn-outline' if site_settings.team_section_visible else 'btn-green' }}">{{ 'Hide' if site_settings.team_section_visible else 'Make Visible' }}</button>
+      </form>
     </div>
   </div>
 
-  {% if not site_settings.portfolio_section_visible %}
-  <div class="flash warn">
-    The public portfolio page is currently hidden. Publishing projects below won't make anything visible until you switch it to LIVE above.
+  <!-- PORTFOLIO PROJECTS / CASE STUDIES -->
+  <div class="section-head">
+    <div class="section-title">Portfolio Projects & Case Studies ({{ portfolio_projects|length }})</div>
+    <a href="/ceo/portfolio/new" class="btn btn-blue">➕ Add Project</a>
   </div>
+  {% if not portfolio_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No portfolio projects yet. Add your first one above.</div>
+  {% else %}
+  {% for pr in portfolio_projects %}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        {% if pr.cover_image %}<div class="card-avatar"><img src="{{ pr.cover_image }}" alt="{{ pr.title }}"/></div>
+        {% else %}<div class="card-avatar">🖼</div>{% endif %}
+        <div><h3>{{ pr.title }}{% if pr.is_featured %} ⭐{% endif %}</h3><p>{{ pr.category }}{% if pr.package_tier %} · {{ pr.package_tier }}{% endif %}</p></div>
+      </div>
+      <span class="status-badge {{ 'badge-approved' if pr.is_published else 'badge-pending' }}">{{ '🌐 Published' if pr.is_published else '🚫 Draft' }}</span>
+    </div>
+    <div class="card-foot">
+      <a href="/ceo/portfolio/{{ pr.id }}/edit" class="btn btn-outline">✏ Edit</a>
+      <form action="/ceo/portfolio/{{ pr.id }}/publish" method="POST" class="inline-form"><button type="submit" class="btn {{ 'btn-outline' if pr.is_published else 'btn-green' }}">{{ 'Unpublish' if pr.is_published else 'Publish' }}</button></form>
+      <form action="/ceo/portfolio/{{ pr.id }}/feature" method="POST" class="inline-form"><button type="submit" class="btn btn-outline">{{ 'Unfeature' if pr.is_featured else '⭐ Feature' }}</button></form>
+      <form action="/ceo/portfolio/{{ pr.id }}/delete" method="POST" class="inline-form" onclick="return confirm('Delete this project?')"><button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);">🗑 Delete</button></form>
+    </div>
+  </div>
+  {% endfor %}
   {% endif %}
 
-  {% if projects and projects|length > 0 %}
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Project</th>
-        <th>Category</th>
-        <th>Status</th>
-        <th>Featured</th>
-        <th>Order</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in projects %}
-      <tr>
-        <td><strong>{{ p.title }}</strong></td>
-        <td>{{ p.category }}</td>
-        <td>
-          {% if p.status == 'published' %}<span class="badge badge-published">Published</span>
-          {% else %}<span class="badge badge-draft">Draft</span>{% endif %}
-        </td>
-        <td>{% if p.is_featured %}<span class="badge badge-featured">★ Featured</span>{% endif %}</td>
-        <td>{{ p.display_order }}</td>
-        <td>
-          <div class="row-actions">
-            <a href="/ceo/portfolio/{{ p.id }}/edit" class="btn-outline btn-sm">Edit</a>
-            <form method="POST" action="/ceo/portfolio/{{ p.id }}/publish" class="inline-form">
-              <button type="submit" class="btn-outline btn-sm">{{ 'Unpublish' if p.status == 'published' else 'Publish' }}</button>
-            </form>
-            <form method="POST" action="/ceo/portfolio/{{ p.id }}/feature" class="inline-form">
-              <button type="submit" class="btn-outline btn-sm">{{ 'Unfeature' if p.is_featured else 'Feature' }}</button>
-            </form>
-            <form method="POST" action="/ceo/portfolio/{{ p.id }}/delete" class="inline-form" onsubmit="return confirm('Delete this project permanently?');">
-              <button type="submit" class="btn-danger">Delete</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="sep"></div>
+
+  <!-- TESTIMONIALS -->
+  <div class="section-head"><div class="section-title">Testimonials ({{ all_testimonials|length }})</div></div>
+  {% if not all_testimonials %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No testimonials yet. They'll appear here as clients leave reviews.</div>
   {% else %}
-  <div class="empty-state">
-    <h3>No projects yet</h3>
-    <p>Add your first project — it'll stay as a draft until you publish it.</p>
+  {% for t in all_testimonials %}
+  <div class="card">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><h3 style="font-size:0.9rem;margin-bottom:0.25rem;">{{ t[5] }} {{ t[6] }}</h3><div class="stars">{{ '★' * t[1] }}{{ '☆' * (5 - t[1]) }}</div></div>
+        {% if t[3] %}<span class="status-badge badge-approved">🌐 Public</span>{% else %}<span class="status-badge badge-pending">🚫 Hidden</span>{% endif %}
+      </div>
+      <div class="note-box">{{ t[2] }}</div>
+    </div>
+    <div class="card-foot">
+      <form action="/ceo/testimonial/{{ t[0] }}/toggle" method="POST" class="inline-form"><button type="submit" class="btn {{ 'btn-outline' if t[3] else 'btn-green' }}">{{ 'Hide' if t[3] else 'Publish' }}</button></form>
+      <form action="/ceo/testimonial/{{ t[0] }}/delete" method="POST" class="inline-form" onclick="return confirm('Delete permanently?')"><button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);">🗑 Delete</button></form>
+    </div>
   </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- FEATURED CONTRACTORS -->
+  <div class="section-head">
+    <div class="section-title">Featured Contractors ({{ team_members|length }})</div>
+    <a href="/ceo/team/new" class="btn btn-blue">➕ Add to Team Page</a>
+  </div>
+  {% if not team_members %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No team members featured yet.</div>
+  {% else %}
+  {% for t in team_members %}
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-left">
+        {% if t[7] %}<div class="card-avatar" style="border-radius:50%;"><img src="{{ t[7] }}" alt="{{ t[1] }}"/></div>
+        {% else %}<div class="card-avatar" style="border-radius:50%;">{{ t[1][0]|upper }}</div>{% endif %}
+        <div><h3>{{ t[1] }}</h3><p>{{ t[2] or '—' }}</p></div>
+      </div>
+      <span class="status-badge {{ 'badge-approved' if t[8] else 'badge-pending' }}">{{ '🌐 Published' if t[8] else '🚫 Draft' }}</span>
+    </div>
+    <div class="card-foot">
+      <a href="/ceo/team/{{ t[0] }}/edit" class="btn btn-outline">✏ Edit</a>
+      <form action="/ceo/team/{{ t[0] }}/publish" method="POST" class="inline-form"><button type="submit" class="btn {{ 'btn-outline' if t[8] else 'btn-green' }}">{{ 'Unpublish' if t[8] else 'Publish' }}</button></form>
+      <form action="/ceo/team/{{ t[0] }}/delete" method="POST" class="inline-form" onclick="return confirm('Remove {{ t[1] }}?')"><button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);">🗑 Remove</button></form>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- MEDIA LIBRARY -->
+  <div class="section-head"><div class="section-title">Media Library ({{ media_images|length }})</div></div>
+  {% if not media_images %}
+  <div class="empty-state">No images uploaded yet. Portfolio covers, galleries, and team photos will appear here automatically.</div>
+  {% else %}
+  <div class="card"><div class="card-body">
+    <div class="media-grid">
+      {% for img in media_images %}
+      <img src="{{ img }}" class="media-thumb" onclick="window.open('{{ img }}')" title="Click to open full size"/>
+      {% endfor %}
+    </div>
+  </div></div>
   {% endif %}
 </div>
-
 </body>
-</html>
+  </html>
