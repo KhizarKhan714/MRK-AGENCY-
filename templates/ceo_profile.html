@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CEO Account — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --red:#DC2626; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:700px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:1.25rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1.5rem; margin-bottom:1.25rem; }
+  .card h2 { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--blue); margin-bottom:1.1rem; }
+  .sm-label { display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.25rem; }
+  .sm-input { width:100%; padding:0.6rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:'Inter',sans-serif; color:var(--text); background:#F8FAFB; outline:none; transition:border-color 0.2s; margin-bottom:1rem; }
+  .sm-input:focus { border-color:var(--blue); background:var(--white); }
+  .sm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:0 1rem; }
+  .btn { display:inline-block; padding:0.65rem 1.5rem; border-radius:8px; font-size:0.85rem; font-weight:700; text-decoration:none; cursor:pointer; border:none; background:var(--blue); color:white; }
+  .hint { font-size:0.78rem; color:var(--muted); margin-bottom:1rem; }
+  .badge-chip { display:inline-block; background:linear-gradient(135deg,#1A56DB,#6366F1); color:white; padding:0.25rem 0.9rem; border-radius:999px; font-size:0.75rem; font-weight:700; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">CEO Account</div>
+
+  {% with messages = get_flashed_messages() %}
+    {% for m in messages %}
+    <div class="card" style="background:#D1FAE5;border-color:#6EE7B7;color:#065F46;font-weight:500;padding:0.9rem 1.25rem;">{{ m }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- IDENTITY -->
+  <div class="card" style="display:flex;align-items:center;gap:1.1rem;">
+    <form action="/ceo/account/update-photo" method="POST" enctype="multipart/form-data" id="ceoPhotoForm">
+      <label for="ceoPhotoInput" style="cursor:pointer;display:block;position:relative;width:88px;height:88px;flex-shrink:0;">
+        {% if ceo.photo %}
+        <img src="{{ ceo.photo }}" alt="CEO photo" style="width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;"/>
+        {% else %}
+        <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#1A56DB,#6366F1);display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:700;">{{ ceo.name[0]|upper }}</div>
+        {% endif %}
+        <span style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--blue);border:2.5px solid white;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:white;">✎</span>
+      </label>
+      <input type="file" name="photo" id="ceoPhotoInput" accept="image/*" required style="display:none;" onchange="document.getElementById('ceoPhotoForm').submit();"/>
+    </form>
+    <div>
+      <h3 style="font-size:1.05rem;font-weight:700;color:var(--dark);margin-bottom:0.2rem;">{{ ceo.name }}</h3>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">{{ ceo.email or 'No email on file' }}</p>
+      <span class="badge-chip">CEO</span>
+    </div>
+  </div>
+
+  <!-- CONTACT INFO -->
+  <form action="/ceo/account/update-contact" method="POST">
+    <div class="card">
+      <h2>Contact Information</h2>
+      <div class="sm-grid">
+        <div><span class="sm-label">Current Email</span><input class="sm-input" type="email" name="email" value="{{ ceo.email or '' }}"/></div>
+        <div><span class="sm-label">Backup Email</span><input class="sm-input" type="email" name="backup_email" value="{{ ceo.backup_email or '' }}"/></div>
+        <div><span class="sm-label">Phone</span><input class="sm-input" type="tel" name="phone" value="{{ ceo.phone or '' }}"/></div>
+        <div><span class="sm-label">WhatsApp</span><input class="sm-input" type="tel" name="whatsapp" value="{{ ceo.whatsapp or '' }}"/></div>
+      </div>
+      <button type="submit" class="btn">Save Contact Info</button>
+    </div>
+  </form>
+
+  <!-- CHANGE PASSWORD -->
+  <form action="/ceo/account/change-password" method="POST">
+    <div class="card">
+      <h2>Change Password</h2>
+      <p class="hint">Requires your current password to confirm the change.</p>
+      <input class="sm-input" type="password" name="current_password" placeholder="Current password" required/>
+      <input class="sm-input" type="password" name="new_password" placeholder="New password" required/>
+      <button type="submit" class="btn">Update Password</button>
+    </div>
+  </form>
+
+  <!-- CHANGE SECRET KEY -->
+  <form action="/ceo/account/change-secret-key" method="POST">
+    <div class="card">
+      <h2>Change Secret Key</h2>
+      <p class="hint">Requires your current secret key to confirm the change.</p>
+      <input class="sm-input" type="password" name="current_secret_key" placeholder="Current secret key" required/>
+      <input class="sm-input" type="password" name="new_secret_key" placeholder="New secret key" required/>
+      <button type="submit" class="btn">Update Secret Key</button>
+    </div>
+  </form>
+
+  <!-- CHANGE SECURITY ANSWER -->
+  <form action="/ceo/account/change-security-answer" method="POST">
+    <div class="card">
+      <h2>Change Security Answer</h2>
+      <p class="hint">Security question: <strong>What is the reason of MRK?</strong> Requires your current answer to confirm the change.</p>
+      <input class="sm-input" type="password" name="current_security_answer" placeholder="Current answer" required/>
+      <input class="sm-input" type="password" name="new_security_answer" placeholder="New answer" required/>
+      <button type="submit" class="btn">Update Security Answer</button>
+    </div>
+  </form>
+
+</div>
+</body>
+  </html>
