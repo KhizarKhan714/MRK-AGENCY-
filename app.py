@@ -1287,7 +1287,81 @@ def ceo_logout():
     session.pop('ceo', None)
     return redirect(url_for('ceo_portal'))
 
+@app.route('/ceo/account')
+@ceo_required
+def ceo_account():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM ceo LIMIT 1")
+    ceo = c.fetchone()
+    conn.close()
+    return render_template('ceo_profile.html', active_page='account', ceo=ceo)
 
+
+@app.route('/ceo/account/update-contact', methods=['POST'])
+@ceo_required
+def ceo_update_contact():
+    conn = get_db(); c = conn.cursor()
+    c.execute('''UPDATE ceo SET email=%s, backup_email=%s, phone=%s, whatsapp=%s WHERE id=1''',
+              (request.form.get('email'), request.form.get('backup_email'),
+               request.form.get('phone'), request.form.get('whatsapp')))
+    conn.commit(); conn.close()
+    flash('Contact info updated.')
+    return redirect(url_for('ceo_account'))
+
+
+@app.route('/ceo/account/update-photo', methods=['POST'])
+@ceo_required
+def ceo_update_photo():
+    photo_url = upload_image(request.files.get('photo'), folder="mrk_agency/ceo")
+    if photo_url:
+        conn = get_db(); c = conn.cursor()
+        c.execute('UPDATE ceo SET photo=%s WHERE id=1', (photo_url,))
+        conn.commit(); conn.close()
+        flash('Photo updated.')
+    return redirect(url_for('ceo_account'))
+
+
+@app.route('/ceo/account/change-password', methods=['POST'])
+@ceo_required
+def ceo_change_password():
+    conn = get_db(); c = conn.cursor()
+    c.execute('SELECT password FROM ceo WHERE id=1')
+    row = c.fetchone()
+    if row[0] != request.form.get('current_password', '').strip():
+        conn.close(); flash('Current password is incorrect.'); return redirect(url_for('ceo_account'))
+    c.execute('UPDATE ceo SET password=%s WHERE id=1', (request.form.get('new_password', '').strip(),))
+    conn.commit(); conn.close()
+    flash('Password updated.')
+    return redirect(url_for('ceo_account'))
+
+
+@app.route('/ceo/account/change-secret-key', methods=['POST'])
+@ceo_required
+def ceo_change_secret_key():
+    conn = get_db(); c = conn.cursor()
+    c.execute('SELECT secret_key FROM ceo WHERE id=1')
+    row = c.fetchone()
+    if row[0] != request.form.get('current_secret_key', '').strip():
+        conn.close(); flash('Current secret key is incorrect.'); return redirect(url_for('ceo_account'))
+    c.execute('UPDATE ceo SET secret_key=%s WHERE id=1', (request.form.get('new_secret_key', '').strip(),))
+    conn.commit(); conn.close()
+    flash('Secret key updated.')
+    return redirect(url_for('ceo_account'))
+
+
+@app.route('/ceo/account/change-security-answer', methods=['POST'])
+@ceo_required
+def ceo_change_security_answer():
+    conn = get_db(); c = conn.cursor()
+    c.execute('SELECT security_answer FROM ceo WHERE id=1')
+    row = c.fetchone()
+    if row[0] != request.form.get('current_security_answer', '').strip():
+        conn.close(); flash('Current answer is incorrect.'); return redirect(url_for('ceo_account'))
+    c.execute('UPDATE ceo SET security_answer=%s WHERE id=1', (request.form.get('new_security_answer', '').strip(),))
+    conn.commit(); conn.close()
+    flash('Security answer updated.')
+    return redirect(url_for('ceo_account'))
+    
 # ─── CEO: DASHBOARD (home page) ──────────────────────────
 @app.route('/ceo-dashboard')
 @ceo_required
