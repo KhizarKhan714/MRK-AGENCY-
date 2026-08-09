@@ -266,7 +266,7 @@ def init_db():
         except: conn.rollback()    
         c.execute("INSERT INTO ceo (name, password, secret_key, security_answer) VALUES (%s,%s,%s,%s)",
              ('Khizar Khan', 'CEOMRKAgencyKhizarKhan', 'KhizarKhanCEOMRK7', 'Kiran'))
-   for col, ddl in [
+    for col, ddl in [
         ('photo', 'TEXT'),
         ('email', 'TEXT'),
         ('backup_email', 'TEXT'),
@@ -274,7 +274,8 @@ def init_db():
         ('whatsapp', 'TEXT'),
     ]:
         try: c.execute(f'ALTER TABLE ceo ADD COLUMN IF NOT EXISTS {col} {ddl}')
-        except: conn.rollback()
+        except: conn.rollback()     
+   
             
     c.execute('''CREATE TABLE IF NOT EXISTS team_members (
     id SERIAL PRIMARY KEY,
