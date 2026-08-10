@@ -1916,23 +1916,6 @@ def reject_project(id):
     return redirect(url_for('ceo_projects'))
 
 
-@app.route('/reject-project/<int:id>', methods=['GET', 'POST'])
-@ceo_required
-def reject_project(id):
-    reason = request.form.get('rejection_reason', 'No reason provided.').strip()
-    if not reason:
-        reason = 'No reason provided.'
-    conn = get_db()
-    c = conn.cursor()
-    try:
-        c.execute("UPDATE projects SET status='rejected', rejection_reason=%s, updated_at=NOW() WHERE id=%s", (reason, id))
-        c.execute("DELETE FROM project_payments WHERE project_id=%s AND is_paid=FALSE", (id,))   # ← ADD THIS LINE
-        conn.commit()
-    except Exception:
-        conn.rollback()
-    conn.close()
-    return redirect(url_for('ceo_projects'))
-
 # ─── CEO: CUSTOMER ACTIONS ──────────────────────────────
 @app.route('/suspend-customer/<int:id>')
 @ceo_required
