@@ -3,8 +3,9 @@
      Set active_page in render_template() so the current section highlights.
      Fully self-contained — no dependency on the host page's CSS.
      IMPORTANT: this only renders correctly when served by Flask — opening
-     this .html file directly in a browser shows raw {% %} tags as text,
-     that is expected and not a bug. Always test via the live site URL. -->
+     this file directly in a browser (not through the live site) will show
+     the raw templating syntax as plain text, which is expected and not a
+     bug. Always test via the live site URL. -->
 <div class="ceo-header">
   <div class="ceo-topbar">
     <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
@@ -73,4 +74,4 @@
   }
   .ceo-section-nav a:hover { color: #1E293B; }
   .ceo-section-nav a.active { color: #1A56DB; border-bottom-color: #1A56DB; }
-  </style>
+         </style>
