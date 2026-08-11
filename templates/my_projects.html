@@ -309,17 +309,20 @@
 
     <div class="card-body">
 
-      <!-- PAYMENT STATUS — always visible, not just at completion -->
-      {% if due > 0 %}
-      <div class="payment-strip due">
-        <span class="p-label">⏳ Payment due — work {% if status == 'pending' %}cannot start{% else %}cannot continue{% endif %} until this is received</span>
-        <span class="p-amount">${{ "%.2f"|format(due) }}</span>
-      </div>
-      {% else %}
-      <div class="payment-strip paid">
-        <span class="p-label">✅ Fully paid</span>
-        <span class="p-amount">$0.00 due</span>
-      </div>
+      <!-- PAYMENT STATUS — always visible, not just at completion —
+           EXCEPT for rejected projects, which have nothing to pay. -->
+      {% if status != 'rejected' %}
+        {% if due > 0 %}
+        <div class="payment-strip due">
+          <span class="p-label">⏳ Payment due — work {% if status == 'pending' %}cannot start{% else %}cannot continue{% endif %} until this is received</span>
+          <span class="p-amount">${{ "%.2f"|format(due) }}</span>
+        </div>
+        {% else %}
+        <div class="payment-strip paid">
+          <span class="p-label">✅ Fully paid</span>
+          <span class="p-amount">$0.00 due</span>
+        </div>
+        {% endif %}
       {% endif %}
 
       <!-- MILESTONE REVIEW — shown once the contractor has submitted proof for this phase -->
@@ -360,6 +363,7 @@
       </div>
 
       <!-- PROGRESS TIMELINE -->
+      {% if status != 'rejected' %}
       <div class="timeline">
         <div class="timeline-label">Progress</div>
         <div class="timeline-steps">
@@ -371,12 +375,9 @@
 
           <div class="t-line {% if status in ['approved','completed'] %}done{% endif %}"></div>
 
-          <!-- Step 2: Under Review / Rejected -->
+          <!-- Step 2: Under Review -->
           <div class="t-step">
-            {% if status == 'rejected' %}
-              <div class="t-dot fail">✗</div>
-              <div class="t-text fail">Rejected</div>
-            {% elif status in ['approved','completed'] %}
+            {% if status in ['approved','completed'] %}
               <div class="t-dot done">✓</div>
               <div class="t-text done">Approved</div>
             {% else %}
@@ -415,12 +416,14 @@
           </div>
         </div>
       </div>
+      {% endif %}
 
       <!-- REJECTION REASON -->
-      {% if status == 'rejected' and p[12] %}
+      {% if status == 'rejected' %}
       <div class="rejection-box">
-        <strong>Reason for Rejection</strong>
-        <p>{{ p[12] }}</p>
+        <strong>This project was declined by MRK Agency</strong>
+        <p>{{ p[12] or 'No reason provided.' }}</p>
+        <p style="margin-top:0.6rem;">No payment is owed for this project. If you'd like to continue working with us, please submit a new project.</p>
       </div>
       {% endif %}
 
@@ -450,12 +453,14 @@
 
     </div>
 
-    <!-- PAYMENT / INVOICE BUTTON — always available, not just when completed -->
+    <!-- PAYMENT / INVOICE BUTTON — hidden for rejected projects, nothing to pay or view -->
+    {% if status != 'rejected' %}
     <div class="card-footer">
       <a href="/invoice/{{ p[0] }}" class="btn btn-blue">
         {% if due > 0 %}Pay Now / View Plan{% else %}View Payment Details{% endif %}
       </a>
     </div>
+    {% endif %}
 
   </div>
   {% endfor %}
