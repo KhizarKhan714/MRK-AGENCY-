@@ -794,3 +794,434 @@ def dashboard():
 
 # ─── CUSTOMER PROFILE ───────────────────────────────────
 @app.route('/profile')
+def profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, first_name, last_name, email, photo, phone, whatsapp FROM customers WHERE id=%s', (session['customer_id'],))
+    row = c.fetchone()
+    conn.close()
+    customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4], 'phone': row[5], 'whatsapp': row[6]}
+    return render_template('profile.html', customer=customer)
+
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    action = request.form.get('action')
+    conn = get_db()
+    c = conn.cursor()
+
+    def get_customer():
+        c.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        return {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+
+    if action == 'update_info':
+        fn = request.form['first_name'].strip()
+        ln = request.form['last_name'].strip()
+        email = request.form['email'].strip()
+        try:
+            c.execute('UPDATE customers SET first_name=%s, last_name=%s, email=%s WHERE id=%s',
+                      (fn, ln, email, session['customer_id']))
+            conn.commit()
+            session['customer_name'] = fn
+            customer = get_customer()
+            conn.close()
+            return render_template('profile.html', customer=customer, success='Profile updated successfully.')
+        except:
+            conn.close()
+            conn2 = get_db(); c2 = conn2.cursor()
+            c2.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+            row = c2.fetchone()
+            customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+            conn2.close()
+            return render_template('profile.html', customer=customer, error='Email already in use.')
+
+    elif action == 'change_password':
+        current_pw = request.form['current_password'].encode()
+        new_pw = request.form['new_password']
+        confirm_pw = request.form['confirm_password']
+        c.execute('SELECT password FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        customer = get_customer()
+        if not bcrypt.checkpw(current_pw, row[0].encode()):
+            conn.close()
+            return render_template('profile.html', customer=customer, error='Current password is incorrect.')
+        if new_pw != confirm_pw:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='New passwords do not match.')
+        if len(new_pw) < 6:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='Password must be at least 6 characters.')
+        hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+        c.execute('UPDATE customers SET password=%s WHERE id=%s', (hashed, session['customer_id']))
+        conn.commit()
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Password changed successfully.')
+
+    elif action == 'update_photo':
+        photo_file = request.files.get('photo')
+        if photo_file and photo_file.filename:
+            photo_data = photo_file.read()
+            b64 = base64.b64encode(photo_data).decode()
+            mime = photo_file.content_type
+            data_url = f'data:{mime};base64,{b64}'
+            c.execute('UPDATE customers SET photo=%s WHERE id=%s', (data_url, session['customer_id']))
+            conn.commit()
+        customer = get_customer()
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Profile photo updated.')
+
+    conn.close()
+    return redirect(url_for('profile'))
+
+
+# ─── PROJECTS ───────────────────────────────────────────
+@app.route('/submit-project', methods=['GET', 'POST'])
+def submit_project():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        try:
+            package = request.form['package']
+            title = request.form['title']
+            description = request.form['description']
+            pages_needed = request.form.get('pages_needed', '')
+            tech_preference = request.form.get('tech_preference', '')
+            reference_sites = request.form.get('reference_sites', '')
+            must_have_features = request.form.get('must_have_features', '')
+
+            extra_lines = []
+            if pages_needed: extra_lines.append(f"Pages/sections wanted: {pages_needed}")
+            if tech_preference: extra_lines.append(f"Language/tech preference: {tech_preference}")
+            if reference_sites: extra_lines.append(f"Reference sites: {reference_sites}")
+            if must_have_features: extra_lines.append(f"Must-have features: {must_have_features}")
+            if extra_lines:
+                description = description + "\n\n---\n" + "\n".join(extra_lines)
+
+            if package == 'Custom Executive':
+                budget = request.form.get('budget', '0') or '0'
+                deadline = request.form.get('deadline', '')
+                custom_scope = request.form.get('custom_scope', '')
+                if custom_scope:
+                    description = description + f"\n\nCustom software scope: {custom_scope}"
+                phases = CUSTOM_EXECUTIVE_PHASES
+            elif package in PACKAGE_INFO:
+                info = PACKAGE_INFO[package]
+                budget = str(info['price'])
+                deadline = (datetime.utcnow() + timedelta(weeks=info['weeks'])).strftime('%Y-%m-%d')
+                phases = info['phases']
+            else:
+                raise ValueError('Unknown package selected.')
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO projects
+                (customer_id,title,description,website_type,budget,deadline,package)
+                VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
+                (session['customer_id'], title, description, package, budget, deadline, package))
+            new_id = c.fetchone()[0]
+
+            create_payment_phases(c, new_id, budget, phases)
+            log_client_activity(c, session['customer_id'], f'Project submitted: {title}')
+
+            conn.commit()
+            conn.close()
+            return redirect(url_for('invoice', project_id=new_id))
+        except Exception as e:
+            return render_template('submit_project.html', error=str(e))
+    return render_template('submit_project.html')
+
+
+@app.route('/my-projects')
+def my_projects():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE customer_id=%s', (session['customer_id'],))
+    projects = c.fetchall()
+
+    amount_due = {}
+    for p in projects:
+        c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                     WHERE project_id=%s AND is_paid=FALSE''', (p[0],))
+        amount_due[p[0]] = float(c.fetchone()[0])
+
+    review_status = {}
+    for p in projects:
+        phase = get_next_review_phase(c, p[0])
+        if phase and phase[3]:
+            review_status[p[0]] = {
+                'phase_number': phase[0], 'phase_label': phase[1],
+                'proof': phase[2], 'submitted_at': phase[3]
+            }
+
+    conn.close()
+    return render_template('my_projects.html', projects=projects, amount_due=amount_due, review_status=review_status)
+
+
+# ─── INVOICE ────────────────────────────────────────────
+@app.route('/invoice/<int:project_id>')
+def invoice(project_id):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE id=%s AND customer_id=%s', (project_id, session['customer_id']))
+    project = c.fetchone()
+    if not project:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''SELECT phase_number, phase_label, amount, is_paid, paid_at
+                 FROM project_payments WHERE project_id=%s ORDER BY phase_number''', (project_id,))
+    phase_rows = c.fetchall()
+    conn.close()
+
+    phases = [{'number': r[0], 'label': r[1], 'amount': float(r[2]), 'is_paid': r[3], 'paid_at': r[4]} for r in phase_rows]
+    total_amount = sum(p['amount'] for p in phases)
+    total_paid = sum(p['amount'] for p in phases if p['is_paid'])
+    amount_due_now = sum(p['amount'] for p in phases if not p['is_paid'])
+    fully_paid = amount_due_now == 0 and len(phases) > 0
+    next_due_phase = next((p for p in phases if not p['is_paid']), None)
+
+    settings = get_site_copy()
+
+    return render_template('invoice.html', project=project, phases=phases,
+                           total_amount=total_amount, total_paid=total_paid,
+                           amount_due_now=amount_due_now, fully_paid=fully_paid,
+                           next_due_phase=next_due_phase, settings=settings)
+
+
+# ─── CONTRACTOR APPLY ───────────────────────────────────
+@app.route('/contractor-apply', methods=['GET', 'POST'])
+@app.route('/contractor/apply', methods=['GET', 'POST'])
+def contractor_apply():
+    if request.method == 'POST':
+        name        = request.form['name'].strip()
+        email       = request.form['email'].strip().lower()
+        country     = request.form.get('country', '').strip()
+        phone       = request.form.get('phone', '').strip()
+        whatsapp    = request.form.get('whatsapp', '').strip()
+        national_id = request.form.get('national_id', '').strip()
+        expertise   = request.form['expertise']
+        experience  = request.form.get('experience', '')
+        specialties = request.form.get('specialties', '')
+        note        = request.form.get('note', '')
+        password    = request.form['password']
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+        bank_account_title  = request.form.get('bank_account_title', '').strip()
+        bank_account_number = request.form.get('bank_account_number', '').strip()
+        bank_name            = request.form.get('bank_name', '').strip()
+        bank_swift_iban      = request.form.get('bank_swift_iban', '').strip()
+
+        cnic_image_name = None
+        cv_name = None
+
+        if 'cnic_image' in request.files:
+            f = request.files['cnic_image']
+            if f and allowed_file(f.filename):
+                cnic_image_name = secure_filename(f'id_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cnic_image_name))
+
+        if 'cv' in request.files:
+            f = request.files['cv']
+            if f and allowed_file(f.filename):
+                cv_name = secure_filename(f'cv_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cv_name))
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO contractors
+            (name, email, phone, whatsapp, cnic, cnic_image, cv,
+             expertise, experience, specialties, note, password, status,
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s,%s,%s,%s)
+            RETURNING id''',
+            (name, email, phone, whatsapp, national_id, cnic_image_name, cv_name,
+             expertise, experience, specialties, note, hashed,
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban))
+        new_id = c.fetchone()[0]
+        conn.commit()
+        conn.close()
+
+        log_audit('contractor', new_id, name, 'CONTRACTOR_APPLIED',
+                  target_type='contractor', target_id=new_id)
+        send_notification('ceo', 1, f'New Contractor Application: {name}',
+                          f'{expertise} specialist from {country} applied.',
+                          '/mrkceokhan7/dashboard')
+        flash('Application submitted! You will receive your CIN upon approval.', 'success')
+        return redirect(url_for('contractor_login'))
+    return render_template('contractor_apply.html')
+
+
+# ─── CONTRACTOR LOGIN ────────────────────────────────────
+@app.route('/contractor-login', methods=['GET', 'POST'])
+def contractor_login():
+    if request.method == 'POST':
+        cin = request.form['cin'].strip()
+        pw = request.form['password'].encode()
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM contractors WHERE cin=%s', (cin,))
+        contractor = c.fetchone()
+        if contractor and bcrypt.checkpw(pw, contractor[2].encode()):
+            if contractor[15]:
+                conn.close()
+                return render_template('contractor_login.html', error='Your account has been suspended. Contact MRK Agency.')
+            session['contractor_id'] = contractor[0]
+            session['contractor_name'] = contractor[1]
+            c.execute("UPDATE contractors SET last_login=NOW() WHERE id=%s", (contractor[0],))
+            log_contractor_activity(c, contractor[0], 'Logged in')
+            conn.commit()
+            conn.close()
+            return redirect(url_for('contractor_dashboard'))
+        conn.close()
+        return render_template('contractor_login.html', error='Invalid CIN or password.')
+    return render_template('contractor_login.html')
+
+
+@app.route('/contractor-logout')
+def contractor_logout():
+    session.pop('contractor_id', None)
+    session.pop('contractor_name', None)
+    return redirect(url_for('contractor_login'))
+
+
+# ─── CONTRACTOR DASHBOARD (Workplace) ───────────────────
+@app.route('/contractor-dashboard')
+def contractor_dashboard():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (cid,))
+    contractor = c.fetchone()
+
+    c.execute('SELECT availability_status, last_login FROM contractors WHERE id=%s', (cid,))
+    avail_row = c.fetchone()
+    availability_status = avail_row[0] or 'Available'
+    last_login = avail_row[1]
+
+    c.execute("""SELECT * FROM projects
+                 WHERE status='approved' AND contractor_pay IS NOT NULL
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""", (cid,))
+    projects = c.fetchall()
+
+    review_status = {}
+    for p in projects:
+        if p[11] == cid:
+            phase = get_next_review_phase(c, p[0])
+            if phase:
+                review_status[p[0]] = {
+                    'phase_number': phase[0], 'phase_label': phase[1],
+                    'proof': phase[2], 'submitted_at': phase[3],
+                    'client_approved': phase[4], 'client_notes': phase[5]
+                }
+
+    c.execute('''SELECT project_id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts WHERE contractor_id=%s
+                 ORDER BY project_id, created_at''', (cid,))
+    payouts = {}
+    for row in c.fetchall():
+        payouts.setdefault(row[0], []).append(
+            {'payout_type': row[1], 'amount': row[2], 'status': row[3], 'paid_at': row[4]})
+
+    project_stage_info = get_project_stage_info(c, [p[0] for p in projects]) if projects else {}
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND (completed IS NULL OR completed=FALSE)", (cid,))
+    assigned_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND completed=TRUE", (cid,))
+    completed_count = c.fetchone()[0]
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE contractor_id=%s AND status='paid'", (cid,))
+    current_earnings = float(c.fetchone()[0])
+    performance_rating = 'New' if completed_count == 0 else 'Good Standing'
+
+    c.execute("SELECT message, created_at FROM announcements ORDER BY created_at DESC LIMIT 10")
+    announcements = c.fetchall()
+    c.execute("SELECT action, created_at FROM contractor_activity WHERE contractor_id=%s ORDER BY created_at DESC LIMIT 6", (cid,))
+    recent_activity = c.fetchall()
+
+    site_copy = get_site_copy()
+    conn.close()
+
+    return render_template('contractor_dashboard.html',
+        contractor=contractor, projects=projects, review_status=review_status, payouts=payouts,
+        availability_status=availability_status, last_login=last_login,
+        assigned_count=assigned_count, completed_count=completed_count,
+        current_earnings=current_earnings, performance_rating=performance_rating,
+        announcements=announcements, recent_activity=recent_activity,
+        contact_whatsapp=site_copy.get('contact_whatsapp'), project_stage_info=project_stage_info)
+
+
+@app.route('/contractor-change-password', methods=['POST'])
+def contractor_change_password():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    current_pw = request.form['current_password'].encode()
+    new_pw = request.form['new_password']
+    confirm_pw = request.form['confirm_password']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (cid,))
+    contractor = c.fetchone()
+    if not bcrypt.checkpw(current_pw, contractor[2].encode()):
+        conn.close(); flash('Current password is incorrect.'); return redirect(url_for('contractor_dashboard'))
+    if new_pw != confirm_pw:
+        conn.close(); flash('New passwords do not match.'); return redirect(url_for('contractor_dashboard'))
+    if len(new_pw) < 6:
+        conn.close(); flash('Password must be at least 6 characters.'); return redirect(url_for('contractor_dashboard'))
+    hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+    c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, cid))
+    log_contractor_activity(c, cid, 'Password changed')
+    conn.commit(); conn.close()
+    flash('Password changed successfully.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/accept-project/<int:id>')
+def accept_project(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
+              (session['contractor_id'], session['contractor_id'], id))
+    c.execute('SELECT contractor_pay FROM projects WHERE id=%s', (id,))
+    pay_row = c.fetchone()
+    if pay_row and pay_row[0]:
+        create_contractor_payouts(c, id, session['contractor_id'], pay_row[0])
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/mark-complete/<int:id>')
+def mark_complete(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+    c.execute("""UPDATE projects SET completed=TRUE, status='completed', invoice_ref=%s, updated_at=NOW()
+                 WHERE id=%s AND accepted_by=%s""",
+              (invoice_ref, id, session['contractor_id']))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED (consolidated pass) — contractor availability, announcements,
+# and the project stage flow (contractor proposes → CEO approves → client sees)
+# ═══════════════════════════════════════════════════════════════════════
