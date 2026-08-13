@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Leads — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B;
+          --purple:#7C3AED; --green:#059669; --amber:#D97706; --red:#DC2626; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1000px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .back-link { display:inline-block; font-size:0.8rem; color:var(--blue); font-weight:600; margin-bottom:1rem; }
+
+  .stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.9rem; margin-bottom:1.5rem; }
+  .stat-box { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:1rem; }
+  .stat-box .n { font-size:1.4rem; font-weight:700; color:var(--dark); }
+  .stat-box .l { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; margin-top:2px; }
+
+  .filters { display:flex; gap:0.5rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+  .filter-chip {
+    font-size:0.78rem; font-weight:600; padding:0.4rem 0.9rem; border-radius:999px;
+    border:1px solid var(--border); color:var(--muted); background:var(--white);
+  }
+  .filter-chip.active { background:var(--dark); color:#fff; border-color:var(--dark); }
+
+  .conv-card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.25rem; margin-bottom:0.9rem; }
+  .conv-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem; flex-wrap:wrap; gap:0.5rem; }
+  .conv-meta { font-size:0.72rem; color:var(--muted); font-family:monospace; }
+  .badge { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:0.25rem 0.65rem; border-radius:999px; }
+  .badge.high { background:#FEE2E2; color:var(--red); }
+  .badge.medium { background:#FEF3C7; color:var(--amber); }
+  .badge.low { background:#E0F2FE; color:#0369A1; }
+  .conv-msg { font-size:0.85rem; margin-bottom:0.5rem; }
+  .conv-msg .who { font-weight:700; margin-right:0.3rem; }
+  .conv-msg.user .who { color:var(--dark); }
+  .conv-msg.bot .who { color:var(--blue); }
+  .empty-state { text-align:center; padding:3rem 1rem; color:var(--muted); font-size:0.9rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <a href="/ceo/ai-center" class="back-link">← Back to AI Assistant</a>
+  <div class="page-title">AI Leads &amp; Conversations</div>
+  <div class="page-sub">Every conversation MRK AI has had with a visitor or client, newest first.</div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="n">{{ counts.get('high', 0) }}</div><div class="l">High Intent</div></div>
+    <div class="stat-box"><div class="n">{{ counts.get('medium', 0) }}</div><div class="l">Medium Intent</div></div>
+    <div class="stat-box"><div class="n">{{ counts.get('low', 0) }}</div><div class="l">Just Browsing</div></div>
+    <div class="stat-box"><div class="n">{{ conversations|length }}</div><div class="l">Showing</div></div>
+  </div>
+
+  <div class="filters">
+    <a href="/ai/ceo/leads?filter=all" class="filter-chip {% if active_filter == 'all' %}active{% endif %}">All</a>
+    <a href="/ai/ceo/leads?filter=high" class="filter-chip {% if active_filter == 'high' %}active{% endif %}">High Intent</a>
+    <a href="/ai/ceo/leads?filter=medium" class="filter-chip {% if active_filter == 'medium' %}active{% endif %}">Medium Intent</a>
+    <a href="/ai/ceo/leads?filter=low" class="filter-chip {% if active_filter == 'low' %}active{% endif %}">Just Browsing</a>
+  </div>
+
+  {% if conversations %}
+    {% for c in conversations %}
+    <div class="conv-card">
+      <div class="conv-top">
+        <span class="conv-meta">{{ c.visitor_session[:12] }}{% if c.client_id %} · registered client{% endif %} · {{ c.created_at.strftime('%b %d, %I:%M %p') }}</span>
+        <span class="badge {{ c.lead_score }}">{{ c.lead_score }}</span>
+      </div>
+      <div class="conv-msg user"><span class="who">Visitor:</span>{{ c.message }}</div>
+      <div class="conv-msg bot"><span class="who">MRK AI:</span>{{ c.response }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">No conversations yet in this filter. Once visitors start chatting on the site, they'll show up here.</div>
+  {% endif %}
+</div>
+</body>
+  </html>
