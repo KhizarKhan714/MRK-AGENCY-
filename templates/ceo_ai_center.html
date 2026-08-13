@@ -32,51 +32,59 @@
     font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
     padding:0.25rem 0.7rem; border-radius:999px;
   }
+  .live-tag {
+    display:inline-block; background:#DCFCE7; color:#059669;
+    font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+    padding:0.25rem 0.7rem; border-radius:999px;
+  }
+  .card-link {
+    display:inline-block; font-size:0.78rem; font-weight:700; color:var(--blue);
+  }
 </style>
 </head>
 <body>
 {% include "ceo_nav.html" %}
 <div class="page">
   <div class="page-title">AI Assistant</div>
-  <div class="page-sub">MRK AI is on the roadmap. This page previews what's coming.</div>
+  <div class="page-sub">MRK AI — built in-house. Client chat is live; more tools are on the way.</div>
 
   <div class="hero-banner">
     <div class="icon">🤖</div>
     <div>
-      <h2>MRK AI — Coming Soon</h2>
-      <p>Your business assistant, built directly into the CEO portal.</p>
+      <h2>MRK AI — Client Chat is Live</h2>
+      <p>Your business assistant is answering visitor questions right now — see every conversation and lead below.</p>
     </div>
   </div>
 
   <div class="grid">
     <div class="feature-card">
-      <div class="f-icon">💬</div>
-      <h3>Imagine</h3>
-      <p>Generate creative and marketing assets on demand.</p>
-      <span class="soon-tag">Coming Soon</span>
-    </div>
-    <div class="feature-card">
       <div class="f-icon">🗨️</div>
       <h3>MRK AI Chat</h3>
-      <p>Ask questions about your business and get instant answers.</p>
-      <span class="soon-tag">Coming Soon</span>
-    </div>
-    <div class="feature-card">
-      <div class="f-icon">📚</div>
-      <h3>Knowledge Base</h3>
-      <p>A searchable archive of your policies, pricing, and processes.</p>
-      <span class="soon-tag">Coming Soon</span>
+      <p>Answers visitor questions about your business and recommends the best-fit package. Live on the homepage now.</p>
+      <span class="live-tag">Live</span>
     </div>
     <div class="feature-card">
       <div class="f-icon">🎯</div>
       <h3>Lead Analysis</h3>
-      <p>Detects high-intent potential clients and flags them for you personally.</p>
-      <span class="soon-tag">Coming Soon</span>
+      <p>Every conversation is scored high / medium / low intent automatically, with an SMS alert to you on high-intent leads.</p>
+      <a href="/ai/ceo/leads" class="card-link">View leads →</a>
     </div>
     <div class="feature-card">
       <div class="f-icon">💡</div>
       <h3>Project Suggestions</h3>
-      <p>Recommends the best-fit package or service based on a client's needs.</p>
+      <p>Package recommendations happen inside the same chat — see exactly what MRK AI told each visitor.</p>
+      <a href="/ai/ceo/leads" class="card-link">View conversations →</a>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📚</div>
+      <h3>Knowledge Base</h3>
+      <p>The business info MRK AI answers from — pricing, packages, and policies, kept in one place.</p>
+      <a href="/ai/ceo/leads" class="card-link">View conversations →</a>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">💬</div>
+      <h3>Imagine</h3>
+      <p>Generate creative and marketing assets on demand.</p>
       <span class="soon-tag">Coming Soon</span>
     </div>
     <div class="feature-card">
@@ -88,4 +96,4 @@
   </div>
 </div>
 </body>
-  </html>
+</html>
