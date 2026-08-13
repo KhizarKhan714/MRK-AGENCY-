@@ -1,0 +1,229 @@
+"""
+MRK AI Assistant — Flask Blueprint
+════════════════════════════════════════════════════════════════════════
+Self-contained AI division for MRK Agency. Registered onto the main
+app with `app.register_blueprint(ai_bp)` — does not touch, import from,
+or depend on any existing route in app.py. If this file has a bug, it
+breaks /ai/* routes only — the rest of the site (hiring page included)
+stays fully online.
+
+WHAT THIS FILE DOES
+- Client-facing chat: answers business questions + recommends the
+  best-fit package, using a fixed knowledge-base prompt (edit
+  KNOWLEDGE_BASE below whenever pricing/services change).
+- Every exchange is saved to its own table (ai_conversations).
+- A lightweight heuristic scores each exchange as a lead (high/medium/low).
+- On a high-intent lead, sends the CEO an SMS via Twilio so no lead
+  is missed even when away from the dashboard.
+- Access is enforced by which ROUTES exist, not by asking the AI to
+  behave — clients can only ever hit /ai/chat, which is hard-locked
+  to the business-Q&A-and-recommendation system prompt below. There is
+  no client route that reaches image generation, marketing tools, or
+  anything else — those simply are not defined here.
+
+ENV VARS REQUIRED (set these in Railway):
+  GROQ_API_KEY        - free API key from console.groq.com, no card required
+  TWILIO_ACCOUNT_SID  - from twilio.com console
+  TWILIO_AUTH_TOKEN   - from twilio.com console
+  TWILIO_FROM_NUMBER  - the Twilio number that sends the SMS (e.g. +1415...)
+  CEO_PHONE_NUMBER    - your phone number to receive lead alerts (e.g. +923184467807)
+DATABASE_URL is reused from the environment exactly like app.py does.
+════════════════════════════════════════════════════════════════════════
+"""
+
+from flask import Blueprint, request, jsonify, session
+import psycopg2
+import os
+import uuid
+import requests
+
+ai_bp = Blueprint('mrk_ai', __name__, url_prefix='/ai')
+
+DATABASE_URL = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+TWILIO_FROM_NUMBER = os.environ.get('TWILIO_FROM_NUMBER', '')
+CEO_PHONE_NUMBER = os.environ.get('CEO_PHONE_NUMBER', '')
+
+
+def get_db():
+    return psycopg2.connect(DATABASE_URL)
+
+
+def init_ai_db():
+    """Call once at startup, same pattern as app.py's init_db()."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS ai_conversations (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER,
+        visitor_session TEXT NOT NULL,
+        message TEXT NOT NULL,
+        response TEXT NOT NULL,
+        lead_score TEXT DEFAULT 'low',
+        notified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW()
+    )''')
+    conn.commit()
+    conn.close()
+
+
+# ─── KNOWLEDGE BASE ─────────────────────────────────────────────────
+# This is the ONLY place the AI's business knowledge lives. Edit this
+# text whenever pricing/services/policy changes — no retraining, no
+# redeploy of any model, it's just live text sent with every request.
+KNOWLEDGE_BASE = """
+You are the MRK AI Assistant for MRK Agency ("Where your brand achieves glory").
+MRK Agency offers: Web Development, SEO, Web Design, Graphic Design, UI/UX Design,
+and Software Engineering. No ecommerce or marketing services are offered.
+
+PACKAGES (full builds):
+- Bronze — $1,499 — 5 pages — 2 weeks — 100% upfront
+- Consular — $2,999 — 10 pages — 3 weeks — 50% upfront / 50% on delivery
+- Gold — $4,999 — 20 pages — 5 weeks — 30% upfront / 20% midpoint / 50% on delivery
+- Diamond — $8,499 — unlimited pages — 10 weeks — 30% upfront / 20% midpoint / 50% on delivery
+- Custom Executive — $10,000+ — everything in Diamond plus custom software and a
+  dedicated point of contact — timeline and budget discussed individually
+All packages include the same core services at greater depth as the tier increases.
+There are no revision limits on any package.
+
+À LA CARTE SERVICES (standalone, no full package needed):
+- Web Design — $799 — design only, no build
+- UI/UX Design — $999 — audit and redesign of an existing product's UX
+- Graphic Design — $499 — logo and brand assets
+- SEO — $599 — one-time technical setup (ongoing ranking work is separate)
+- Web Development — $1,299 — add functionality to an existing site
+
+YOUR JOB in every reply:
+1. Answer the client's question using ONLY the information above.
+2. If they describe a need, recommend the single best-fit package or
+   service and briefly say why.
+3. Never invent pricing, timelines, or services not listed above.
+4. Never mention image generation, marketing asset creation, business
+   reports, or any other internal/CEO tool — those do not exist for clients.
+5. Keep replies short and conversational, not a wall of text.
+6. If the client wants to proceed, tell them to use the "Get Started"
+   flow on the site or reach out via the contact info there.
+"""
+
+
+def call_groq(user_message, history):
+    messages = [{"role": "system", "content": KNOWLEDGE_BASE}] + history + [{"role": "user", "content": user_message}]
+    resp = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": "llama-3.3-70b-versatile",
+            "max_tokens": 500,
+            "messages": messages,
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return data["choices"][0]["message"]["content"]
+
+
+# ─── LEAD SCORING ───────────────────────────────────────────────────
+# Simple, fast, and easy for you to tune — no extra API call needed.
+# Add/remove words any time to adjust sensitivity.
+HIGH_INTENT_WORDS = [
+    'ready to start', 'sign up', 'hire you', 'get started', 'how do i pay',
+    'my budget is', 'when can we start', 'move forward', 'book a call',
+    'contact number', 'whatsapp number', 'let\'s do it', 'i want to proceed',
+]
+MEDIUM_INTENT_WORDS = [
+    'price', 'pricing', 'cost', 'package', 'quote', 'timeline', 'how long',
+]
+
+def score_lead(message):
+    text = message.lower()
+    if any(p in text for p in HIGH_INTENT_WORDS):
+        return 'high'
+    if any(p in text for p in MEDIUM_INTENT_WORDS):
+        return 'medium'
+    return 'low'
+
+
+def notify_ceo_sms(visitor_session, message):
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER and CEO_PHONE_NUMBER):
+        return  # Twilio not configured yet — silently skip, don't crash the chat
+    try:
+        requests.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json",
+            auth=(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN),
+            data={
+                "From": TWILIO_FROM_NUMBER,
+                "To": CEO_PHONE_NUMBER,
+                "Body": f"🔥 High-intent MRK lead ({visitor_session[:8]}): \"{message[:120]}\"",
+            },
+            timeout=10,
+        )
+    except Exception:
+        pass  # never let a notification failure break the chat response
+
+
+# ─── ROUTES ─────────────────────────────────────────────────────────
+
+@ai_bp.route('/chat', methods=['POST'])
+def chat():
+    """
+    The ONLY client-facing AI route. Deliberately does one thing:
+    business Q&A + package recommendation. No other capability is
+    reachable through this endpoint, by design.
+    """
+    data = request.get_json(silent=True) or {}
+    user_message = (data.get('message') or '').strip()
+    visitor_session = data.get('visitor_session') or str(uuid.uuid4())
+
+    if not user_message:
+        return jsonify({'error': 'message is required'}), 400
+
+    client_id = session.get('customer_id')  # None for anonymous visitors
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Pull last 6 exchanges for this visitor so Claude has context
+    c.execute('''SELECT message, response FROM ai_conversations
+                 WHERE visitor_session=%s ORDER BY id DESC LIMIT 6''', (visitor_session,))
+    rows = c.fetchall()
+    history = []
+    for msg, resp in reversed(rows):
+        history.append({"role": "user", "content": msg})
+        history.append({"role": "assistant", "content": resp})
+
+    try:
+        reply = call_groq(user_message, history)
+    except Exception:
+        conn.close()
+        return jsonify({'error': 'AI is temporarily unavailable, please try again shortly.'}), 503
+
+    lead_score = score_lead(user_message)
+
+    c.execute('''INSERT INTO ai_conversations
+                 (client_id, visitor_session, message, response, lead_score)
+                 VALUES (%s,%s,%s,%s,%s)''',
+              (client_id, visitor_session, user_message, reply, lead_score))
+    conn.commit()
+
+    if lead_score == 'high':
+        # avoid spamming the CEO — only notify if this visitor hasn't
+        # triggered a high-intent alert in their last 5 messages
+        c.execute('''SELECT COUNT(*) FROM ai_conversations
+                     WHERE visitor_session=%s AND lead_score='high' AND notified=TRUE''',
+                  (visitor_session,))
+        already = c.fetchone()[0]
+        if already == 0:
+            notify_ceo_sms(visitor_session, user_message)
+            c.execute('''UPDATE ai_conversations SET notified=TRUE
+                         WHERE visitor_session=%s AND lead_score='high' ''',
+                      (visitor_session,))
+            conn.commit()
+
+    conn.close()
+    return jsonify({'reply': reply, 'visitor_session': visitor_session})
