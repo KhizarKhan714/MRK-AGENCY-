@@ -89,6 +89,63 @@
     /* SUBMIT */
     .submit-btn { width:100%; padding:0.85rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.95rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s; }
     .submit-btn:hover { opacity:0.88; }
+
+    /* ===== MRK AI WIDGET ===== */
+    #mrk-ai-bubble{
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      display:flex;align-items:center;gap:10px;
+      background:var(--blue);color:#fff;
+      padding:14px 20px;border-radius:100px;
+      border:1px solid var(--blue);
+      font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+      cursor:pointer;box-shadow:0 8px 24px rgba(26,86,219,0.35);
+      transition:transform .2s ease, opacity .2s ease;
+    }
+    #mrk-ai-bubble:hover{opacity:0.9;transform:translateY(-2px);}
+    #mrk-ai-bubble .dot{width:7px;height:7px;border-radius:50%;background:#3DDC84;}
+    #mrk-ai-window{
+      position:fixed;bottom:96px;right:24px;z-index:999;
+      width:360px;max-width:calc(100vw - 32px);height:480px;max-height:calc(100vh - 140px);
+      background:var(--dark);border:1px solid #1A2744;border-radius:16px;
+      display:none;flex-direction:column;overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,0.45);
+    }
+    #mrk-ai-window.open{display:flex;}
+    #mrk-ai-header{
+      padding:16px 18px;border-bottom:1px solid #1A2744;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    #mrk-ai-header .title-block .t1{color:#fff;font-weight:800;font-size:15px;}
+    #mrk-ai-header .title-block .t2{color:#94A3B8;font-size:11.5px;margin-top:2px;}
+    #mrk-ai-close{color:#94A3B8;cursor:pointer;font-size:20px;line-height:1;padding:4px;}
+    #mrk-ai-close:hover{color:#fff;}
+    #mrk-ai-messages{
+      flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;
+    }
+    #mrk-ai-empty{color:#94A3B8;font-size:13px;text-align:center;margin:auto;padding:0 12px;line-height:1.5;}
+    .mrk-ai-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.5;}
+    .mrk-ai-msg.bot{background:rgba(255,255,255,0.06);color:#EAEFFB;align-self:flex-start;border-bottom-left-radius:3px;}
+    .mrk-ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+    .mrk-ai-msg.typing{color:#94A3B8;font-style:italic;}
+    #mrk-ai-input-row{
+      display:flex;gap:8px;padding:14px;border-top:1px solid #1A2744;
+    }
+    #mrk-ai-input{
+      flex:1;background:rgba(255,255,255,0.06);border:1px solid #1A2744;
+      border-radius:8px;padding:10px 12px;color:#fff;font-size:13.5px;font-family:'Inter',sans-serif;
+    }
+    #mrk-ai-input::placeholder{color:#94A3B8;}
+    #mrk-ai-input:focus{outline:none;border-color:var(--blue);}
+    #mrk-ai-send{
+      background:var(--blue);color:#fff;border:none;border-radius:8px;
+      padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;
+    }
+    #mrk-ai-send:hover{opacity:0.9;}
+    #mrk-ai-send:disabled{opacity:0.5;cursor:not-allowed;}
+    @media (max-width:560px){
+      #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
+      #mrk-ai-bubble{right:16px;bottom:16px;}
+    }
   </style>
 </head>
 <body>
@@ -302,5 +359,88 @@
     }
   }
 </script>
+
+<!-- ===== MRK AI WIDGET — helps clients choose the right package/service right here ===== -->
+<div id="mrk-ai-bubble" onclick="mrkAiToggle()">
+  <span class="dot"></span> MRK AI
+</div>
+
+<div id="mrk-ai-window">
+  <div id="mrk-ai-header">
+    <div class="title-block">
+      <div class="t1">MRK AI</div>
+      <div class="t2">Built in-house by MRK Agency</div>
+    </div>
+    <span id="mrk-ai-close" onclick="mrkAiToggle()">×</span>
+  </div>
+  <div id="mrk-ai-messages">
+    <div id="mrk-ai-empty">Not sure which package fits your project? Tell MRK AI your budget or needs and it'll recommend the best fit.</div>
+  </div>
+  <div id="mrk-ai-input-row">
+    <input id="mrk-ai-input" type="text" placeholder="e.g. My budget is $3000, what should I pick?" onkeydown="if(event.key==='Enter') mrkAiSend();">
+    <button id="mrk-ai-send" onclick="mrkAiSend()">Send</button>
+  </div>
+</div>
+
+<script>
+  function mrkAiSessionId(){
+    let id = localStorage.getItem('mrk_ai_session');
+    if(!id){
+      id = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('mrk_ai_session', id);
+    }
+    return id;
+  }
+
+  function mrkAiAppendMessage(text, role){
+    const box = document.getElementById('mrk-ai-messages');
+    const empty = document.getElementById('mrk-ai-empty');
+    if(empty) empty.remove();
+    const el = document.createElement('div');
+    el.className = 'mrk-ai-msg ' + role;
+    el.textContent = text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+  }
+
+  function mrkAiToggle(){
+    document.getElementById('mrk-ai-window').classList.toggle('open');
+  }
+
+  async function mrkAiSend(){
+    const input = document.getElementById('mrk-ai-input');
+    const sendBtn = document.getElementById('mrk-ai-send');
+    const message = input.value.trim();
+    if(!message) return;
+
+    mrkAiAppendMessage(message, 'user');
+    input.value = '';
+    sendBtn.disabled = true;
+    const typingEl = mrkAiAppendMessage('MRK AI is typing…', 'bot typing');
+
+    try{
+      const res = await fetch('/ai/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ message: message, visitor_session: mrkAiSessionId() })
+      });
+      const data = await res.json();
+      typingEl.remove();
+      if(data.reply){
+        mrkAiAppendMessage(data.reply, 'bot');
+      } else {
+        mrkAiAppendMessage("Sorry, something went wrong. Please try again in a moment.", 'bot');
+      }
+    } catch(err){
+      typingEl.remove();
+      mrkAiAppendMessage("MRK AI is temporarily unavailable. Please try again shortly.", 'bot');
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+</script>
+
 </body>
-  </html>
+</html>
