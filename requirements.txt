@@ -3,3 +3,4 @@ bcrypt
 gunicorn
 psycopg2-binary
 cloudinary
+requests
