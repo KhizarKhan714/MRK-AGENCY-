@@ -227,3 +227,53 @@ def chat():
 
     conn.close()
     return jsonify({'reply': reply, 'visitor_session': visitor_session})
+
+
+@ai_bp.route('/ceo/leads')
+def ceo_leads():
+    """
+    CEO-only view of every AI conversation, grouped by visitor, newest
+    first. Guarded the same way every other CEO route in app.py is —
+    if there's no ceo session, bounce to login. This route (and this
+    file) is the ONLY place that reads ai_conversations; clients never
+    get access to this data through /ai/chat.
+    """
+    from flask import render_template, redirect, url_for
+
+    if not session.get('ceo'):
+        return redirect(url_for('ceo_login'))
+
+    filter_score = request.args.get('filter', 'all')
+
+    conn = get_db()
+    c = conn.cursor()
+    if filter_score in ('high', 'medium', 'low'):
+        c.execute('''SELECT visitor_session, client_id, message, response,
+                            lead_score, created_at
+                     FROM ai_conversations
+                     WHERE lead_score=%s
+                     ORDER BY created_at DESC LIMIT 200''', (filter_score,))
+    else:
+        c.execute('''SELECT visitor_session, client_id, message, response,
+                            lead_score, created_at
+                     FROM ai_conversations
+                     ORDER BY created_at DESC LIMIT 200''')
+    rows = c.fetchall()
+
+    c.execute('''SELECT lead_score, COUNT(*) FROM ai_conversations GROUP BY lead_score''')
+    counts = {row[0]: row[1] for row in c.fetchall()}
+    conn.close()
+
+    conversations = [{
+        'visitor_session': r[0],
+        'client_id': r[1],
+        'message': r[2],
+        'response': r[3],
+        'lead_score': r[4],
+        'created_at': r[5],
+    } for r in rows]
+
+    return render_template('ceo_ai_leads.html',
+                            conversations=conversations,
+                            counts=counts,
+                            active_filter=filter_score)
