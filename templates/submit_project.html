@@ -78,13 +78,37 @@
     .pkg-option + label .pkg-price { font-size:1rem; font-weight:800; color:var(--blue); margin-top:0.15rem; }
     .pkg-option + label .pkg-desc { font-size:0.7rem; color:var(--muted); margin-top:0.2rem; }
 
+    /* PILL TOGGLES — used for Existing Website yes/no and Contact Preference */
+    .pill-group { display:flex; gap:0.6rem; flex-wrap:wrap; }
+    .pill-option { display:none; }
+    .pill-option + label {
+      padding:0.55rem 1.1rem; border:1.5px solid var(--border); border-radius:100px;
+      font-size:0.82rem; font-weight:600; color:var(--text); cursor:pointer;
+      background:var(--bg); transition:all 0.2s;
+    }
+    .pill-option:checked + label { border-color:var(--blue); background:#EFF6FF; color:var(--blue); }
+
     /* CUSTOM EXECUTIVE ONLY FIELDS */
     #custom-executive-fields { display:none; }
     #custom-executive-fields.show { display:block; }
 
+    /* CONDITIONAL SUB-FIELDS (existing website URL, main objective "other") */
+    .sub-field { display:none; margin-top:0.75rem; }
+    .sub-field.show { display:block; }
+
     /* FIXED PACKAGE INFO BANNER */
     #fixed-package-note { display:none; background:#F0F4FF; border:1.5px solid #C7D7FF; border-radius:8px; padding:0.8rem 1rem; font-size:0.82rem; color:#3B4FC8; margin-top:1rem; }
     #fixed-package-note.show { display:block; }
+
+    /* REVIEW & CONFIRM */
+    .review-row { display:flex; justify-content:space-between; gap:1rem; padding:0.55rem 0; border-bottom:1px solid var(--border); font-size:0.83rem; }
+    .review-row:last-child { border-bottom:none; }
+    .review-row.hidden-row { display:none; }
+    .review-label { color:var(--muted); font-weight:600; white-space:nowrap; }
+    .review-value { color:var(--text); text-align:right; word-break:break-word; }
+    .confirm-row { display:flex; gap:0.6rem; align-items:flex-start; margin-top:1.1rem; padding-top:1.1rem; border-top:1px solid var(--border); }
+    .confirm-row input[type="checkbox"] { margin-top:3px; flex-shrink:0; width:16px; height:16px; accent-color:var(--blue); }
+    .confirm-row label { font-size:0.8rem; color:var(--muted); line-height:1.5; text-transform:none; letter-spacing:0; font-weight:500; }
 
     /* SUBMIT */
     .submit-btn { width:100%; padding:0.85rem; background:var(--blue); color:var(--white); border:none; border-radius:9px; font-size:0.95rem; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s; }
@@ -173,7 +197,7 @@
   <div class="hero-inner">
     <div class="hero-label">New Project</div>
     <h1>Submit a Project</h1>
-    <p>Describe your vision and we'll bring it to life.</p>
+    <p>Tell us what you want built. We'll figure out how.</p>
   </div>
 </div>
 
@@ -181,7 +205,7 @@
 
   {% if error %}<div class="alert-error">{{ error }}</div>{% endif %}
 
-  <form action="/submit-project" method="POST">
+  <form action="/submit-project" method="POST" id="submit-form">
 
     {% set locked_service = request.args.get('service') %}
 
@@ -200,6 +224,18 @@
           </div>
         </div>
         <div class="field-hint" style="margin-top:0.75rem;">Ordering something else instead? <a href="/services" style="color:var(--blue);">Browse services</a> or <a href="/submit-project" style="color:var(--blue);">see full packages</a>.</div>
+      </div>
+    </div>
+
+    <!-- À LA CARTE BUDGET — required, floor set by this service's starting price -->
+    <div class="form-card">
+      <div class="form-card-title">Your Budget</div>
+      <div class="form-card-body">
+        <div class="form-group">
+          <label>Approximate Budget (USD)</label>
+          <input type="number" id="alc-budget-input" name="budget" placeholder="e.g. {{ locked_service_price or 1000 }}" min="{{ locked_service_price or 0 }}" required/>
+          <div class="field-hint">{% if locked_service_price %}Starts at ${{ '{:,}'.format(locked_service_price) }} — let us know what you're working with so we can scope accurately.{% else %}Let us know what you're working with so we can scope accurately.{% endif %}</div>
+        </div>
       </div>
     </div>
 
@@ -242,7 +278,7 @@
             <label for="pkg4">
               <div class="pkg-name">Diamond</div>
               <div class="pkg-price">$8,499</div>
-              <div class="pkg-desc">Unlimited pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
+              <div class="pkg-desc">40 pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
             </label>
           </div>
 
@@ -268,31 +304,54 @@
 
     <!-- PROJECT DETAILS -->
     <div class="form-card">
-      <div class="form-card-title">Project Details</div>
+      <div class="form-card-title">About Your Project</div>
       <div class="form-card-body">
         <div class="form-group">
-          <label>Project Title</label>
-          <input type="text" name="title" placeholder="e.g. Business Website for My Company" required/>
+          <label>Business / Project Name</label>
+          <input type="text" name="title" placeholder="e.g. ABC Real Estate, XYZ SaaS Platform, New Restaurant Website" required/>
         </div>
         <div class="form-group">
           <label>Project Description</label>
-          <textarea name="description" placeholder="Describe your project in detail — your goals, target audience, and any specific requirements..." required></textarea>
+          <textarea name="description" placeholder="Tell us what you'd like MRK AGENCY to build, improve, or create. Don't worry about technical details — just explain your idea in your own words." required></textarea>
         </div>
         <div class="form-group">
-          <label>Pages / Sections Wanted <span class="optional-tag">(optional)</span></label>
-          <textarea class="short" name="pages_needed" placeholder="e.g. Home, About, Services, Portfolio, Contact"></textarea>
+          <label>Main Objective</label>
+          <select name="main_objective" id="main-objective-select" onchange="toggleMainObjectiveOther()" required>
+            <option value="" disabled selected>What's the main thing you want to achieve?</option>
+            <option value="Launch a new business or project">Launch a new business or project</option>
+            <option value="Improve an existing website or digital product">Improve an existing website or digital product</option>
+            <option value="Generate more leads">Generate more leads</option>
+            <option value="Increase sales or conversions">Increase sales or conversions</option>
+            <option value="Build a software product">Build a software product</option>
+            <option value="Automate a business process">Automate a business process</option>
+            <option value="Improve our brand/presentation">Improve our brand/presentation</option>
+            <option value="Improve online visibility / SEO">Improve online visibility / SEO</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="sub-field" id="main-objective-other-field">
+            <input type="text" name="main_objective_other" placeholder="Tell us a bit more"/>
+          </div>
         </div>
         <div class="form-group">
-          <label>Language / Tech Preference <span class="optional-tag">(optional)</span></label>
-          <input type="text" name="tech_preference" placeholder="e.g. English only, or English + Urdu, or no preference"/>
+          <label>Do You Already Have a Website or Product? <span class="optional-tag">(optional)</span></label>
+          <div class="pill-group">
+            <input class="pill-option" type="radio" name="has_existing_website" id="existing-yes" value="yes" onchange="toggleExistingWebsite()"/>
+            <label for="existing-yes">Yes</label>
+            <input class="pill-option" type="radio" name="has_existing_website" id="existing-no" value="no" onchange="toggleExistingWebsite()"/>
+            <label for="existing-no">No</label>
+          </div>
+          <div class="sub-field" id="existing-website-url-field">
+            <input type="url" name="existing_website_url" placeholder="https://yourwebsite.com"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Anything Specific You Already Know You Need? <span class="optional-tag">(optional)</span></label>
+          <textarea name="specific_requirements" placeholder="e.g. booking system, WhatsApp button, blog, multilingual support..."></textarea>
+          <div class="field-hint">Features, pages, integrations, functionality, or anything else you already have in mind. Don't worry if you're not sure yet.</div>
         </div>
         <div class="form-group">
           <label>Reference Sites <span class="optional-tag">(optional)</span></label>
-          <input type="text" name="reference_sites" placeholder="Links to sites whose style you like"/>
-        </div>
-        <div class="form-group">
-          <label>Must-Have Features <span class="optional-tag">(optional)</span></label>
-          <input type="text" name="must_have_features" placeholder="e.g. booking system, WhatsApp button, blog"/>
+          <input type="text" name="reference_sites" placeholder="Links to sites, apps, or designs you like"/>
         </div>
         <div class="form-group">
           <label>AI Integration</label>
@@ -303,7 +362,7 @@
 
     <!-- CUSTOM EXECUTIVE ONLY -->
     <div class="form-card" id="custom-executive-fields">
-      <div class="form-card-title">Custom Executive — Budget, Timeline & Scope</div>
+      <div class="form-card-title">Custom Executive — Budget &amp; Scope</div>
       <div class="form-card-body">
         <div class="form-group">
           <label>Your Budget (USD)</label>
@@ -311,12 +370,47 @@
           <div class="field-hint">Starts at $10,000 — enter what you're working with so we can scope accurately.</div>
         </div>
         <div class="form-group">
-          <label>Your Target Deadline</label>
-          <input type="date" id="deadline-input" name="deadline"/>
+          <label>Custom Software Scope <span class="optional-tag">(optional)</span></label>
+          <textarea name="custom_scope" placeholder="Describe the custom software or systems you need beyond a standard website, in your own words."></textarea>
         </div>
-        <div class="form-group">
-          <label>Custom Software Scope</label>
-          <textarea name="custom_scope" placeholder="Describe the custom software/systems you need beyond a standard website..."></textarea>
+      </div>
+    </div>
+
+    <!-- CONTACT PREFERENCE — required for every path -->
+    <div class="form-card">
+      <div class="form-card-title">How Should We Reach You?</div>
+      <div class="form-card-body">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Contact Preference</label>
+          <div class="pill-group">
+            <input class="pill-option" type="radio" name="contact_preference" id="contact-email" value="Email" required/>
+            <label for="contact-email">Email</label>
+            <input class="pill-option" type="radio" name="contact_preference" id="contact-whatsapp" value="WhatsApp"/>
+            <label for="contact-whatsapp">WhatsApp</label>
+            <input class="pill-option" type="radio" name="contact_preference" id="contact-either" value="Either"/>
+            <label for="contact-either">Either</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW & CONFIRM -->
+    <div class="form-card">
+      <div class="form-card-title">Review &amp; Confirm</div>
+      <div class="form-card-body">
+        <div class="review-row"><span class="review-label">Project / Business</span><span class="review-value" id="rv-title">—</span></div>
+        <div class="review-row"><span class="review-label">Service</span><span class="review-value" id="rv-service">{% if locked_service %}{{ locked_service.replace(' (Service)', '') }}{% else %}—{% endif %}</span></div>
+        <div class="review-row"><span class="review-label">Description</span><span class="review-value" id="rv-description">—</span></div>
+        <div class="review-row"><span class="review-label">Main Objective</span><span class="review-value" id="rv-objective">—</span></div>
+        <div class="review-row"><span class="review-label">Existing Website</span><span class="review-value" id="rv-existing">—</span></div>
+        <div class="review-row"><span class="review-label">Specific Requirements</span><span class="review-value" id="rv-requirements">—</span></div>
+        <div class="review-row"><span class="review-label">References</span><span class="review-value" id="rv-references">—</span></div>
+        <div class="review-row hidden-row" id="rv-budget-row"><span class="review-label">Budget</span><span class="review-value" id="rv-budget">—</span></div>
+        <div class="review-row"><span class="review-label">Contact Preference</span><span class="review-value" id="rv-contact">—</span></div>
+
+        <div class="confirm-row">
+          <input type="checkbox" id="confirm-check" name="confirm_accurate" required/>
+          <label for="confirm-check">I confirm that the information provided above is accurate to the best of my knowledge and I understand that MRK AGENCY may contact me to discuss the project before final scope, pricing, or delivery arrangements are confirmed.</label>
         </div>
       </div>
     </div>
@@ -344,20 +438,120 @@
     const customFields = document.getElementById('custom-executive-fields');
     const fixedNote = document.getElementById('fixed-package-note');
     const budgetInput = document.getElementById('budget-input');
-    const deadlineInput = document.getElementById('deadline-input');
 
     if (isCustom) {
       customFields.classList.add('show');
       fixedNote.classList.remove('show');
-      budgetInput.required = true;
-      deadlineInput.required = true;
+      if (budgetInput) budgetInput.required = true;
     } else {
       customFields.classList.remove('show');
       fixedNote.classList.add('show');
-      budgetInput.required = false;
-      deadlineInput.required = false;
+      if (budgetInput) budgetInput.required = false;
     }
+    updateReview();
   }
+
+  function toggleExistingWebsite() {
+    const yes = document.getElementById('existing-yes');
+    const urlField = document.getElementById('existing-website-url-field');
+    if (yes && yes.checked) {
+      urlField.classList.add('show');
+    } else {
+      urlField.classList.remove('show');
+    }
+    updateReview();
+  }
+
+  function toggleMainObjectiveOther() {
+    const select = document.getElementById('main-objective-select');
+    const otherField = document.getElementById('main-objective-other-field');
+    if (select.value === 'Other') {
+      otherField.classList.add('show');
+    } else {
+      otherField.classList.remove('show');
+    }
+    updateReview();
+  }
+
+  function getPackageLabel() {
+    const hidden = document.querySelector('input[type="hidden"][name="package"]');
+    if (hidden) return hidden.value;
+    const checked = document.querySelector('input[name="package"]:checked');
+    return checked ? checked.value : '—';
+  }
+
+  function updateReview() {
+    const form = document.getElementById('submit-form');
+    if (!form) return;
+
+    const title = form.elements['title'];
+    const description = form.elements['description'];
+    const mainObjective = form.elements['main_objective'];
+    const mainObjectiveOther = form.elements['main_objective_other'];
+    const hasExisting = form.querySelector('input[name="has_existing_website"]:checked');
+    const existingUrl = form.elements['existing_website_url'];
+    const requirements = form.elements['specific_requirements'];
+    const references = form.elements['reference_sites'];
+    const contact = form.querySelector('input[name="contact_preference"]:checked');
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (val && String(val).trim()) ? val : '—';
+    };
+
+    set('rv-title', title ? title.value : '');
+    if (!document.querySelector('input[type="hidden"][name="package"]')) {
+      set('rv-service', getPackageLabel());
+    }
+    set('rv-description', description ? description.value : '');
+
+    let objectiveText = mainObjective ? mainObjective.value : '';
+    if (objectiveText === 'Other' && mainObjectiveOther && mainObjectiveOther.value.trim()) {
+      objectiveText = 'Other — ' + mainObjectiveOther.value.trim();
+    }
+    set('rv-objective', objectiveText);
+
+    let existingText = '';
+    if (hasExisting) {
+      if (hasExisting.value === 'yes') {
+        existingText = existingUrl && existingUrl.value.trim() ? ('Yes — ' + existingUrl.value.trim()) : 'Yes';
+      } else {
+        existingText = 'No';
+      }
+    }
+    set('rv-existing', existingText);
+
+    set('rv-requirements', requirements ? requirements.value : '');
+    set('rv-references', references ? references.value : '');
+    set('rv-contact', contact ? contact.value : '');
+
+    const ceBudget = document.getElementById('budget-input');
+    const alcBudget = document.getElementById('alc-budget-input');
+    const budgetRow = document.getElementById('rv-budget-row');
+    let budgetVisible = false;
+    let budgetVal = '';
+    if (alcBudget) {
+      budgetVisible = true;
+      budgetVal = alcBudget.value ? ('$' + alcBudget.value) : '';
+    } else if (ceBudget) {
+      const wrap = document.getElementById('custom-executive-fields');
+      if (wrap && wrap.classList.contains('show')) {
+        budgetVisible = true;
+        budgetVal = ceBudget.value ? ('$' + ceBudget.value) : '';
+      }
+    }
+    if (budgetRow) budgetRow.classList.toggle('hidden-row', !budgetVisible);
+    set('rv-budget', budgetVal);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('submit-form');
+    if (form) {
+      form.addEventListener('input', updateReview);
+      form.addEventListener('change', updateReview);
+    }
+    updateReview();
+  });
 </script>
 
 <!-- ===== MRK AI WIDGET — helps clients choose the right package/service right here ===== -->
@@ -441,6 +635,5 @@
     }
   }
 </script>
-
 </body>
 </html>
