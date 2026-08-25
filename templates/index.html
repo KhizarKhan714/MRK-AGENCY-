@@ -86,40 +86,43 @@
   .btn-ghost:hover{border-color:var(--blue-bright);background:rgba(59,124,255,0.08);}
   .menu-toggle{display:none;}
 
-  /* ===== HERO ===== */
+  /* ===== HERO v2 — real photo background ===== */
   .hero{
     position:relative;
-    background:var(--dark);
+    background:
+      linear-gradient(100deg, rgba(3,5,13,0.94) 0%, rgba(3,5,13,0.82) 26%, rgba(3,5,13,0.42) 50%, rgba(3,5,13,0.08) 68%),
+      linear-gradient(180deg, rgba(3,5,13,0.45) 0%, rgba(3,5,13,0) 22%, rgba(3,5,13,0.1) 78%, rgba(3,5,13,0.7) 100%),
+      url('{{ url_for("static", filename="images/hero-bg.jpg") }}');
+    background-size: cover, cover, cover;
+    background-position: center, center, center right;
+    background-repeat: no-repeat, no-repeat, no-repeat;
     overflow:hidden;
-    padding:120px 32px 100px;
+    padding:112px 32px 0;
   }
   #net-canvas{
     position:absolute;inset:0;
     width:100%;height:100%;
-    opacity:0.55;
-  }
-  .hero::after{
-    content:'';
-    position:absolute;inset:0;
-    background:radial-gradient(circle at 18% 20%, rgba(26,86,219,0.35), transparent 55%),
-               radial-gradient(circle at 85% 75%, rgba(26,86,219,0.18), transparent 50%);
+    opacity:0.14;
+    z-index:1;
     pointer-events:none;
   }
   .hero-inner{
     position:relative;z-index:2;
     max-width:1240px;margin:0 auto;
+    padding-bottom:60px;
   }
   .eyebrow{
     display:inline-flex;align-items:center;gap:9px;
     font-family:var(--mono);
     font-size:12.5px;font-weight:500;
     color:#B7C4E8;
-    background:rgba(255,255,255,0.05);
+    background:rgba(255,255,255,0.06);
     border:1px solid var(--line);
     padding:7px 14px 7px 12px;
     border-radius:100px;
-    margin-bottom:28px;
+    margin-bottom:14px;
     letter-spacing:0.02em;
+    backdrop-filter:blur(6px);
   }
   .pulse-dot{
     width:7px;height:7px;border-radius:50%;
@@ -132,46 +135,91 @@
     70%{box-shadow:0 0 0 8px rgba(61,220,132,0);}
     100%{box-shadow:0 0 0 0 rgba(61,220,132,0);}
   }
-  h1.headline{
-    font-size:clamp(38px, 6vw, 74px);
-    font-weight:800;
-    line-height:1.05;
-    letter-spacing:-0.02em;
-    color:#fff;
-    max-width:900px;
-    margin-bottom:22px;
-  }
-  h1.headline em{
-    font-style:normal;
+
+  /* positioning kicker — "Pakistan's Premier Hybrid Digital Agency" */
+  .hero-kicker-top{
+    font-family:var(--mono);
+    font-size:12px;font-weight:600;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
     color:var(--blue-bright);
+    margin-bottom:10px;
   }
+
+  /* big brand lockup — mirrors the reference banner */
+  .brand-lockup{
+    font-size:clamp(42px, 8vw, 84px);
+    font-weight:900;
+    letter-spacing:-0.01em;
+    line-height:1;
+    margin-bottom:16px;
+  }
+  .brand-lockup .w{color:#fff;}
+  .brand-lockup .a{color:var(--blue-bright);margin-left:16px;}
+
+  /* tagline treatment — "Where your brand achieves glory." */
+  .tagline-row{margin-bottom:28px;}
+  .tagline-text{
+    display:block;
+    font-weight:700;
+    font-size:clamp(17px,2.4vw,26px);
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:#EAF0FF;
+    margin-bottom:12px;
+  }
+  .tagline-text b{color:var(--blue-bright);font-weight:900;}
+  .tagline-underline{
+    display:block;width:120px;height:3px;
+    background:linear-gradient(90deg, var(--blue-bright), transparent);
+    border-radius:2px;
+  }
+
+  .hero-func-line{
+    font-size:clamp(17px,2vw,21px);
+    color:#D3DAF2;font-weight:600;
+    margin-bottom:22px;
+    max-width:640px;line-height:1.4;
+  }
+  .hero-func-line #rotator{color:var(--blue-bright);font-weight:800;transition:opacity .25s ease;}
+
   .hero p.lede{
-    font-size:18px;line-height:1.6;
+    font-size:16.5px;line-height:1.65;
     color:var(--text-dim);
-    max-width:560px;
-    margin-bottom:40px;
+    max-width:540px;
+    margin-bottom:38px;
   }
-  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:72px;}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:64px;}
   .hero-ctas .btn-primary, .hero-ctas .btn-ghost{padding:14px 26px;font-size:15px;}
+  .hero-ctas .btn-primary{
+    box-shadow:0 8px 28px rgba(26,86,219,0.4);
+  }
 
   .stat-rail{
     display:grid;
     grid-template-columns:repeat(4, 1fr);
     border-top:1px solid var(--line);
-    padding-top:32px;
+    padding-top:28px;
     gap:24px;
+    position:relative;
+  }
+  .stat-rail::before{
+    content:'';
+    position:absolute;top:-1px;left:0;width:120px;height:1px;
+    background:linear-gradient(90deg, var(--blue-bright), transparent);
   }
   .stat{
     display:flex;flex-direction:column;gap:6px;
   }
   .stat .num{
     font-family:var(--mono);
-    font-size:26px;font-weight:600;
+    font-size:24px;font-weight:600;
     color:#fff;
+    text-shadow:0 2px 12px rgba(0,0,0,0.5);
   }
   .stat .label{
     font-family:var(--mono);
-    font-size:12px;
+    font-size:11.5px;
     color:var(--text-dim);
     text-transform:uppercase;
     letter-spacing:0.04em;
@@ -179,17 +227,18 @@
 
   @media (max-width:900px){
     nav ul{display:none;}
-    .stat-rail{grid-template-columns:repeat(2, 1fr);row-gap:28px;}
+    .stat-rail{grid-template-columns:repeat(2, 1fr);row-gap:24px;}
   }
   @media (max-width:560px){
-    .hero{padding:90px 20px 70px;}
+    .hero{padding:88px 20px 0;}
     .hero-ctas{flex-direction:column;}
     .nav-cta .btn-ghost{display:none;}
+    .brand-lockup .a{display:block;margin-left:0;margin-top:2px;}
   }
 
   @media (prefers-reduced-motion: reduce){
     .pulse-dot{animation:none;}
-    #net-canvas{opacity:0.25;}
+    #net-canvas{opacity:0.06;}
   }
 
   /* ===== MRK AI WIDGET ===== */
@@ -274,11 +323,16 @@
   <canvas id="net-canvas"></canvas>
   <div class="hero-inner">
     <div class="eyebrow"><span class="pulse-dot"></span>Currently accepting new projects</div>
+    <div class="hero-kicker-top">Pakistan's Premier Hybrid Digital Agency</div>
 
-    <h1 class="headline">
-      We engineer the systems<br>
-      your brand runs on — <span id="rotator" style="color:var(--blue-bright);">Web Development</span>
-    </h1>
+    <div class="brand-lockup"><span class="w">MRK</span><span class="a">AGENCY</span></div>
+
+    <div class="tagline-row">
+      <span class="tagline-text">Where your brand achieves <b>glory</b>.</span>
+      <i class="tagline-underline"></i>
+    </div>
+
+    <p class="hero-func-line">We engineer the systems your brand runs on — <span id="rotator">Web Development</span></p>
 
     <p class="lede">
       MRK Agency is a full-stack digital partner — development, design, and software engineering delivered with enterprise discipline, at agency speed. No revision limits. No guesswork. Just a system built to scale with you.
@@ -413,11 +467,11 @@
     </div>
     <div class="grid grid-3">
       {% set tiers = [
-        ('Bronze', '1499', '5 pages · 2 weeks', false),
-        ('Consular', '2,999', '10 pages · 3 weeks', false),
-        ('Gold', '4,499', '20 pages · 5 weeks', true),
-        ('Diamond', '8,499', 'Unlimited pages · 10 weeks', false),
-        ('Custom Executive', '10,000+', 'Everything in Diamond + custom software + dedicated point of contact', false)
+        ('Bronze', '1,499', '5 pages · 2 weeks · Web Development, Web Design & Basic SEO', false),
+        ('Consular', '2,999', '10 pages · 3 weeks · Web Development, Web Design, Graphic Design & Full SEO', false),
+        ('Gold', '4,999', '20 pages · 5 weeks · Everything in Consular, plus UI/UX Design & Analytics Setup', true),
+        ('Diamond', '8,499', '40 pages · 10 weeks · Everything in Gold, plus Premium Branding & Priority Support', false),
+        ('Custom Executive', '10,000+', 'Everything in Diamond + custom software + much more, anything you ask for!', false)
       ] %}
       {% for name, price, spec, featured in tiers %}
       <div class="price-card {% if featured %}featured{% endif %}">
@@ -440,7 +494,7 @@
   {% if site_settings.get('instagram_url') %}<a href="{{ site_settings.instagram_url }}" target="_blank" style="color:var(--text-dim);">Instagram</a>{% endif %}
   {% if site_settings.get('twitter_url') %}<a href="{{ site_settings.twitter_url }}" target="_blank" style="color:var(--text-dim);">X</a>{% endif %}
   </div>
-  
+
 {% include 'footer.html' %}
 
 
@@ -460,25 +514,25 @@
   }, 2200);
   rotEl.style.transition = 'opacity .25s ease';
 
-  // ---- Network node background ----
+  // ---- Network node background (subtle ambient motion over the photo) ----
   const canvas = document.getElementById('net-canvas');
   const ctx = canvas.getContext('2d');
-  let w, h, nodes;
-  const NODE_COUNT = 46;
-  const MAX_DIST = 140;
+  let nodes;
+  const NODE_COUNT = 40;
+  const MAX_DIST = 130;
 
   function resize(){
-    w = canvas.width = canvas.offsetWidth * devicePixelRatio;
-    h = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    canvas.width = canvas.offsetWidth * devicePixelRatio;
+    canvas.height = canvas.offsetHeight * devicePixelRatio;
     ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
   }
 
   function initNodes(){
     nodes = Array.from({length: NODE_COUNT}, () => ({
-      x: Math.random() * canvas.offsetWidth,
+      x: Math.random() * canvas.offsetWidth * 0.55,
       y: Math.random() * canvas.offsetHeight,
-      vx: (Math.random() - 0.5) * 0.25,
-      vy: (Math.random() - 0.5) * 0.25
+      vx: (Math.random() - 0.5) * 0.22,
+      vy: (Math.random() - 0.5) * 0.22
     }));
   }
 
@@ -487,7 +541,7 @@
     ctx.clearRect(0,0,cw,ch);
     for(const n of nodes){
       n.x += n.vx; n.y += n.vy;
-      if(n.x < 0 || n.x > cw) n.vx *= -1;
+      if(n.x < 0 || n.x > cw * 0.55) n.vx *= -1;
       if(n.y < 0 || n.y > ch) n.vy *= -1;
     }
     for(let i=0;i<nodes.length;i++){
@@ -495,7 +549,7 @@
         const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
         const dist = Math.sqrt(dx*dx+dy*dy);
         if(dist < MAX_DIST){
-          ctx.strokeStyle = `rgba(59,124,255,${(1 - dist/MAX_DIST) * 0.35})`;
+          ctx.strokeStyle = `rgba(59,124,255,${(1 - dist/MAX_DIST) * 0.3})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(nodes[i].x, nodes[i].y);
@@ -505,9 +559,9 @@
       }
     }
     for(const n of nodes){
-      ctx.fillStyle = 'rgba(178,197,255,0.8)';
+      ctx.fillStyle = 'rgba(178,197,255,0.7)';
       ctx.beginPath();
-      ctx.arc(n.x, n.y, 1.6, 0, Math.PI*2);
+      ctx.arc(n.x, n.y, 1.4, 0, Math.PI*2);
       ctx.fill();
     }
     requestAnimationFrame(step);
@@ -521,7 +575,7 @@
         const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
         const dist = Math.sqrt(dx*dx+dy*dy);
         if(dist < MAX_DIST){
-          ctx.strokeStyle = `rgba(59,124,255,${(1 - dist/MAX_DIST) * 0.35})`;
+          ctx.strokeStyle = `rgba(59,124,255,${(1 - dist/MAX_DIST) * 0.3})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(nodes[i].x, nodes[i].y);
@@ -531,9 +585,9 @@
       }
     }
     for(const n of nodes){
-      ctx.fillStyle = 'rgba(178,197,255,0.8)';
+      ctx.fillStyle = 'rgba(178,197,255,0.7)';
       ctx.beginPath();
-      ctx.arc(n.x, n.y, 1.6, 0, Math.PI*2);
+      ctx.arc(n.x, n.y, 1.4, 0, Math.PI*2);
       ctx.fill();
     }
   }
@@ -628,4 +682,4 @@
 </script>
 
 </body>
-</html>  
+</html>
