@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -91,6 +91,23 @@
     .btn-disabled { background: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
     .btn-disabled:hover { opacity: 1; }
 
+    /* COMMAND CENTER SUMMARY */
+    .command-card {
+      background: linear-gradient(135deg, var(--dark), #0F1A33);
+      border: 1px solid #1A2744;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--white);
+    }
+    .command-card .cc-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #93A4C9; margin-bottom: 0.5rem; }
+    .command-card .cc-project { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; }
+    .cc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+    .cc-item label { display: block; font-size: 0.68rem; font-weight: 600; color: #7C8CB0; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+    .cc-item span { font-size: 0.92rem; font-weight: 600; color: var(--white); }
+    .cc-item.cc-action span.cc-clear { color: #6EE7B7; }
+    .cc-item.cc-action span.cc-pending { color: #FCD34D; }
+
     /* 1. PROJECT OVERVIEW STATS */
     .stats-grid {
       display: grid;
@@ -179,7 +196,10 @@
       background: linear-gradient(135deg, #1A56DB, #6366F1);
       color: white; display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 1rem;
+      overflow: hidden;
+      flex-shrink: 0;
     }
+    .am-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .am-name { font-size: 0.95rem; font-weight: 700; color: var(--dark); }
     .am-role { font-size: 0.8rem; color: var(--muted); }
 
@@ -279,6 +299,7 @@
   <div class="nav-links">
     <a href="/submit-project">New Project</a>
     <a href="/my-projects">My Projects</a>
+    <a href="/files">Files</a>
     <a href="/profile">Profile</a>
     <a href="/logout">Logout</a>
   </div>
@@ -287,6 +308,7 @@
 <div class="mobile-menu" id="mobileMenu">
   <a href="/submit-project">New Project</a>
   <a href="/my-projects">My Projects</a>
+  <a href="/files">Files</a>
   <a href="/profile">Profile</a>
   <a href="/logout">Logout</a>
 </div>
@@ -317,6 +339,37 @@
   </div>
 
   {% else %}
+
+  <!-- COMMAND CENTER SUMMARY — built entirely from data already computed for this page -->
+  {% if timeline_project %}
+  {% set stage_names = ['Submitted','Planning','Design','Development','Testing','Delivered'] %}
+  <div class="command-card">
+    <div class="cc-title">Your project, at a glance</div>
+    <div class="cc-project">{{ timeline_project.title }}</div>
+    <div class="cc-grid">
+      <div class="cc-item">
+        <label>Currently</label>
+        <span>{{ stage_names[timeline_project.stage_index] }}</span>
+      </div>
+      <div class="cc-item">
+        <label>Next</label>
+        <span>{% if timeline_project.stage_index + 1 < stage_names|length %}{{ stage_names[timeline_project.stage_index + 1] }}{% else %}Delivery{% endif %}</span>
+      </div>
+      <div class="cc-item cc-action">
+        <label>Action Required</label>
+        {% if open_requests_count > 0 %}
+        <span class="cc-pending">Review pending — see below</span>
+        {% else %}
+        <span class="cc-clear">Nothing right now</span>
+        {% endif %}
+      </div>
+      <div class="cc-item">
+        <label>Project Balance</label>
+        <span>${{ '%.0f'|format(pending_payments_total) }}</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- 1. PROJECT OVERVIEW -->
   <div class="section-title">Project Overview</div>
@@ -450,7 +503,7 @@
     <div class="section-title">Quick Actions</div>
     <div class="quick-actions-grid">
       <a href="/submit-project" class="btn btn-blue">New Project</a>
-      <button class="btn btn-disabled" disabled title="Coming soon">Upload Files</button>
+      <a href="/files" class="btn btn-outline">Files &amp; Documents</a>
       {% if latest_project_id %}
       <a href="/invoice/{{ latest_project_id }}" class="btn btn-outline">Download Invoice</a>
       {% else %}
@@ -483,7 +536,7 @@
     <div class="card">
       <div class="section-title">Your Account Manager</div>
       <div class="am-row">
-        <div class="am-avatar">KK</div>
+        <div class="am-avatar">{% if ceo_photo %}<img src="{{ ceo_photo }}" alt="Khizar Khan">{% else %}KK{% endif %}</div>
         <div>
           <div class="am-name">Khizar Khan</div>
           <div class="am-role">CEO, MRK Agency</div>
@@ -588,4 +641,4 @@
 </script>
 
 </body>
-  </html>
+  </html>    
