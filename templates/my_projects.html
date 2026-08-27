@@ -137,6 +137,7 @@
       margin-bottom: 0.2rem;
     }
     .meta-item span { font-size: 0.9rem; font-weight: 500; color: var(--dark); }
+    .meta-item .meta-sub { display: block; font-size: 0.78rem; font-weight: 400; color: var(--muted); margin-top: 0.2rem; line-height: 1.4; }
 
     /* PAYMENT STATUS STRIP */
     .payment-strip {
@@ -246,6 +247,7 @@
     <a href="/dashboard">Dashboard</a>
     <a href="/submit-project">New Project</a>
     <a href="/my-projects" class="active">My Projects</a>
+    <a href="/files">Files</a>
     <a href="/profile">Profile</a>
     <a href="/logout">Logout</a>
   </div>
@@ -255,6 +257,7 @@
   <a href="/dashboard">Dashboard</a>
   <a href="/submit-project">New Project</a>
   <a href="/my-projects" class="active">My Projects</a>
+  <a href="/files">Files</a>
   <a href="/profile">Profile</a>
   <a href="/logout">Logout</a>
 </div>
@@ -273,6 +276,13 @@
   </div>
 
   {% else %}
+  {% set pkg_desc = {
+    'Bronze': '5 pages · 2 weeks · Web Development, Web Design & Basic SEO',
+    'Consular': '10 pages · 3 weeks · Web Development, Web Design, Graphic Design & Full SEO',
+    'Gold': '20 pages · 5 weeks · Everything in Consular, plus UI/UX Design & Analytics Setup',
+    'Diamond': '40 pages · 10 weeks · Everything in Gold, plus Premium Branding & Priority Support',
+    'Custom Executive': 'Everything in Diamond + custom software + much more, anything you ask for!'
+  } %}
   {% for p in projects %}
   {% set status = p[8] %}
   {% set due = amount_due.get(p[0], 0) %}
@@ -348,9 +358,10 @@
 
       <!-- META -->
       <div class="meta-grid">
-        <div class="meta-item">
+        <div class="meta-item" style="grid-column:1/-1;">
           <label>Package</label>
           <span>{{ p[7] or '—' }}</span>
+          {% if pkg_desc.get(p[7]) %}<span class="meta-sub">{{ pkg_desc[p[7]] }}</span>{% endif %}
         </div>
         <div class="meta-item">
           <label>Budget</label>
@@ -476,5 +487,5 @@
     a.addEventListener('click', () => { document.getElementById('mobileMenu').classList.remove('open'); document.getElementById('hamburger').classList.remove('open'); });
   });
 </script>
-</body>
-  </html>
+</body> 
+</html>
