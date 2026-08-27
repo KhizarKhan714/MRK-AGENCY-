@@ -56,6 +56,7 @@
     }
     .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
     .tab-btn:hover { color: var(--text); }
+    .tab-btn .tb-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--red); margin-left:5px; vertical-align:middle; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -217,7 +218,7 @@
       color: var(--text);
     }
 
-    .announce-list, .activity-list { list-style: none; }
+    .announce-list, .activity-list, .notif-list-c { list-style: none; }
     .announce-list li {
       padding: 0.7rem 0;
       border-bottom: 1px solid var(--border);
@@ -262,6 +263,110 @@
 
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
     @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* PERFORMANCE BREAKDOWN */
+    .perf-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:1rem; }
+    .perf-item { text-align:center; padding:1rem 0.5rem; background:var(--bg); border-radius:10px; }
+    .perf-item .p-num { font-size:1.35rem; font-weight:700; color:var(--dark); }
+    .perf-item .p-lbl { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-top:0.25rem; font-weight:600; }
+
+    /* RESOURCES TAB — structural placeholder */
+    .resource-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 0; border-bottom: 1px solid var(--border);
+    }
+    .resource-row:last-child { border-bottom: none; }
+    .resource-row .r-name { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
+    .resource-row .r-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* FILES TAB */
+    .file-row { display:flex; align-items:center; gap:0.9rem; padding:0.85rem 0; border-bottom:1px solid var(--border); }
+    .file-row:last-child { border-bottom:none; }
+    .file-icon { width:36px; height:36px; border-radius:8px; background:#EFF6FF; color:var(--blue); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+    .file-meta { flex:1; min-width:0; }
+    .file-name { font-size:0.87rem; font-weight:600; color:var(--dark); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .file-sub { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
+    .file-actions a { font-size:0.8rem; font-weight:600; color:var(--blue); text-decoration:none; white-space:nowrap; }
+    .tag { display:inline-block; font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:0.12rem 0.5rem; border-radius:5px; }
+    .tag-client { background:#F0FDF4; color:#166534; }
+    .tag-mrk { background:#EFF6FF; color:#1E40AF; }
+    .tag-you { background:#FEF3C7; color:#92400E; }
+    .upload-zone { border:1.5px dashed var(--border); border-radius:10px; padding:1.25rem; text-align:center; margin-bottom:1rem; }
+    .upload-zone input[type="file"] { display:none; }
+    .upload-zone label { cursor:pointer; font-size:0.85rem; color:var(--muted); }
+    .upload-zone label strong { color:var(--blue); }
+
+    /* NOTIFICATIONS TAB */
+    .notif-item-c { display:flex; align-items:flex-start; gap:0.75rem; padding:0.85rem 0; border-bottom:1px solid var(--border); }
+    .notif-item-c:last-child { border-bottom:none; }
+    .notif-item-c .n-dot { font-size:0.8rem; margin-top:0.1rem; }
+    .notif-item-c .n-text { font-size:0.88rem; color:var(--text); font-weight:500; }
+    .notif-item-c .n-time { font-size:0.74rem; color:var(--muted); margin-top:0.15rem; }
+
+    /* REVISION HISTORY */
+    .version-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border); font-size:0.83rem; }
+    .version-row:last-child { border-bottom:none; }
+    .version-status { font-size:0.72rem; font-weight:700; padding:0.15rem 0.55rem; border-radius:999px; }
+    .vs-approved { background:#D1FAE5; color:#065F46; }
+    .vs-revision { background:#FEE2E2; color:#991B1B; }
+    .vs-pending  { background:#FEF3C7; color:#92400E; }
+
+    /* ===== MRK AI WIDGET ===== */
+    #mrk-ai-bubble{
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      display:flex;align-items:center;gap:10px;
+      background:var(--blue);color:#fff;
+      padding:14px 20px;border-radius:100px;
+      border:1px solid var(--blue);
+      font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
+      cursor:pointer;box-shadow:0 8px 24px rgba(26,86,219,0.35);
+      transition:transform .2s ease, opacity .2s ease;
+    }
+    #mrk-ai-bubble:hover{opacity:0.9;transform:translateY(-2px);}
+    #mrk-ai-bubble .dot{width:7px;height:7px;border-radius:50%;background:#3DDC84;}
+    #mrk-ai-window{
+      position:fixed;bottom:96px;right:24px;z-index:999;
+      width:360px;max-width:calc(100vw - 32px);height:480px;max-height:calc(100vh - 140px);
+      background:var(--dark);border:1px solid #1A2744;border-radius:16px;
+      display:none;flex-direction:column;overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,0.45);
+    }
+    #mrk-ai-window.open{display:flex;}
+    #mrk-ai-header{
+      padding:16px 18px;border-bottom:1px solid #1A2744;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    #mrk-ai-header .title-block .t1{color:#fff;font-weight:800;font-size:15px;}
+    #mrk-ai-header .title-block .t2{color:#94A3B8;font-size:11.5px;margin-top:2px;}
+    #mrk-ai-close{color:#94A3B8;cursor:pointer;font-size:20px;line-height:1;padding:4px;}
+    #mrk-ai-close:hover{color:#fff;}
+    #mrk-ai-messages{
+      flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;
+    }
+    #mrk-ai-empty{color:#94A3B8;font-size:13px;text-align:center;margin:auto;padding:0 12px;line-height:1.5;}
+    .mrk-ai-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.5;}
+    .mrk-ai-msg.bot{background:rgba(255,255,255,0.06);color:#EAEFFB;align-self:flex-start;border-bottom-left-radius:3px;}
+    .mrk-ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+    .mrk-ai-msg.typing{color:#94A3B8;font-style:italic;}
+    #mrk-ai-input-row{
+      display:flex;gap:8px;padding:14px;border-top:1px solid #1A2744;
+    }
+    #mrk-ai-input{
+      flex:1;background:rgba(255,255,255,0.06);border:1px solid #1A2744;
+      border-radius:8px;padding:10px 12px;color:#fff;font-size:13.5px;font-family:'Inter',sans-serif;
+    }
+    #mrk-ai-input::placeholder{color:#94A3B8;}
+    #mrk-ai-input:focus{outline:none;border-color:var(--blue);}
+    #mrk-ai-send{
+      background:var(--blue);color:#fff;border:none;border-radius:8px;
+      padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;
+    }
+    #mrk-ai-send:hover{opacity:0.9;}
+    #mrk-ai-send:disabled{opacity:0.5;cursor:not-allowed;}
+    @media (max-width:560px){
+      #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
+      #mrk-ai-bubble{right:16px;bottom:16px;}
+    }
   </style>
 </head>
 <body>
@@ -291,6 +396,9 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
     <button class="tab-btn" onclick="showTab('projects')">Projects</button>
+    <button class="tab-btn" onclick="showTab('files')">Files</button>
+    <button class="tab-btn" onclick="showTab('notifications')">Notifications{% if unread_notification_count and unread_notification_count > 0 %}<span class="tb-dot"></span>{% endif %}</button>
+    <button class="tab-btn" onclick="showTab('resources')">Resources</button>
     <button class="tab-btn" onclick="showTab('profile')">My Profile</button>
   </div>
 
@@ -350,6 +458,19 @@
     </div>
     {% endif %}
 
+    <!-- PERFORMANCE BREAKDOWN -->
+    {% if deliverables_submitted is defined %}
+    <div class="card">
+      <div class="section-title">Performance Breakdown</div>
+      <div class="perf-grid">
+        <div class="perf-item"><div class="p-num">{{ deliverables_submitted }}</div><div class="p-lbl">Submitted</div></div>
+        <div class="perf-item"><div class="p-num">{{ deliverables_approved }}</div><div class="p-lbl">Approved</div></div>
+        <div class="perf-item"><div class="p-num">{{ deliverables_revision }}</div><div class="p-lbl">Revision Requested</div></div>
+        <div class="perf-item"><div class="p-num">{{ on_time_rate if on_time_rate is defined else '—' }}</div><div class="p-lbl">On-Time Rate</div></div>
+      </div>
+    </div>
+    {% endif %}
+
     <!-- 4. Company Announcements -->
     <div class="card">
       <div class="section-title">Company Announcements</div>
@@ -389,13 +510,13 @@
       <div class="section-title">Quick Actions</div>
       <div class="quick-actions-grid">
         <button class="btn btn-outline" onclick="showTab('profile')">Update Profile</button>
-        <button class="btn btn-outline" onclick="showTab('profile')">Change Password</button>
+        <button class="btn btn-outline" onclick="showTab('files')">Files &amp; Resources</button>
         {% if contact_whatsapp %}
         <a href="https://wa.me/{{ contact_whatsapp }}" target="_blank" class="btn btn-blue">Contact CEO</a>
         {% else %}
         <button class="btn btn-disabled" disabled title="Contact channel not set up yet">Contact CEO</button>
         {% endif %}
-        <button class="btn btn-disabled" disabled title="Coming soon">Download Contractor Guide</button>
+        <button class="btn btn-outline" onclick="showTab('resources')">Contractor Guide</button>
       </div>
     </div>
 
@@ -434,283 +555,4 @@
     </div>
 
   </div>
-
-  <!-- TAB: PROJECTS -->
-  <div class="tab-content" id="tab-projects">
-    {% if not projects %}
-    <div class="card premium-empty">
-      <div class="icon">📂</div>
-      <h3>No active projects</h3>
-      <p>You don't have any assigned projects at the moment.</p>
-      <p>When the CEO assigns work, it will automatically appear here.</p>
-      <div class="status-line">
-        {% if availability_status == 'Available' %}🟢 Available for Assignment{% elif availability_status == 'Busy' %}🟡 Busy{% else %}🔴 Offline{% endif %}
-      </div>
-    </div>
-    {% else %}
-    {% for p in projects %}
-    {% set rs = review_status.get(p[0]) %}
-    <div class="card">
-      <h3>{{ p[2] }}</h3>
-      <p>{{ p[3] }}</p>
-
-      <div class="pay-badge">Your Pay: ${{ p[10] }}</div>
-
-      <div class="meta-row">
-        <div class="meta-item">
-          <label>Deadline</label>
-          <span>{{ p[6] or '—' }}</span>
-        </div>
-      </div>
-
-      {% if p[11] == contractor[0] %}
-        {% set stage_info = project_stage_info.get(p[0]) if project_stage_info else None %}
-        <div class="meta-row" style="margin-bottom:1rem;">
-          <div class="meta-item">
-            <label>Current Stage (client-visible)</label>
-            <span>{{ stage_info.current if stage_info else 'Submitted' }}</span>
-          </div>
-        </div>
-        {% if stage_info and stage_info.pending %}
-        <div class="alert alert-info" style="margin-bottom:1rem;">
-          ⏳ Stage update to <strong>{{ stage_info.pending }}</strong> submitted — waiting on CEO approval before the client sees it.
-        </div>
-        {% else %}
-        <form action="/contractor/update-stage/{{ p[0] }}" method="POST" style="margin-bottom:1rem;display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;">
-          <div class="form-group" style="margin-bottom:0;flex:1;min-width:180px;">
-            <label>Update project stage</label>
-            <select name="new_stage" style="width:100%;padding:0.65rem 0.9rem;border:1.5px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:'Inter',sans-serif;">
-              {% for stage in ['Submitted','Planning','Design','Development','Testing','Delivered'] %}
-              <option value="{{ stage }}" {% if stage_info and stage_info.current == stage %}selected{% endif %}>{{ stage }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <button type="submit" class="btn btn-blue">Submit for CEO Approval</button>
-        </form>
-        {% endif %}
-      {% endif %}
-
-      {% if p[11] == contractor[0] and rs %}
-        {% if rs.client_notes %}
-        <div class="alert alert-error" style="margin-bottom:1rem;">
-          <strong>Client requested changes on {{ rs.phase_label }}:</strong><br/>{{ rs.client_notes }}
-        </div>
-        {% endif %}
-
-        {% if rs.submitted_at and not rs.client_approved %}
-        <div class="alert alert-info" style="margin-bottom:1rem;">
-          ⏳ Waiting on client review for <strong>{{ rs.phase_label }}</strong> — submitted, nothing to do until they respond.
-        </div>
-        {% else %}
-        <form action="/contractor/submit-milestone/{{ p[0] }}" method="POST" style="margin-bottom:1rem;">
-          <div class="form-group">
-            <label>Submit proof for {{ rs.phase_label }}</label>
-            <input type="text" name="proof" placeholder="Link to preview, staging site, or a note describing what's done" required/>
-          </div>
-          <button type="submit" class="btn btn-blue">Submit for Client Review</button>
-        </form>
-        {% endif %}
-
-        <details style="margin-bottom:1rem;">
-          <summary style="cursor:pointer;font-size:0.85rem;color:var(--muted);">Request an advance</summary>
-          <form action="/contractor/request-advance/{{ p[0] }}" method="POST" style="margin-top:0.75rem;">
-            <div class="form-group">
-              <label>Amount (USD)</label>
-              <input type="number" name="amount" min="0" step="0.01" required/>
-            </div>
-            <div class="form-group">
-              <label>Reason</label>
-              <input type="text" name="reason" placeholder="Why you need this before completion" required/>
-            </div>
-            <button type="submit" class="btn btn-blue">Submit Request</button>
-          </form>
-        </details>
-      {% endif %}
-
-      <div class="btn-row">
-        {% if p[11] is none %}
-          <a href="/accept-project/{{ p[0] }}" class="btn btn-blue">Accept Project</a>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-    {% endif %}
-  </div>
-
-  <!-- TAB: PROFILE -->
-  <div class="tab-content" id="tab-profile">
-
-    <!-- IDENTITY CARD — avatar (tap to change photo), name, email, role badge -->
-    <div class="card" style="display:flex;align-items:center;gap:1.1rem;">
-      <form action="/contractor/update-photo" method="POST" enctype="multipart/form-data" id="photoForm">
-        <label for="contractorPhotoInput" style="cursor:pointer;display:block;position:relative;width:88px;height:88px;flex-shrink:0;">
-          {% if contractor[23] %}
-          <img src="{{ contractor[23] }}" alt="Profile photo" style="width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;"/>
-          {% else %}
-          <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#1A56DB,#6366F1);display:flex;align-items:center;justify-content:center;color:white;font-size:1.8rem;font-weight:700;">{{ contractor[1][0]|upper }}</div>
-          {% endif %}
-          <span style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--blue);border:2.5px solid white;display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:white;">✎</span>
-        </label>
-        <input type="file" name="photo" id="contractorPhotoInput" accept="image/*" required style="display:none;" onchange="document.getElementById('photoForm').submit();"/>
-      </form>
-      <div>
-        <h3 style="font-size:1.05rem;font-weight:700;color:var(--dark);margin-bottom:0.2rem;">{{ contractor[1] }}</h3>
-        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem;">{{ contractor[8] or '—' }}</p>
-        <span class="badge-chip">CONTRACTOR</span>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">My Information</div>
-      <div class="profile-grid">
-        <div class="profile-item">
-          <label>Full Name</label>
-          <span>{{ contractor[1] }}</span>
-        </div>
-        <div class="profile-item">
-          <label>CIN</label>
-          <span>{{ contractor[6] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Email</label>
-          <span>{{ contractor[8] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Phone</label>
-          <span>{{ contractor[9] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>WhatsApp</label>
-          <span>{{ contractor[10] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>CNIC</label>
-          <span>{{ contractor[11] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Expertise</label>
-          <span>{{ contractor[3] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Experience</label>
-          <span>{{ contractor[4] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Specialties</label>
-          <span>{{ contractor[14] or '—' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Status</label>
-          <span>{{ contractor[7] | capitalize }}</span>
-        </div>
-        {% if contractor[16] %}
-        <div class="profile-item">
-          <label>Badge</label>
-          <span class="badge-chip">{{ contractor[16] }}</span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- PAYOUT DETAILS — first fill-in is instant, edits need CEO approval -->
-    <div class="card">
-      <div class="section-title">Payout Details</div>
-      <div class="profile-grid" style="margin-bottom:1.25rem;">
-        <div class="profile-item">
-          <label>Account Title</label>
-          <span>{{ contractor[19] or 'Not set' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Bank Name</label>
-          <span>{{ contractor[21] or 'Not set' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>Account Number</label>
-          <span>{{ contractor[20] or 'Not set' }}</span>
-        </div>
-        <div class="profile-item">
-          <label>IBAN / SWIFT</label>
-          <span>{{ contractor[22] or '—' }}</span>
-        </div>
-      </div>
-      {% if contractor[20] %}
-      <p class="field-hint" style="margin-bottom:0.75rem;font-size:0.78rem;color:var(--muted);">Changing these details requires CEO approval before they take effect.</p>
-      {% endif %}
-      <details>
-        <summary style="cursor:pointer;font-size:0.85rem;color:var(--blue);font-weight:600;">{{ 'Update payout details' if contractor[20] else 'Add payout details' }}</summary>
-        <form action="/contractor/update-bank" method="POST" style="margin-top:1rem;">
-          <div class="form-group">
-            <label>Account Title</label>
-            <input type="text" name="bank_account_title" value="{{ contractor[19] or '' }}" required/>
-          </div>
-          <div class="form-group">
-            <label>Bank Name</label>
-            <input type="text" name="bank_name" value="{{ contractor[21] or '' }}" required/>
-          </div>
-          <div class="form-group">
-            <label>Account Number</label>
-            <input type="text" name="bank_account_number" value="{{ contractor[20] or '' }}" required/>
-          </div>
-          <div class="form-group">
-            <label>IBAN / SWIFT (optional)</label>
-            <input type="text" name="bank_swift_iban" value="{{ contractor[22] or '' }}"/>
-          </div>
-          <button type="submit" class="btn btn-blue">Save</button>
-        </form>
-      </details>
-    </div>
-
-    <!-- PAYOUTS -->
-    {% if payouts %}
-    <div class="card">
-      <div class="section-title">Payouts</div>
-      {% for project_id, plist in payouts.items() %}
-        {% for po in plist %}
-        <div class="meta-row" style="border-bottom:1px solid var(--border);padding-bottom:0.75rem;margin-bottom:0.75rem;">
-          <div class="meta-item">
-            <label>{{ po.payout_type | capitalize }}</label>
-            <span>${{ '%.2f'|format(po.amount) }}</span>
-          </div>
-          <div class="meta-item">
-            <label>Status</label>
-            <span>{{ '✅ Paid' if po.status == 'paid' else '⏳ Pending' }}</span>
-          </div>
-        </div>
-        {% endfor %}
-      {% endfor %}
-    </div>
-    {% endif %}
-    <div class="card">
-      <div class="section-title">Change Password</div>
-      <form action="/contractor-change-password" method="POST">
-        <div class="form-group">
-          <label>Current Password</label>
-          <input type="password" name="current_password" required/>
-        </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input type="password" name="new_password" required/>
-        </div>
-        <div class="form-group">
-          <label>Confirm New Password</label>
-          <input type="password" name="confirm_password" required/>
-        </div>
-        <button type="submit" class="btn btn-blue">Update Password</button>
-      </form>
-    </div>
-  </div>
-
-</div>
-
-<script>
-  function showTab(name) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach(b => {
-      if (b.getAttribute('onclick') === "showTab('" + name + "')") b.classList.add('active');
-    });
-  }
-</script>
-</body>
-  </html>
+  
