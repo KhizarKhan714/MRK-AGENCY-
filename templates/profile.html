@@ -48,6 +48,7 @@
     .form-group label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.4rem; }
     .form-group input { width:100%; padding:0.65rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.88rem; font-family:'Inter',sans-serif; color:var(--text); background:var(--bg); outline:none; transition:border-color 0.2s; }
     .form-group input:focus { border-color:var(--blue); background:var(--white); }
+    .form-group .field-hint { font-size:0.72rem; color:var(--muted); margin-top:0.35rem; font-weight:400; text-transform:none; letter-spacing:0; }
     .row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
 
     .btn { display:inline-block; padding:0.65rem 1.25rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; border:none; transition:opacity 0.2s; font-family:'Inter',sans-serif; text-decoration:none; }
@@ -67,6 +68,7 @@
     <a href="/dashboard">Dashboard</a>
     <a href="/submit-project">New Project</a>
     <a href="/my-projects">My Projects</a>
+    <a href="/files">Files</a>
     <a href="/profile" class="active">Profile</a>
     <a href="/logout">Logout</a>
   </div>
@@ -76,6 +78,7 @@
   <a href="/dashboard">Dashboard</a>
   <a href="/submit-project">New Project</a>
   <a href="/my-projects">My Projects</a>
+  <a href="/files">Files</a>
   <a href="/profile" class="active">Profile</a>
   <a href="/logout">Logout</a>
 </div>
@@ -105,6 +108,26 @@
     <input type="hidden" name="action" value="update_photo"/>
     <input type="file" name="photo" id="photoInput" accept="image/*" style="display:none;" onchange="document.getElementById('photoForm').submit()"/>
   </form>
+
+  <!-- MY COMPANY — business/company identity, minimal version per spec -->
+  <div class="section-card">
+    <h3>My Company</h3>
+    <div class="section-body">
+      <form action="/update-profile" method="POST">
+        <input type="hidden" name="action" value="update_company"/>
+        <div class="form-group">
+          <label>Business / Company Name</label>
+          <input type="text" name="business_name" value="{{ customer.business_name or '' }}" placeholder="e.g. ABC Real Estate"/>
+          <div class="field-hint">Shown on your projects and invoices. Leave blank if you're not operating under a business name.</div>
+        </div>
+        <div class="form-group">
+          <label>Business Website <span style="font-weight:500;text-transform:none;letter-spacing:0;color:#B0BDCA;">(optional)</span></label>
+          <input type="url" name="business_website" value="{{ customer.business_website or '' }}" placeholder="https://yourbusiness.com"/>
+        </div>
+        <button type="submit" class="btn btn-blue">Save Company Info</button>
+      </form>
+    </div>
+  </div>
 
   <!-- PERSONAL INFO -->
   <div class="section-card">
@@ -154,4 +177,4 @@
   });
 </script>
 </body>
-    </html>
+  </html>
