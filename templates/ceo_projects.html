@@ -44,12 +44,14 @@
     .badge-approved { background: #D1FAE5; color: #065F46; }
     .badge-rejected { background: #FEE2E2; color: #991B1B; }
     .badge-completed { background: #DBEAFE; color: #1E40AF; }
+    .badge-suspended { background: #FFF7ED; color: #9A3412; }
 
     .btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.95rem; border-radius: 7px; font-size: 0.78rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: opacity 0.2s; white-space: nowrap; font-family: 'Inter', sans-serif; }
     .btn:hover { opacity: 0.82; }
     .btn-green { background: var(--green); color: white; }
     .btn-red { background: var(--red); color: white; }
     .btn-blue { background: var(--blue); color: white; }
+    .btn-orange { background: var(--orange); color: white; }
     .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 
     .inline-form { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; }
@@ -79,6 +81,7 @@
       <option value="">All Statuses</option>
       <option value="pending">Pending</option>
       <option value="approved">Active</option>
+      <option value="suspended">Suspended</option>
       <option value="completed">Completed</option>
       <option value="rejected">Rejected / Cancelled</option>
     </select>
@@ -149,6 +152,7 @@
   <div class="empty-state" style="margin-bottom:1.5rem;">No active projects.</div>
   {% else %}
   {% for p in approved_projects %}
+  {% set stage_info = project_stage_info.get(p[0]) if project_stage_info else None %}
   <div class="card project-row" data-status="approved" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
     <div class="card-head">
       <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or '—' }}</p></div>
@@ -162,6 +166,7 @@
         <div class="info-item"><label>Deadline</label><span>{{ p[6] or '—' }}</span></div>
         <div class="info-item"><label>Assigned Contractor</label><span>{% if p[9] %}#{{ p[9] }}{% else %}Unassigned{% endif %}</span></div>
         <div class="info-item"><label>Accepted By</label><span>{% if p[11] %}#{{ p[11] }}{% else %}Awaiting{% endif %}</span></div>
+        <div class="info-item"><label>Current Stage (client-visible)</label><span>{{ stage_info.current if stage_info else 'Submitted' }}</span></div>
       </div>
 
       {% if not p[11] %}
@@ -174,9 +179,21 @@
         </select>
         <button type="submit" class="btn btn-blue">Assign</button>
       </form>
+      {% else %}
+      <details style="margin-top:1rem;">
+        <summary style="cursor:pointer;font-size:0.8rem;color:var(--blue);font-weight:600;">Reassign contractor</summary>
+        <form action="/ceo/project/{{ p[0] }}/assign-contractor" method="POST" class="inline-form" style="margin-top:0.6rem;">
+          <select name="contractor_id" required>
+            <option value="">Choose a different contractor...</option>
+            {% for ct in approved_contractors %}
+            <option value="{{ ct[0] }}">{{ ct[1] }} — {{ ct[3] or 'General' }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-outline" onclick="return confirm('Reassign this project to a different contractor?')">Reassign</button>
+        </form>
+      </details>
       {% endif %}
 
-      {% set stage_info = project_stage_info.get(p[0]) if project_stage_info else None %}
       {% if stage_info and stage_info.pending %}
       <div class="note-box" style="margin-top:0.85rem;background:#EFF6FF;border-color:#BFDBFE;">
         <strong>Contractor proposed stage:</strong> {{ stage_info.pending }} <span style="color:var(--muted);">(current: {{ stage_info.current }})</span>
@@ -192,12 +209,39 @@
       {% endif %}
 
       {% if milestone_submissions.get(p[0]) %}
-      <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions</div>
+      <div class="note-label" style="margin-top:0.85rem;">Milestone Submissions — Your Review</div>
       {% for m in milestone_submissions[p[0]] %}
-      <div class="note-box" style="margin-bottom:0.5rem;">
-        <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
-        <span style="font-size:0.72rem;color:var(--muted);">{{ 'Approved by client' if m.client_approved else 'Awaiting client review' }}</span>
-      </div>
+        {% if m.ceo_review_status == 'approved' %}
+        <div class="note-box" style="margin-bottom:0.5rem;background:#F0FDF4;border-color:#BBF7D0;">
+          <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
+          <span style="font-size:0.72rem;color:#166534;">✓ You approved this — {{ 'client has approved it' if m.client_approved else 'awaiting client review' }}</span>
+        </div>
+        {% elif m.ceo_review_status == 'revision_requested' %}
+        <div class="note-box" style="margin-bottom:0.5rem;background:#FEF2F2;border-color:#FECACA;">
+          <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
+          <span style="font-size:0.72rem;color:#991B1B;">You requested changes: "{{ m.ceo_feedback }}" — waiting on the contractor to resubmit. The client never saw this submission.</span>
+        </div>
+        {% else %}
+        <div class="note-box" style="margin-bottom:0.5rem;background:#EFF6FF;border-color:#BFDBFE;">
+          <strong>{{ m.phase_label }}</strong> — {{ m.proof }}<br/>
+          <span style="font-size:0.72rem;color:#1E40AF;">Awaiting your review — the client cannot see this yet.</span>
+          <div style="display:flex;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap;align-items:center;">
+            <form action="/ceo/project/{{ p[0] }}/approve-submission/{{ m.phase_number }}" method="POST" class="inline-form">
+              <button type="submit" class="btn btn-green">✓ Approve — send to client</button>
+            </form>
+            <details>
+              <summary style="cursor:pointer;font-size:0.78rem;color:#1E40AF;font-weight:600;">Request revision</summary>
+              <form action="/ceo/project/{{ p[0] }}/request-submission-revision/{{ m.phase_number }}" method="POST" style="margin-top:0.5rem;">
+                <textarea name="feedback" placeholder="What needs to change? Only the contractor sees this." required style="width:100%;min-height:60px;padding:0.5rem;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:0.8rem;margin-bottom:0.4rem;"></textarea>
+                <button type="submit" class="btn btn-outline">Send Back to Contractor</button>
+              </form>
+            </details>
+            <form action="/ceo/project/{{ p[0] }}/reject-submission/{{ m.phase_number }}" method="POST" class="inline-form" onsubmit="return confirm('Reject this submission entirely?')">
+              <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);">✗ Reject</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
       {% endfor %}
       {% endif %}
 
@@ -233,6 +277,42 @@
       </div>
       {% endfor %}
       {% endif %}
+    </div>
+    <div class="card-foot">
+      <form action="/ceo/project/{{ p[0] }}/suspend" method="POST" class="inline-form">
+        <button type="submit" class="btn btn-orange" onclick="return confirm('Suspend this project? Work pauses until resumed.')">⏸ Suspend Project</button>
+      </form>
+      <form action="/ceo/project/{{ p[0] }}/cancel" method="POST" class="inline-form">
+        <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red);" onclick="return confirm('Cancel this project? This cannot be easily undone.')">✗ Cancel Project</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="sep"></div>
+
+  <!-- SUSPENDED -->
+  <div class="section-head"><div class="section-title">Suspended Projects ({{ suspended_projects|length if suspended_projects else 0 }})</div></div>
+  {% if not suspended_projects %}
+  <div class="empty-state" style="margin-bottom:1.5rem;">No suspended projects.</div>
+  {% else %}
+  {% for p in suspended_projects %}
+  <div class="card project-row" data-status="suspended" data-search="{{ (p[2] ~ ' ' ~ (p[7] or '') ~ ' customer#' ~ p[1])|lower }}">
+    <div class="card-head">
+      <div><h3>{{ p[2] }}</h3><p>Customer #{{ p[1] }} · {{ p[7] or '—' }}</p></div>
+      <span class="status-badge badge-suspended">⏸ Suspended</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-item"><label>Package</label><span>{{ p[7] or '—' }}</span></div>
+        <div class="info-item"><label>Assigned Contractor</label><span>{% if p[9] %}#{{ p[9] }}{% else %}Unassigned{% endif %}</span></div>
+      </div>
+    </div>
+    <div class="card-foot">
+      <form action="/ceo/project/{{ p[0] }}/resume" method="POST" class="inline-form">
+        <button type="submit" class="btn btn-green">▶ Resume Project</button>
+      </form>
     </div>
   </div>
   {% endfor %}
@@ -302,4 +382,4 @@
   }
 </script>
 </body>
-                                                                                                               </html>
+</html>
