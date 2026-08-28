@@ -161,216 +161,7 @@
     .empty-state { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
 
     /* ═══ OVERVIEW TAB ═══ */
-
-    .welcome-card {
-      background: var(--dark);
-      border-radius: 12px;
-      padding: 1.75rem 2rem;
-      margin-bottom: 1.5rem;
-      color: var(--white);
-    }
-    .welcome-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.35rem; }
-    .welcome-card .welcome-sub { color: #CBD5E1; font-size: 0.9rem; margin-bottom: 1rem; }
-    .welcome-card .welcome-meta { display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; font-size: 0.82rem; color: #94A3B8; }
-
-    .availability-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.3rem 0.85rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
-    .avail-available { background: #D1FAE5; color: #065F46; }
-    .avail-busy       { background: #FEF3C7; color: #92400E; }
-    .avail-offline    { background: #FEE2E2; color: #991B1B; }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
-    }
-    .stat-card label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem; }
-    .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--dark); }
-
-    .premium-empty {
-      text-align: center;
-      padding: 2.75rem 1.5rem;
-    }
-    .premium-empty .icon { font-size: 2.25rem; margin-bottom: 0.75rem; }
-    .premium-empty h3 { font-size: 1.05rem; font-weight: 700; color: var(--dark); margin-bottom: 0.5rem; }
-    .premium-empty p { font-size: 0.88rem; color: var(--muted); margin-bottom: 0.25rem; line-height: 1.5; }
-    .premium-empty .status-line {
-      margin-top: 1.25rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .announce-list, .activity-list, .notif-list-c { list-style: none; }
-    .announce-list li {
-      padding: 0.7rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.88rem;
-      color: var(--text);
-    }
-    .announce-list li:last-child { border-bottom: none; }
-    .announce-list .announce-date { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
-
-    .activity-list li {
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
-      color: var(--text);
-      display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-    .activity-list li:last-child { border-bottom: none; }
-    .activity-list .activity-time { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
-
-    .quick-actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 0.75rem;
-    }
-    .quick-actions-grid .btn { width: 100%; text-align: center; }
-
-    .skills-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
-    .skill-chip {
-      background: #EFF6FF;
-      color: #1E40AF;
-      padding: 0.35rem 0.85rem;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .company-services { list-style: none; margin-top: 0.75rem; }
-    .company-services li { padding: 0.35rem 0; font-size: 0.86rem; color: var(--text); }
-    .company-services li.soon { color: var(--muted); }
-
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
-
-    /* PERFORMANCE BREAKDOWN */
-    .perf-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:1rem; }
-    .perf-item { text-align:center; padding:1rem 0.5rem; background:var(--bg); border-radius:10px; }
-    .perf-item .p-num { font-size:1.35rem; font-weight:700; color:var(--dark); }
-    .perf-item .p-lbl { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-top:0.25rem; font-weight:600; }
-
-    /* RESOURCES TAB — structural placeholder */
-    .resource-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.85rem 0; border-bottom: 1px solid var(--border);
-    }
-    .resource-row:last-child { border-bottom: none; }
-    .resource-row .r-name { font-size: 0.9rem; font-weight: 600; color: var(--dark); }
-    .resource-row .r-sub { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
-
-    /* FILES TAB */
-    .file-row { display:flex; align-items:center; gap:0.9rem; padding:0.85rem 0; border-bottom:1px solid var(--border); }
-    .file-row:last-child { border-bottom:none; }
-    .file-icon { width:36px; height:36px; border-radius:8px; background:#EFF6FF; color:var(--blue); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
-    .file-meta { flex:1; min-width:0; }
-    .file-name { font-size:0.87rem; font-weight:600; color:var(--dark); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .file-sub { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
-    .file-actions a { font-size:0.8rem; font-weight:600; color:var(--blue); text-decoration:none; white-space:nowrap; }
-    .tag { display:inline-block; font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:0.12rem 0.5rem; border-radius:5px; }
-    .tag-client { background:#F0FDF4; color:#166534; }
-    .tag-mrk { background:#EFF6FF; color:#1E40AF; }
-    .tag-you { background:#FEF3C7; color:#92400E; }
-    .upload-zone { border:1.5px dashed var(--border); border-radius:10px; padding:1.25rem; text-align:center; margin-bottom:1rem; }
-    .upload-zone input[type="file"] { display:none; }
-    .upload-zone label { cursor:pointer; font-size:0.85rem; color:var(--muted); }
-    .upload-zone label strong { color:var(--blue); }
-
-    /* NOTIFICATIONS TAB */
-    .notif-item-c { display:flex; align-items:flex-start; gap:0.75rem; padding:0.85rem 0; border-bottom:1px solid var(--border); }
-    .notif-item-c:last-child { border-bottom:none; }
-    .notif-item-c .n-dot { font-size:0.8rem; margin-top:0.1rem; }
-    .notif-item-c .n-text { font-size:0.88rem; color:var(--text); font-weight:500; }
-    .notif-item-c .n-time { font-size:0.74rem; color:var(--muted); margin-top:0.15rem; }
-
-    /* REVISION HISTORY */
-    .version-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border); font-size:0.83rem; }
-    .version-row:last-child { border-bottom:none; }
-    .version-status { font-size:0.72rem; font-weight:700; padding:0.15rem 0.55rem; border-radius:999px; }
-    .vs-approved { background:#D1FAE5; color:#065F46; }
-    .vs-revision { background:#FEE2E2; color:#991B1B; }
-    .vs-pending  { background:#FEF3C7; color:#92400E; }
-
-    /* ===== MRK AI WIDGET ===== */
-    #mrk-ai-bubble{
-      position:fixed;bottom:24px;right:24px;z-index:999;
-      display:flex;align-items:center;gap:10px;
-      background:var(--blue);color:#fff;
-      padding:14px 20px;border-radius:100px;
-      border:1px solid var(--blue);
-      font-family:'Inter',sans-serif;font-weight:700;font-size:14px;
-      cursor:pointer;box-shadow:0 8px 24px rgba(26,86,219,0.35);
-      transition:transform .2s ease, opacity .2s ease;
-    }
-    #mrk-ai-bubble:hover{opacity:0.9;transform:translateY(-2px);}
-    #mrk-ai-bubble .dot{width:7px;height:7px;border-radius:50%;background:#3DDC84;}
-    #mrk-ai-window{
-      position:fixed;bottom:96px;right:24px;z-index:999;
-      width:360px;max-width:calc(100vw - 32px);height:480px;max-height:calc(100vh - 140px);
-      background:var(--dark);border:1px solid #1A2744;border-radius:16px;
-      display:none;flex-direction:column;overflow:hidden;
-      box-shadow:0 20px 60px rgba(0,0,0,0.45);
-    }
-    #mrk-ai-window.open{display:flex;}
-    #mrk-ai-header{
-      padding:16px 18px;border-bottom:1px solid #1A2744;
-      display:flex;align-items:center;justify-content:space-between;
-    }
-    #mrk-ai-header .title-block .t1{color:#fff;font-weight:800;font-size:15px;}
-    #mrk-ai-header .title-block .t2{color:#94A3B8;font-size:11.5px;margin-top:2px;}
-    #mrk-ai-close{color:#94A3B8;cursor:pointer;font-size:20px;line-height:1;padding:4px;}
-    #mrk-ai-close:hover{color:#fff;}
-    #mrk-ai-messages{
-      flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;
-    }
-    #mrk-ai-empty{color:#94A3B8;font-size:13px;text-align:center;margin:auto;padding:0 12px;line-height:1.5;}
-    .mrk-ai-msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.5;}
-    .mrk-ai-msg.bot{background:rgba(255,255,255,0.06);color:#EAEFFB;align-self:flex-start;border-bottom-left-radius:3px;}
-    .mrk-ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
-    .mrk-ai-msg.typing{color:#94A3B8;font-style:italic;}
-    #mrk-ai-input-row{
-      display:flex;gap:8px;padding:14px;border-top:1px solid #1A2744;
-    }
-    #mrk-ai-input{
-      flex:1;background:rgba(255,255,255,0.06);border:1px solid #1A2744;
-      border-radius:8px;padding:10px 12px;color:#fff;font-size:13.5px;font-family:'Inter',sans-serif;
-    }
-    #mrk-ai-input::placeholder{color:#94A3B8;}
-    #mrk-ai-input:focus{outline:none;border-color:var(--blue);}
-    #mrk-ai-send{
-      background:var(--blue);color:#fff;border:none;border-radius:8px;
-      padding:0 16px;font-weight:700;font-size:13px;cursor:pointer;
-    }
-    #mrk-ai-send:hover{opacity:0.9;}
-    #mrk-ai-send:disabled{opacity:0.5;cursor:not-allowed;}
-    @media (max-width:560px){
-      #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
-      #mrk-ai-bubble{right:16px;bottom:16px;}
-    }
-  </style>
-</head>
-<body>
-
+    
 <nav>
   <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
   <div class="nav-links">
@@ -555,8 +346,8 @@
     </div>
 
   </div>
-  
-<!-- TAB: PROJECTS -->
+    
+  <!-- TAB: PROJECTS -->
   <div class="tab-content" id="tab-projects">
     {% if not projects %}
     <div class="card premium-empty">
@@ -630,15 +421,25 @@
       {% endif %}
 
       {% if p[11] == contractor[0] and rs %}
+        {% if rs.ceo_feedback %}
+        <div class="alert alert-error" style="margin-bottom:1rem;">
+          <strong>CEO requested changes on {{ rs.phase_label }}:</strong><br/>{{ rs.ceo_feedback }}
+        </div>
+        {% endif %}
+
         {% if rs.client_notes %}
         <div class="alert alert-error" style="margin-bottom:1rem;">
           <strong>Client requested changes on {{ rs.phase_label }}:</strong><br/>{{ rs.client_notes }}
         </div>
         {% endif %}
 
-        {% if rs.submitted_at and not rs.client_approved %}
+        {% if rs.submitted_at and rs.ceo_review_status == 'pending' %}
         <div class="alert alert-info" style="margin-bottom:1rem;">
-          ⏳ Waiting on client review for <strong>{{ rs.phase_label }}</strong> — submitted, nothing to do until they respond.
+          ⏳ Submitted — waiting on CEO review for <strong>{{ rs.phase_label }}</strong>.
+        </div>
+        {% elif rs.submitted_at and rs.ceo_review_status == 'approved' and not rs.client_approved %}
+        <div class="alert alert-info" style="margin-bottom:1rem;">
+          ⏳ CEO approved — now waiting on client review for <strong>{{ rs.phase_label }}</strong>.
         </div>
         {% else %}
         <form action="/contractor/submit-milestone/{{ p[0] }}" method="POST" style="margin-bottom:1rem;">
@@ -646,7 +447,7 @@
             <label>Submit proof for {{ rs.phase_label }}</label>
             <input type="text" name="proof" placeholder="Link to preview, staging site, or a note describing what's done" required/>
           </div>
-          <button type="submit" class="btn btn-blue">Submit for Client Review</button>
+          <button type="submit" class="btn btn-blue">Submit for CEO Review</button>
         </form>
         {% endif %}
 
@@ -690,7 +491,7 @@
     {% endfor %}
     {% endif %}
   </div>
-
+    
   <!-- TAB: FILES — client assets, MRK resources, your own submissions -->
   <div class="tab-content" id="tab-files">
     {% if not projects %}
@@ -818,7 +619,8 @@
       </div>
     </div>
   </div>
-    <!-- TAB: PROFILE -->
+
+  <!-- TAB: PROFILE -->
   <div class="tab-content" id="tab-profile">
 
     <!-- IDENTITY CARD — avatar (tap to change photo), name, email, role badge -->
@@ -993,7 +795,7 @@
     });
   }
 </script>
-
+         
 <!-- ===== MRK AI WIDGET — limited, read-only productivity assistant (spec section 13) ===== -->
 <div id="mrk-ai-bubble" onclick="mrkAiToggle()">
   <span class="dot"></span> MRK AI
@@ -1075,5 +877,6 @@
     }
   }
 </script>
+
 </body>
-    </html>
+</html>
