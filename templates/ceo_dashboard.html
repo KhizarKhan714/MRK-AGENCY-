@@ -27,6 +27,20 @@
     .brief-focus { font-size: 0.82rem; background: rgba(26,86,219,0.25); border: 1px solid rgba(26,86,219,0.4); border-radius: 8px; padding: 0.6rem 0.9rem; display: inline-block; }
     .brief-focus strong { color: #93C5FD; }
 
+    /* ATTENTION REQUIRED — the CEO's operational starting point */
+    .attention-card {
+      background: var(--white); border: 1.5px solid #FDE68A; border-radius: 14px;
+      padding: 1.25rem 1.5rem; margin-bottom: 1.25rem;
+    }
+    .attention-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.9rem; }
+    .attention-head h2 { font-size:0.95rem; font-weight:700; color:var(--dark); }
+    .attention-count { background:#FEF3C7; color:#92400E; font-size:0.74rem; font-weight:700; padding:0.2rem 0.65rem; border-radius:999px; }
+    .attn-item { display:flex; align-items:center; gap:0.85rem; padding:0.65rem 0; border-bottom:1px solid var(--border); }
+    .attn-item:last-child { border-bottom:none; }
+    .attn-num { width:22px; height:22px; border-radius:50%; background:var(--bg); color:var(--muted); font-size:0.72rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .attn-text { flex:1; font-size:0.86rem; color:var(--text); }
+    .attn-sub { font-size:0.74rem; color:var(--muted); }
+
     /* REVENUE */
     .revenue-card {
       background: var(--white); border: 1px solid var(--border); border-radius: 14px;
@@ -44,12 +58,13 @@
     .health-item span { font-size: 0.92rem; font-weight: 700; color: var(--dark); }
 
     /* STATS */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 0.75rem; }
     .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; }
     .stat-card label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
     .stat-val { font-size: 1.55rem; font-weight: 700; }
     .stat-val.green { color: var(--green); } .stat-val.blue { color: var(--blue); }
     .stat-val.orange { color: var(--orange); } .stat-val.red { color: var(--red); }
+    .stats-group-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:1.1rem 0 0.6rem; }
 
     .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
     .card .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
@@ -57,14 +72,6 @@
 
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
     @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
-
-    /* PENDING APPROVALS */
-    .approval-item { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0; border-bottom: 1px solid var(--border); gap: 1rem; }
-    .approval-item:last-child { border-bottom: none; }
-    .approval-item .a-text { font-size: 0.86rem; color: var(--text); }
-    .approval-item .a-sub { font-size: 0.74rem; color: var(--muted); }
-    .btn { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 7px; font-size: 0.78rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
-    .btn-blue { background: var(--blue); color: white; }
 
     /* NOTIFICATIONS */
     .notif-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0; font-size: 0.85rem; color: var(--text); }
@@ -77,6 +84,8 @@
     .activity-text { font-size: 0.85rem; color: var(--text); }
 
     .empty-state { text-align: center; padding: 1.5rem; color: var(--muted); font-size: 0.85rem; }
+    .btn { display: inline-block; padding: 0.4rem 0.9rem; border-radius: 7px; font-size: 0.78rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+    .btn-blue { background: var(--blue); color: white; }
   </style>
 </head>
 <body>
@@ -96,12 +105,31 @@
     <div class="brief-focus"><strong>Focus today:</strong> {{ focus_today }}</div>
   </div>
 
+  <!-- ATTENTION REQUIRED — ranked priority queue, the CEO's starting point -->
+  <div class="attention-card">
+    <div class="attention-head">
+      <h2>⚠️ Attention Required</h2>
+      {% if pending_approvals %}<span class="attention-count">{{ pending_approvals|length }} item{{ 's' if pending_approvals|length != 1 else '' }}</span>{% endif %}
+    </div>
+    {% if not pending_approvals %}
+    <div class="empty-state" style="padding:0.75rem 0;">Nothing waiting on you right now.</div>
+    {% else %}
+    {% for pa in pending_approvals %}
+    <div class="attn-item">
+      <div class="attn-num">{{ loop.index }}</div>
+      <div class="attn-text">{{ pa.text }}<div class="attn-sub">{{ pa.sub }}</div></div>
+      <a href="{{ pa.link }}" class="btn btn-blue">Review</a>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
   <!-- REVENUE + BUSINESS HEALTH -->
   <div class="revenue-card">
     <div class="revenue-main">
       <h2>Total Revenue</h2>
       <div class="amount">${{ "%.2f"|format(total_revenue) }}</div>
-      <p>From {{ completed_count }} completed project(s)</p>
+      <p>From {{ completed_count }} completed project(s){% if expenses_total is defined %} · ${{ "%.2f"|format(expenses_total) }} in expenses · ${{ "%.2f"|format(total_revenue - expenses_total) }} net{% endif %}</p>
     </div>
     <div class="health-strip">
       <div class="health-item"><label>Status</label><span>{% if business_health.status == 'Healthy' %}🟢{% else %}🟡{% endif %} {{ business_health.status }}</span></div>
@@ -112,35 +140,33 @@
     </div>
   </div>
 
-  <!-- STATISTICS -->
+  <!-- PROJECTS -->
+  <div class="stats-group-label">Projects</div>
   <div class="stats-grid">
-    <div class="stat-card"><label>Pending Contractors</label><div class="stat-val orange">{{ pending_contractors_count }}</div></div>
-    <div class="stat-card"><label>Active Contractors</label><div class="stat-val green">{{ active_contractors_count }}</div></div>
-    <div class="stat-card"><label>Pending Projects</label><div class="stat-val orange">{{ pending_projects_count }}</div></div>
-    <div class="stat-card"><label>Active Projects</label><div class="stat-val blue">{{ active_projects_count }}</div></div>
-    <div class="stat-card"><label>Active Clients</label><div class="stat-val blue">{{ active_customers_count }}</div></div>
-    <div class="stat-card"><label>Completed Projects</label><div class="stat-val green">{{ completed_count }}</div></div>
+    <div class="stat-card"><label>Pending Approval</label><div class="stat-val orange">{{ pending_projects_count }}</div></div>
+    <div class="stat-card"><label>Active</label><div class="stat-val blue">{{ active_projects_count }}</div></div>
+    {% if awaiting_ceo_review_count is defined %}<div class="stat-card"><label>Awaiting CEO Review</label><div class="stat-val orange">{{ awaiting_ceo_review_count }}</div></div>{% endif %}
+    {% if revision_required_count is defined %}<div class="stat-card"><label>Revision Required</label><div class="stat-val red">{{ revision_required_count }}</div></div>{% endif %}
+    <div class="stat-card"><label>Completed</label><div class="stat-val green">{{ completed_count }}</div></div>
+    {% if overdue_projects_count is defined %}<div class="stat-card"><label>Overdue</label><div class="stat-val red">{{ overdue_projects_count }}</div></div>{% endif %}
   </div>
 
-  <div class="two-col">
-    <!-- PENDING APPROVALS -->
-    <div class="card">
-      <div class="section-title">Pending Approvals <a href="/ceo/contractors">View All →</a></div>
-      {% if not pending_approvals %}
-      <div class="empty-state">Nothing waiting on you right now.</div>
-      {% else %}
-      {% for pa in pending_approvals %}
-      <div class="approval-item">
-        <div>
-          <div class="a-text">{{ pa.text }}</div>
-          <div class="a-sub">{{ pa.sub }}</div>
-        </div>
-        <a href="{{ pa.link }}" class="btn btn-blue">Review</a>
-      </div>
-      {% endfor %}
-      {% endif %}
-    </div>
+  <!-- CLIENTS -->
+  <div class="stats-group-label">Clients</div>
+  <div class="stats-grid">
+    <div class="stat-card"><label>Active</label><div class="stat-val blue">{{ active_customers_count }}</div></div>
+    {% if suspended_clients_count is defined %}<div class="stat-card"><label>Suspended</label><div class="stat-val orange">{{ suspended_clients_count }}</div></div>{% endif %}
+  </div>
 
+  <!-- CONTRACTORS -->
+  <div class="stats-group-label">Contractors</div>
+  <div class="stats-grid">
+    <div class="stat-card"><label>Pending Review</label><div class="stat-val orange">{{ pending_contractors_count }}</div></div>
+    <div class="stat-card"><label>Active</label><div class="stat-val green">{{ active_contractors_count }}</div></div>
+    {% if suspended_contractors_count is defined %}<div class="stat-card"><label>Suspended</label><div class="stat-val orange">{{ suspended_contractors_count }}</div></div>{% endif %}
+  </div>
+
+  <div class="two-col" style="margin-top:1.25rem;">
     <!-- NOTIFICATIONS -->
     <div class="card">
       <div class="section-title">Notifications <a href="/ceo/notifications">View All →</a></div>
@@ -152,23 +178,23 @@
       {% endfor %}
       {% endif %}
     </div>
-  </div>
 
-  <!-- RECENT ACTIVITY -->
-  <div class="card">
-    <div class="section-title">Recent Activity <a href="/ceo/activity">View All →</a></div>
-    {% if not recent_activity %}
-    <div class="empty-state">No recent activity yet.</div>
-    {% else %}
-    {% for act in recent_activity %}
-    <div class="activity-item">
-      <div class="activity-time">{{ act.time }}</div>
-      <div class="activity-text">{{ act.text }}</div>
+    <!-- RECENT ACTIVITY -->
+    <div class="card">
+      <div class="section-title">Recent Activity <a href="/ceo/audit-log">View All →</a></div>
+      {% if not recent_activity %}
+      <div class="empty-state">No recent activity yet.</div>
+      {% else %}
+      {% for act in recent_activity %}
+      <div class="activity-item">
+        <div class="activity-time">{{ act.time }}</div>
+        <div class="activity-text">{{ act.text }}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
     </div>
-    {% endfor %}
-    {% endif %}
   </div>
 
 </div>
 </body>
-  </html>
+                                                  </html>
