@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>System Health — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:800px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.1rem; overflow:hidden; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; border-bottom:1px solid var(--border); gap:1rem; }
+  .row:last-child { border-bottom:none; }
+  .row .r-title { font-size:0.87rem; font-weight:600; color:var(--dark); }
+  .row .r-sub { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
+  .status-badge { display:inline-flex; align-items:center; gap:0.35rem; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.74rem; font-weight:700; white-space:nowrap; }
+  .badge-ok { background:#D1FAE5; color:#065F46; }
+  .badge-warn { background:#FEF3C7; color:#92400E; }
+  .badge-down { background:#FEE2E2; color:#991B1B; }
+  .badge-unknown { background:#F1F5F9; color:#64748B; }
+  .empty-state { text-align:center; padding:2.25rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+  .note { font-size:0.78rem; color:var(--muted); text-align:center; margin-top:1rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">System Health</div>
+  <div class="page-sub">A concise operational view — not a full observability platform.</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="r-title">Database</div>
+        <div class="r-sub">PostgreSQL connection</div>
+      </div>
+      <span class="status-badge {% if system_health and system_health.database == 'ok' %}badge-ok{% elif system_health and system_health.database == 'warn' %}badge-warn{% elif system_health and system_health.database == 'down' %}badge-down{% else %}badge-unknown{% endif %}">
+        {% if system_health and system_health.database == 'ok' %}🟢 Operational{% elif system_health and system_health.database == 'down' %}🔴 Down{% else %}⚪ Unknown{% endif %}
+      </span>
+    </div>
+    <div class="row">
+      <div>
+        <div class="r-title">File Storage</div>
+        <div class="r-sub">Cloudinary</div>
+      </div>
+      <span class="status-badge {% if system_health and system_health.storage == 'ok' %}badge-ok{% elif system_health and system_health.storage == 'warn' %}badge-warn{% elif system_health and system_health.storage == 'down' %}badge-down{% else %}badge-unknown{% endif %}">
+        {% if system_health and system_health.storage == 'ok' %}🟢 Operational{% elif system_health and system_health.storage == 'down' %}🔴 Down{% else %}⚪ Unknown{% endif %}
+      </span>
+    </div>
+    <div class="row">
+      <div>
+        <div class="r-title">Application</div>
+        <div class="r-sub">Flask app / Railway</div>
+      </div>
+      <span class="status-badge {% if system_health and system_health.app == 'ok' %}badge-ok{% elif system_health and system_health.app == 'warn' %}badge-warn{% elif system_health and system_health.app == 'down' %}badge-down{% else %}badge-unknown{% endif %}">
+        {% if system_health and system_health.app == 'ok' %}🟢 Operational{% elif system_health and system_health.app == 'down' %}🔴 Down{% else %}⚪ Unknown{% endif %}
+      </span>
+    </div>
+    <div class="row">
+      <div>
+        <div class="r-title">MRK AI</div>
+        <div class="r-sub">Groq API</div>
+      </div>
+      <span class="status-badge {% if system_health and system_health.ai == 'ok' %}badge-ok{% elif system_health and system_health.ai == 'warn' %}badge-warn{% elif system_health and system_health.ai == 'down' %}badge-down{% else %}badge-unknown{% endif %}">
+        {% if system_health and system_health.ai == 'ok' %}🟢 Operational{% elif system_health and system_health.ai == 'down' %}🔴 Down{% else %}⚪ Unknown{% endif %}
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="r-title">Last Known Backup</div>
+        <div class="r-sub">{% if backup_info and backup_info.timestamp %}{{ backup_info.timestamp }}{% else %}No backup schedule configured yet{% endif %}</div>
+      </div>
+      {% if backup_info and backup_info.status %}
+      <span class="status-badge {% if backup_info.status == 'ok' %}badge-ok{% else %}badge-warn{% endif %}">{{ backup_info.status|capitalize }}</span>
+      {% else %}
+      <span class="status-badge badge-unknown">⚪ Not Set Up</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not recent_errors %}
+  <div class="empty-state">No recent errors logged.</div>
+  {% else %}
+  <div class="card">
+    {% for err in recent_errors %}
+    <div class="row">
+      <div>
+        <div class="r-title" style="color:var(--red);">{{ err.message }}</div>
+        <div class="r-sub">{{ err.location or '' }}</div>
+      </div>
+      <span style="font-size:0.75rem;color:var(--muted);">{{ err.timestamp.strftime('%b %d, %-I:%M %p') if err.timestamp else '' }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="note">This is a lightweight status view, not a full monitoring/observability system.</div>
+</div>
+</body>
+                                                  </html>
