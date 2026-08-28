@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Security — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:900px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+  .stat-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; }
+  .stat-card label { display:block; font-size:0.7rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.3rem; }
+  .stat-val { font-size:1.55rem; font-weight:700; }
+  .stat-val.green { color:var(--green); } .stat-val.red { color:var(--red); } .stat-val.orange { color:var(--orange); }
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; margin-top:0.25rem; }
+  .section-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:1.1rem; }
+  .row { display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1.25rem; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+  .row:last-child { border-bottom:none; }
+  .row .r-title { font-size:0.86rem; font-weight:600; color:var(--dark); }
+  .row .r-sub { font-size:0.75rem; color:var(--muted); margin-top:0.15rem; }
+  .status-badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:999px; font-size:0.7rem; font-weight:700; white-space:nowrap; }
+  .badge-ok { background:#D1FAE5; color:#065F46; }
+  .badge-fail { background:#FEE2E2; color:#991B1B; }
+  .empty-state { text-align:center; padding:2.25rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Security Center</div>
+  <div class="page-sub">Visibility into login activity and account-security-sensitive events across MRK AGENCY. No passwords or credentials are ever shown here.</div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><label>Logins (24h)</label><div class="stat-val green">{{ logins_24h if logins_24h is defined else '—' }}</div></div>
+    <div class="stat-card"><label>Failed Attempts (24h)</label><div class="stat-val {% if failed_logins_24h and failed_logins_24h > 0 %}red{% else %}green{% endif %}">{{ failed_logins_24h if failed_logins_24h is defined else '—' }}</div></div>
+    <div class="stat-card"><label>Security Changes (7d)</label><div class="stat-val orange">{{ security_changes_7d if security_changes_7d is defined else '—' }}</div></div>
+  </div>
+
+  <div class="section-head"><div class="section-title">Recent Login Activity</div></div>
+  {% if not login_activity %}
+  <div class="empty-state" style="margin-bottom:1.25rem;">No login activity recorded yet.</div>
+  {% else %}
+  <div class="card">
+    {% for l in login_activity %}
+    <div class="row">
+      <div>
+        <div class="r-title">{{ l.account }} <span style="font-weight:400;color:var(--muted);">({{ l.role }})</span></div>
+        <div class="r-sub">{{ l.ip or 'IP not recorded' }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="status-badge {{ 'badge-ok' if l.success else 'badge-fail' }}">{{ '✓ Success' if l.success else '✗ Failed' }}</span>
+        <span style="font-size:0.76rem;color:var(--muted);">{{ l.timestamp.strftime('%b %d, %-I:%M %p') if l.timestamp else '' }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="section-head"><div class="section-title">Account &amp; Security Changes</div></div>
+  {% if not security_changes %}
+  <div class="empty-state">No security-related changes recorded yet.</div>
+  {% else %}
+  <div class="card">
+    {% for s in security_changes %}
+    <div class="row">
+      <div>
+        <div class="r-title">{{ s.text }}</div>
+        <div class="r-sub">{{ s.account }}</div>
+      </div>
+      <span style="font-size:0.76rem;color:var(--muted);">{{ s.timestamp.strftime('%b %d, %-I:%M %p') if s.timestamp else '' }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</body>
+  </html>
