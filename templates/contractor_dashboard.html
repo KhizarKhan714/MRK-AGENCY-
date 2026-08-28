@@ -1004,3 +1004,88 @@
     });
   }
   </script>  
+
+<!-- ===== MRK AI WIDGET — limited, read-only productivity assistant (spec section 13) ===== -->
+<div id="mrk-ai-bubble" onclick="mrkAiToggle()">
+  <span class="dot"></span> MRK AI
+</div>
+
+<div id="mrk-ai-window">
+  <div id="mrk-ai-header">
+    <div class="title-block">
+      <div class="t1">MRK AI</div>
+      <div class="t2">Built in-house by MRK Agency</div>
+    </div>
+    <span id="mrk-ai-close" onclick="mrkAiToggle()">×</span>
+  </div>
+  <div id="mrk-ai-messages">
+    <div id="mrk-ai-empty">Ask about your projects, deadlines, or MRK Agency.</div>
+  </div>
+  <div id="mrk-ai-input-row">
+    <input id="mrk-ai-input" type="text" placeholder="Ask MRK AI…" onkeydown="if(event.key==='Enter') mrkAiSend();">
+    <button id="mrk-ai-send" onclick="mrkAiSend()">Send</button>
+  </div>
+</div>
+
+<script>
+  function mrkAiSessionId(){
+    let id = localStorage.getItem('mrk_ai_session');
+    if(!id){
+      id = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem('mrk_ai_session', id);
+    }
+    return id;
+  }
+
+  function mrkAiAppendMessage(text, role){
+    const box = document.getElementById('mrk-ai-messages');
+    const empty = document.getElementById('mrk-ai-empty');
+    if(empty) empty.remove();
+    const el = document.createElement('div');
+    el.className = 'mrk-ai-msg ' + role;
+    el.textContent = text;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    return el;
+  }
+
+  function mrkAiToggle(){
+    document.getElementById('mrk-ai-window').classList.toggle('open');
+  }
+
+  async function mrkAiSend(){
+    const input = document.getElementById('mrk-ai-input');
+    const sendBtn = document.getElementById('mrk-ai-send');
+    const message = input.value.trim();
+    if(!message) return;
+
+    mrkAiAppendMessage(message, 'user');
+    input.value = '';
+    sendBtn.disabled = true;
+    const typingEl = mrkAiAppendMessage('MRK AI is typing…', 'bot typing');
+
+    try{
+      const res = await fetch('/ai/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ message: message, visitor_session: mrkAiSessionId() })
+      });
+      const data = await res.json();
+      typingEl.remove();
+      if(data.reply){
+        mrkAiAppendMessage(data.reply, 'bot');
+      } else {
+        mrkAiAppendMessage("Sorry, something went wrong. Please try again in a moment.", 'bot');
+      }
+    } catch(err){
+      typingEl.remove();
+      mrkAiAppendMessage("MRK AI is temporarily unavailable. Please try again shortly.", 'bot');
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+</script>
+
+</body>
+</html>
