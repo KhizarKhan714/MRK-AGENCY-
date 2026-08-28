@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Audit Log — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:1000px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+
+  .filter-bar { display:flex; gap:0.6rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; }
+  .filter-bar input { flex:1; min-width:200px; padding:0.6rem 0.9rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:'Inter',sans-serif; background:var(--white); }
+  .filter-chip { padding:0.4rem 0.9rem; border-radius:999px; font-size:0.78rem; font-weight:600; text-decoration:none; color:var(--muted); background:var(--white); border:1.5px solid var(--border); white-space:nowrap; }
+  .filter-chip.active { background:var(--blue); color:white; border-color:var(--blue); }
+
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .log-row { display:flex; gap:1rem; padding:0.95rem 1.25rem; border-bottom:1px solid var(--border); align-items:flex-start; }
+  .log-row:last-child { border-bottom:none; }
+  .log-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:0.95rem; flex-shrink:0; }
+  .log-icon.ic-approve { background:#F0FDF4; }
+  .log-icon.ic-reject { background:#FEF2F2; }
+  .log-icon.ic-suspend { background:#FFFBEB; }
+  .log-icon.ic-info { background:#EFF6FF; }
+  .log-body { flex:1; min-width:0; }
+  .log-action { font-size:0.87rem; font-weight:600; color:var(--dark); }
+  .log-meta { font-size:0.76rem; color:var(--muted); margin-top:0.2rem; }
+  .log-state-change { font-size:0.76rem; color:var(--muted); margin-top:0.3rem; background:var(--bg); border-radius:6px; padding:0.35rem 0.6rem; display:inline-block; }
+  .log-time { font-size:0.74rem; color:var(--muted); white-space:nowrap; flex-shrink:0; }
+
+  .empty-state { text-align:center; padding:2.5rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+  .immutable-note { font-size:0.78rem; color:var(--muted); text-align:center; margin-top:1rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Audit Log</div>
+  <div class="page-sub">An immutable record of every consequential action taken across MRK AGENCY. Nothing here can be edited or deleted.</div>
+
+  <div class="filter-bar">
+    <input type="text" id="auditSearch" placeholder="Search by actor, action, or target..." oninput="filterAudit()"/>
+    <a href="/ceo/audit-log" class="filter-chip {% if not active_category %}active{% endif %}">All</a>
+    <a href="/ceo/audit-log?category=projects" class="filter-chip {% if active_category == 'projects' %}active{% endif %}">Projects</a>
+    <a href="/ceo/audit-log?category=clients" class="filter-chip {% if active_category == 'clients' %}active{% endif %}">Clients</a>
+    <a href="/ceo/audit-log?category=contractors" class="filter-chip {% if active_category == 'contractors' %}active{% endif %}">Contractors</a>
+    <a href="/ceo/audit-log?category=finance" class="filter-chip {% if active_category == 'finance' %}active{% endif %}">Finance</a>
+    <a href="/ceo/audit-log?category=public" class="filter-chip {% if active_category == 'public' %}active{% endif %}">Public/Website</a>
+  </div>
+
+  {% if not audit_entries %}
+  <div class="empty-state">No audit entries recorded yet. Actions like approvals, suspensions, and payments will appear here as they happen.</div>
+  {% else %}
+  <div class="card">
+    {% for e in audit_entries %}
+    <div class="log-row" data-search="{{ (e.actor ~ ' ' ~ e.action ~ ' ' ~ (e.target or ''))|lower }}">
+      <div class="log-icon {% if e.kind == 'approve' %}ic-approve{% elif e.kind == 'reject' or e.kind == 'suspend' %}ic-reject{% elif e.kind == 'warn' %}ic-suspend{% else %}ic-info{% endif %}">
+        {% if e.kind == 'approve' %}✓{% elif e.kind == 'reject' %}✗{% elif e.kind == 'suspend' %}⏸{% else %}•{% endif %}
+      </div>
+      <div class="log-body">
+        <div class="log-action">{{ e.action }}{% if e.target %} — {{ e.target }}{% endif %}</div>
+        <div class="log-meta">by {{ e.actor }}{% if e.relevant_id %} · ID #{{ e.relevant_id }}{% endif %}</div>
+        {% if e.previous_state and e.new_state %}
+        <div class="log-state-change">{{ e.previous_state }} → {{ e.new_state }}</div>
+        {% endif %}
+      </div>
+      <div class="log-time">{{ e.timestamp.strftime('%b %d, %Y · %-I:%M %p') if e.timestamp else '' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="immutable-note">🔒 Audit records are permanent and cannot be edited or deleted by any account, including CEO.</div>
+  {% endif %}
+</div>
+
+<script>
+  function filterAudit() {
+    const q = document.getElementById('auditSearch').value.trim().toLowerCase();
+    document.querySelectorAll('.log-row').forEach(row => {
+      const hay = row.getAttribute('data-search') || '';
+      row.style.display = (q && !hay.includes(q)) ? 'none' : 'flex';
+    });
+  }
+</script>
+</body>
+  </html>
