@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Website Status — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:800px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.25rem; padding:1.5rem; }
+  .card h2 { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--blue); margin-bottom:1.1rem; }
+
+  .current-status-row { display:flex; align-items:center; gap:0.85rem; padding:1rem; border-radius:10px; margin-bottom:1.5rem; }
+  .current-status-row.st-online { background:#F0FDF4; border:1.5px solid #BBF7D0; }
+  .current-status-row.st-maint { background:#FFFBEB; border:1.5px solid #FDE68A; }
+  .status-dot-lg { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+  .st-online .status-dot-lg { background:var(--green); }
+  .st-maint .status-dot-lg { background:var(--orange); }
+  .current-status-row .cs-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); }
+  .current-status-row .cs-value { font-size:1.05rem; font-weight:700; color:var(--dark); margin-top:0.1rem; }
+
+  .sm-label { display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.35rem; }
+  .sm-input, .sm-textarea, .sm-select { width:100%; padding:0.6rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:'Inter',sans-serif; color:var(--text); background:#F8FAFB; outline:none; transition:border-color 0.2s; }
+  .sm-input:focus, .sm-textarea:focus, .sm-select:focus { border-color:var(--blue); background:var(--white); }
+  .sm-textarea { resize:vertical; min-height:90px; }
+  .form-group { margin-bottom:1rem; }
+  .field-hint { font-size:0.75rem; color:var(--muted); margin-top:0.35rem; }
+
+  .status-option { display:none; }
+  .status-option + label {
+    display:flex; align-items:center; gap:0.6rem;
+    padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:9px;
+    cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--text);
+    margin-bottom:0.6rem; transition:all 0.15s;
+  }
+  .status-option:checked + label { border-color:var(--blue); background:#EFF6FF; color:var(--blue); }
+
+  .preview-box { border:1.5px dashed var(--border); border-radius:10px; padding:2rem 1.5rem; text-align:center; background:var(--dark); color:white; margin-top:0.5rem; }
+  .preview-box .p-logo { font-size:1rem; font-weight:800; margin-bottom:1.1rem; letter-spacing:0.04em; }
+  .preview-box .p-logo span { color:#4C7DF0; }
+  .preview-box .p-headline { font-size:1.15rem; font-weight:700; margin-bottom:0.6rem; line-height:1.3; }
+  .preview-box .p-message { font-size:0.85rem; color:#94A3B8; max-width:420px; margin:0 auto 0.75rem; line-height:1.55; }
+  .preview-box .p-eta { font-size:0.78rem; color:#4C7DF0; font-weight:600; }
+
+  .btn { display:inline-block; padding:0.65rem 1.5rem; border-radius:8px; font-size:0.85rem; font-weight:700; text-decoration:none; cursor:pointer; border:none; background:var(--blue); color:white; font-family:'Inter',sans-serif; }
+  .btn-danger { background:var(--red); }
+  .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+  .bypass-note { background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:0.85rem 1rem; font-size:0.82rem; color:#1E40AF; margin-bottom:1.5rem; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Website Status</div>
+  <div class="page-sub">Control whether MRK AGENCY's public website is online or in maintenance mode.</div>
+
+  <div class="bypass-note">
+    🔓 CEO and contractor logins always bypass maintenance mode — enabling this never locks you out of this portal, the contractor portal, or any /ceo/* route.
+  </div>
+
+  <div class="current-status-row {% if site_status and site_status.mode != 'online' %}st-maint{% else %}st-online{% endif %}">
+    <span class="status-dot-lg"></span>
+    <div>
+      <div class="cs-label">Current Status</div>
+      <div class="cs-value">{% if site_status and site_status.mode != 'online' %}{{ site_status.mode_label or 'Maintenance Mode' }} — visitors see the status page{% else %}Online — site is live{% endif %}</div>
+    </div>
+  </div>
+
+  <form action="/ceo/website-status/update" method="POST">
+    <div class="card">
+      <h2>Set Status</h2>
+
+      <input class="status-option" type="radio" name="mode" id="st-online" value="online" {% if not site_status or site_status.mode == 'online' %}checked{% endif %}/>
+      <label for="st-online">🟢 Online — site fully accessible to the public</label>
+
+      <input class="status-option" type="radio" name="mode" id="st-maintenance" value="maintenance" {% if site_status and site_status.mode == 'maintenance' %}checked{% endif %}/>
+      <label for="st-maintenance">🟡 Maintenance — routine maintenance in progress</label>
+
+      <input class="status-option" type="radio" name="mode" id="st-upgrading" value="upgrading" {% if site_status and site_status.mode == 'upgrading' %}checked{% endif %}/>
+      <label for="st-upgrading">🟡 Upgrading — infrastructure/feature upgrade in progress</label>
+
+      <input class="status-option" type="radio" name="mode" id="st-unavailable" value="unavailable" {% if site_status and site_status.mode == 'unavailable' %}checked{% endif %}/>
+      <label for="st-unavailable">🟠 Temporarily Unavailable</label>
+
+      <input class="status-option" type="radio" name="mode" id="st-emergency" value="emergency" {% if site_status and site_status.mode == 'emergency' %}checked{% endif %}/>
+      <label for="st-emergency">🔴 Emergency Maintenance</label>
+    </div>
+
+    <div class="card">
+      <h2>Public Message</h2>
+      <div class="form-group">
+        <span class="sm-label">Headline</span>
+        <input class="sm-input" type="text" name="headline" value="{{ site_status.headline if site_status else \"We're Currently Upgrading Our Infrastructure\" }}"/>
+      </div>
+      <div class="form-group">
+        <span class="sm-label">Message</span>
+        <textarea class="sm-textarea" name="message" placeholder="We're making improvements to provide a faster, more reliable experience. Our systems will be back shortly.">{{ site_status.message if site_status else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <span class="sm-label">Estimated Return (optional)</span>
+        <input class="sm-input" type="text" name="eta" value="{{ site_status.eta if site_status else '' }}" placeholder="e.g. Back online by 6:00 PM PKT"/>
+        <div class="field-hint">Leave blank to omit an ETA from the public page.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Preview</h2>
+      <div class="preview-box">
+        <div class="p-logo">MRK <span>AGENCY</span></div>
+        <div class="p-headline" id="previewHeadline">We're Currently Upgrading Our Infrastructure</div>
+        <div class="p-message" id="previewMessage">We're making improvements to provide a faster, more reliable experience. Our systems will be back shortly. Thank you for your patience.</div>
+        <div class="p-eta" id="previewEta"></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn">💾 Save &amp; Publish Status</button>
+  </form>
+</div>
+
+<script>
+  const headlineInput = document.querySelector('input[name="headline"]');
+  const messageInput = document.querySelector('textarea[name="message"]');
+  const etaInput = document.querySelector('input[name="eta"]');
+  const previewHeadline = document.getElementById('previewHeadline');
+  const previewMessage = document.getElementById('previewMessage');
+  const previewEta = document.getElementById('previewEta');
+
+  function syncPreview(){
+    previewHeadline.textContent = headlineInput.value || 'We\'re Currently Upgrading Our Infrastructure';
+    previewMessage.textContent = messageInput.value || 'We\'re making improvements to provide a faster, more reliable experience. Our systems will be back shortly. Thank you for your patience.';
+    previewEta.textContent = etaInput.value ? ('Estimated return: ' + etaInput.value) : '';
+  }
+  [headlineInput, messageInput, etaInput].forEach(el => el.addEventListener('input', syncPreview));
+  syncPreview();
+</script>
+</body>
+  </html>
