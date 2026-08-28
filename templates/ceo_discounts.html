@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Discounts — CEO Portal — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --bg:#F0F2F5; --white:#fff; --border:#E2E8F0; --text:#1E293B; --muted:#64748B; --green:#16A34A; --red:#DC2626; --orange:#D97706; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); }
+  .page { max-width:900px; margin:0 auto; padding:1.5rem 1.5rem 3rem; }
+  .page-title { font-size:1.4rem; font-weight:700; color:var(--dark); margin-bottom:0.4rem; }
+  .page-sub { font-size:0.85rem; color:var(--muted); margin-bottom:1.5rem; }
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; margin-top:0.25rem; }
+  .section-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+  .card { background:var(--white); border:1px solid var(--border); border-radius:12px; margin-bottom:1.1rem; overflow:hidden; }
+  .card-body { padding:1.1rem 1.25rem; }
+  .sm-label { display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:0.25rem; }
+  .sm-input, .sm-select { width:100%; padding:0.6rem 0.85rem; border:1.5px solid var(--border); border-radius:8px; font-size:0.85rem; font-family:'Inter',sans-serif; color:var(--text); background:#F8FAFB; outline:none; }
+  .sm-input:focus, .sm-select:focus { border-color:var(--blue); background:var(--white); }
+  .sm-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:0.85rem; margin-bottom:1rem; }
+  .btn { display:inline-flex; align-items:center; gap:0.3rem; padding:0.55rem 1.1rem; border-radius:7px; font-size:0.82rem; font-weight:700; text-decoration:none; cursor:pointer; border:none; font-family:'Inter',sans-serif; background:var(--blue); color:white; }
+  .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+  .btn-sm { padding:0.35rem 0.8rem; font-size:0.75rem; }
+
+  .disc-row { display:flex; justify-content:space-between; align-items:center; padding:0.9rem 1.25rem; border-bottom:1px solid var(--border); gap:1rem; flex-wrap:wrap; }
+  .disc-row:last-child { border-bottom:none; }
+  .disc-code { font-family:monospace; font-weight:700; font-size:0.88rem; color:var(--dark); background:var(--bg); padding:0.2rem 0.55rem; border-radius:6px; }
+  .disc-detail { font-size:0.78rem; color:var(--muted); margin-top:0.3rem; }
+  .disc-value { font-size:0.92rem; font-weight:700; color:var(--green); }
+
+  .status-badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:999px; font-size:0.7rem; font-weight:700; white-space:nowrap; }
+  .badge-active { background:#D1FAE5; color:#065F46; }
+  .badge-inactive { background:#F1F5F9; color:#64748B; }
+  .badge-expired { background:#FEE2E2; color:#991B1B; }
+
+  .empty-state { text-align:center; padding:2.25rem; color:var(--muted); font-size:0.86rem; background:var(--white); border:1px solid var(--border); border-radius:12px; }
+</style>
+</head>
+<body>
+{% include "ceo_nav.html" %}
+<div class="page">
+  <div class="page-title">Discounts</div>
+  <div class="page-sub">Create and manage promotional discounts. Nothing is ever applied to a project unless it matches a rule you set here.</div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="section-title" style="margin-bottom:1rem;">Create Discount</div>
+      <form action="/ceo/discounts/create" method="POST">
+        <div class="sm-grid">
+          <div>
+            <span class="sm-label">Discount Name</span>
+            <input class="sm-input" type="text" name="name" placeholder="e.g. Launch Week" required/>
+          </div>
+          <div>
+            <span class="sm-label">Code</span>
+            <input class="sm-input" type="text" name="code" placeholder="e.g. LAUNCH10" style="text-transform:uppercase;" required/>
+          </div>
+          <div>
+            <span class="sm-label">Type</span>
+            <select class="sm-select" name="discount_type" required>
+              <option value="percent">Percentage off</option>
+              <option value="fixed">Fixed amount off</option>
+            </select>
+          </div>
+          <div>
+            <span class="sm-label">Value</span>
+            <input class="sm-input" type="number" name="value" min="0" step="0.01" placeholder="e.g. 10" required/>
+          </div>
+          <div>
+            <span class="sm-label">Applies To</span>
+            <select class="sm-select" name="applies_to">
+              <option value="all">All packages &amp; services</option>
+              <option value="Bronze">Bronze</option>
+              <option value="Consular">Consular</option>
+              <option value="Gold">Gold</option>
+              <option value="Diamond">Diamond</option>
+              <option value="Custom Executive">Custom Executive</option>
+              <option value="service">À la carte services only</option>
+            </select>
+          </div>
+          <div>
+            <span class="sm-label">Usage Limit</span>
+            <input class="sm-input" type="number" name="usage_limit" min="1" placeholder="Leave blank for unlimited"/>
+          </div>
+          <div>
+            <span class="sm-label">Start Date</span>
+            <input class="sm-input" type="date" name="start_date"/>
+          </div>
+          <div>
+            <span class="sm-label">End Date</span>
+            <input class="sm-input" type="date" name="end_date"/>
+          </div>
+        </div>
+        <button type="submit" class="btn">+ Create Discount</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="section-head"><div class="section-title">Active &amp; Past Discounts {% if discounts %}({{ discounts|length }}){% endif %}</div></div>
+  {% if not discounts %}
+  <div class="empty-state">No discounts created yet.</div>
+  {% else %}
+  <div class="card">
+    {% for d in discounts %}
+    <div class="disc-row">
+      <div>
+        <span class="disc-code">{{ d.code }}</span>
+        <span style="font-size:0.85rem;font-weight:600;color:var(--dark);margin-left:0.5rem;">{{ d.name }}</span>
+        <div class="disc-detail">
+          {{ d.applies_to }} · {% if d.usage_limit %}{{ d.used_count or 0 }}/{{ d.usage_limit }} used{% else %}unlimited uses{% endif %}
+          {% if d.start_date or d.end_date %} · {{ d.start_date or 'now' }} → {{ d.end_date or 'no end date' }}{% endif %}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span class="disc-value">{% if d.discount_type == 'percent' %}{{ d.value }}% off{% else %}${{ d.value }} off{% endif %}</span>
+        <span class="status-badge {% if d.status == 'active' %}badge-active{% elif d.status == 'expired' %}badge-expired{% else %}badge-inactive{% endif %}">{{ d.status|capitalize }}</span>
+        {% if d.status == 'active' %}
+        <form action="/ceo/discounts/{{ d.id }}/deactivate" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-outline btn-sm">Deactivate</button>
+        </form>
+        {% else %}
+        <form action="/ceo/discounts/{{ d.id }}/activate" method="POST" style="display:inline;">
+          <button type="submit" class="btn btn-outline btn-sm">Activate</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</body>
+  </html>
