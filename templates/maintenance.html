@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>We'll Be Right Back — MRK AGENCY</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root { --blue:#1A56DB; --dark:#0A0F1E; --muted:#94A3B8; --border:rgba(255,255,255,0.08); }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body {
+    font-family:'Inter',sans-serif; background:var(--dark); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:1.5rem; text-align:center;
+  }
+  .wrap { max-width:480px; width:100%; }
+  .logo { font-size:1.15rem; font-weight:800; letter-spacing:0.05em; margin-bottom:2.5rem; }
+  .logo span { color:var(--blue); }
+  .icon-ring {
+    width:64px; height:64px; border-radius:50%; margin:0 auto 1.75rem;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(26,86,219,0.12); border:1.5px solid rgba(26,86,219,0.35);
+    font-size:1.6rem; animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.08); opacity:0.85; } }
+  h1 { font-size:1.5rem; font-weight:700; margin-bottom:0.85rem; line-height:1.35; }
+  p.message { font-size:0.95rem; color:var(--muted); line-height:1.65; margin-bottom:1.5rem; }
+  .eta-pill {
+    display:inline-flex; align-items:center; gap:0.5rem;
+    background:rgba(26,86,219,0.12); border:1px solid rgba(26,86,219,0.35);
+    color:#7DA2F5; font-size:0.85rem; font-weight:600;
+    padding:0.55rem 1.1rem; border-radius:999px; margin-bottom:2rem;
+  }
+  .contact { border-top:1px solid var(--border); padding-top:1.5rem; margin-top:0.5rem; }
+  .contact p { font-size:0.82rem; color:var(--muted); margin-bottom:0.75rem; }
+  .contact a {
+    color:#fff; text-decoration:none; font-size:0.85rem; font-weight:600;
+    display:inline-flex; align-items:center; gap:0.4rem;
+  }
+  .contact a:hover { color:var(--blue); }
+  .refresh-note { font-size:0.75rem; color:#475569; margin-top:2rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">MRK <span>AGENCY</span></div>
+  <div class="icon-ring">🛠️</div>
+  <h1>{{ headline or "We're Currently Upgrading Our Infrastructure" }}</h1>
+  <p class="message">{{ message or "We're making improvements to provide a faster, more reliable experience. Our systems will be back shortly. Thank you for your patience." }}</p>
+  {% if eta %}
+  <div class="eta-pill">⏱ Estimated return: {{ eta }}</div>
+  {% endif %}
+  <div class="contact">
+    <p>Need something urgently?</p>
+    <a href="https://wa.me/923184467807" target="_blank">💬 Message us on WhatsApp</a>
+  </div>
+  <div class="refresh-note">This page refreshes automatically — no need to keep reloading.</div>
+</div>
+<script>
+  setTimeout(() => window.location.reload(), 60000);
+</script>
+</body>
+  </html>
