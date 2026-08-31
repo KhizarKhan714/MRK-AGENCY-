@@ -1049,3 +1049,212 @@ def update_profile():
 
 
 # ─── PROJECTS ────────────────────────────
+def _locked_service_context():
+    """The à-la-carte submit flow arrives with a specific service pre-selected
+    via query string; the template needs its price computed, not guessed."""
+    locked_service = (request.args.get('locked_service') or request.args.get('service')
+                       or request.form.get('locked_service'))
+    locked_service_price = None
+    if locked_service and locked_service in PACKAGE_INFO:
+        locked_service_price = PACKAGE_INFO[locked_service]['price']
+    return locked_service, locked_service_price
+
+
+@app.route('/submit-project', methods=['GET', 'POST'])
+def submit_project():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        try:
+            package = request.form['package']
+            title = request.form['title']
+            description = request.form['description']
+
+            main_objective = request.form.get('main_objective', '')
+            main_objective_other = request.form.get('main_objective_other', '')
+            has_existing_website = request.form.get('has_existing_website', '')
+            existing_website_url = request.form.get('existing_website_url', '')
+            specific_requirements = request.form.get('specific_requirements', '')
+            reference_sites = request.form.get('reference_sites', '')
+            contact_preference = request.form.get('contact_preference', '')
+            confirm_accurate = request.form.get('confirm_accurate') == 'on'
+
+            if package == 'Custom Executive':
+                budget = request.form.get('budget', '0') or '0'
+                deadline = ''  # discussed after submission, not auto-computed
+                custom_scope = request.form.get('custom_scope', '')
+                if custom_scope:
+                    description = description + f"\n\nCustom software scope: {custom_scope}"
+                phases = CUSTOM_EXECUTIVE_PHASES
+            elif package in PACKAGE_INFO:
+                info = PACKAGE_INFO[package]
+                if info.get('category') == 'service':
+                    # À la carte: client's entered budget is a floor, not an
+                    # override — never let it undercut the listed price.
+                    try:
+                        entered = float(request.form.get('budget', '') or 0)
+                    except ValueError:
+                        entered = 0
+                    budget = str(max(entered, info['price']))
+                    deadline = ''  # no auto-computed deadline for standalone services
+                else:
+                    budget = str(info['price'])
+                    deadline = (datetime.utcnow() + timedelta(weeks=info['weeks'])).strftime('%Y-%m-%d')
+                phases = info['phases']
+            else:
+                raise ValueError('Unknown package selected.')
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('''INSERT INTO projects
+                (customer_id,title,description,website_type,budget,deadline,package,
+                 main_objective,main_objective_other,has_existing_website,existing_website_url,
+                 specific_requirements,reference_sites,contact_preference,confirm_accurate)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id''',
+                (session['customer_id'], title, description, package, budget, deadline, package,
+                 main_objective, main_objective_other, has_existing_website, existing_website_url,
+                 specific_requirements, reference_sites, contact_preference, confirm_accurate))
+            new_id = c.fetchone()[0]
+
+            create_payment_phases(c, new_id, budget, phases)
+            log_client_activity(c, session['customer_id'], f'Project submitted: {title}')
+
+            conn.commit()
+            conn.close()
+            return redirect(url_for('invoice', project_id=new_id))
+        except Exception as e:
+            locked_service, locked_service_price = _locked_service_context()
+            return render_template('submit_project.html', error=str(e),
+                                    locked_service=locked_service, locked_service_price=locked_service_price)
+    locked_service, locked_service_price = _locked_service_context()
+    return render_template('submit_project.html', locked_service=locked_service,
+                            locked_service_price=locked_service_price)
+
+
+@app.route('/my-projects')
+def my_projects():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE customer_id=%s', (session['customer_id'],))
+    projects = c.fetchall()
+
+    amount_due = {}
+    for p in projects:
+        c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                     WHERE project_id=%s AND is_paid=FALSE''', (p[0],))
+        amount_due[p[0]] = float(c.fetchone()[0])
+
+    review_status = {}
+    for p in projects:
+        phase = get_client_reviewable_phase(c, p[0])
+        if phase and phase[3]:
+            review_status[p[0]] = {
+                'phase_number': phase[0], 'phase_label': phase[1],
+                'proof': phase[2], 'submitted_at': phase[3]
+            }
+
+    conn.close()
+    return render_template('my_projects.html', projects=projects, amount_due=amount_due, review_status=review_status)
+
+
+# ─── INVOICE ────────────────────────────────────────────
+@app.route('/invoice/<int:project_id>')
+def invoice(project_id):
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM projects WHERE id=%s AND customer_id=%s', (project_id, session['customer_id']))
+    project = c.fetchone()
+    if not project:
+        conn.close()
+        return redirect(url_for('my_projects'))
+
+    c.execute('''SELECT phase_number, phase_label, amount, is_paid, paid_at
+                 FROM project_payments WHERE project_id=%s ORDER BY phase_number''', (project_id,))
+    phase_rows = c.fetchall()
+    conn.close()
+
+    phases = [{'number': r[0], 'label': r[1], 'amount': float(r[2]), 'is_paid': r[3], 'paid_at': r[4]} for r in phase_rows]
+    total_amount = sum(p['amount'] for p in phases)
+    total_paid = sum(p['amount'] for p in phases if p['is_paid'])
+    amount_due_now = sum(p['amount'] for p in phases if not p['is_paid'])
+    fully_paid = amount_due_now == 0 and len(phases) > 0
+    next_due_phase = next((p for p in phases if not p['is_paid']), None)
+
+    settings = get_site_copy()
+
+    return render_template('invoice.html', project=project, phases=phases,
+                           total_amount=total_amount, total_paid=total_paid,
+                           amount_due_now=amount_due_now, fully_paid=fully_paid,
+                           next_due_phase=next_due_phase, settings=settings)
+
+
+# ─── CONTRACTOR APPLY ───────────────────────────────────
+@app.route('/contractor-apply', methods=['GET', 'POST'])
+@app.route('/contractor/apply', methods=['GET', 'POST'])
+def contractor_apply():
+    if request.method == 'POST':
+        name        = request.form['name'].strip()
+        email       = request.form['email'].strip().lower()
+        country     = request.form.get('country', '').strip()
+        phone       = request.form.get('phone', '').strip()
+        whatsapp    = request.form.get('whatsapp', '').strip()
+        national_id = request.form.get('national_id', '').strip()
+        expertise   = request.form['expertise']
+        experience  = request.form.get('experience', '')
+        specialties = request.form.get('specialties', '')
+        note        = request.form.get('note', '')
+        password    = request.form['password']
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+        bank_account_title  = request.form.get('bank_account_title', '').strip()
+        bank_account_number = request.form.get('bank_account_number', '').strip()
+        bank_name            = request.form.get('bank_name', '').strip()
+        bank_swift_iban      = request.form.get('bank_swift_iban', '').strip()
+
+        cnic_image_name = None
+        cv_name = None
+
+        if 'cnic_image' in request.files:
+            f = request.files['cnic_image']
+            if f and allowed_file(f.filename):
+                cnic_image_name = secure_filename(f'id_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cnic_image_name))
+
+        if 'cv' in request.files:
+            f = request.files['cv']
+            if f and allowed_file(f.filename):
+                cv_name = secure_filename(f'cv_{name}_{f.filename}')
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], cv_name))
+
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''INSERT INTO contractors
+            (name, email, phone, whatsapp, cnic, cnic_image, cv,
+             expertise, experience, specialties, note, password, status,
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s,%s,%s,%s)
+            RETURNING id''',
+            (name, email, phone, whatsapp, national_id, cnic_image_name, cv_name,
+             expertise, experience, specialties, note, hashed,
+             country, national_id, bank_account_title, bank_account_number,
+             bank_name, bank_swift_iban))
+        new_id = c.fetchone()[0]
+        conn.commit()
+        conn.close()
+
+        log_audit('contractor', new_id, name, 'CONTRACTOR_APPLIED',
+                  target_type='contractor', target_id=new_id)
+        send_notification('ceo', 1, f'New Contractor Application: {name}',
+                          f'{expertise} specialist from {country} applied.',
+                          '/mrkceokhan7/dashboard')
+        flash('Application submitted! You will receive your CIN upon approval.', 'success')
+        return redirect(url_for('contractor_login'))
+    return render_template('contractor_apply.html')
+
+
+# ─── CONTRACTOR LOGIN ──────────────────────────
