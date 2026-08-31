@@ -2235,3 +2235,202 @@ def award_badge(id):
 
 
 # ─── CEO: PROJECT ACTIONS ───────────────
+@app.route('/approve-project/<int:id>', methods=['GET', 'POST'])
+@ceo_required
+def approve_project(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT is_paid FROM project_payments
+                 WHERE project_id=%s AND phase_number=1''', (id,))
+    row = c.fetchone()
+    if row and not row[0]:
+        conn.close()
+        flash('Cannot approve — the upfront payment for this project has not been marked as paid yet.')
+        return redirect(url_for('ceo_projects'))
+
+    contractor_pay = request.form.get('contractor_pay', '0').strip()
+    if not contractor_pay:
+        contractor_pay = '0'
+    try:
+        c.execute("UPDATE projects SET status='approved', contractor_pay=%s, updated_at=NOW() WHERE id=%s", (contractor_pay, id))
+        c.execute('SELECT customer_id, title FROM projects WHERE id=%s', (id,))
+        row2 = c.fetchone()
+        if row2:
+            log_client_activity(c, row2[0], f'Proposal approved: {row2[1]}')
+            send_notification('client', row2[0], 'Project approved',
+                               f'Your project "{row2[1]}" has been approved and is moving forward.',
+                               link=url_for('my_projects'))
+        conn.commit()
+        log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Approved project',
+                  target_type='project', target_id=id, category='project')
+    except Exception:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_projects'))
+
+
+@app.route('/reject-project/<int:id>', methods=['GET', 'POST'])
+@ceo_required
+def reject_project(id):
+    reason = request.form.get('rejection_reason', 'No reason provided.').strip()
+    if not reason:
+        reason = 'No reason provided.'
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE projects SET status='rejected', rejection_reason=%s, updated_at=NOW() WHERE id=%s", (reason, id))
+        # ─── ADDED: a rejected project has no legitimate reason to still show
+        #     as "payment due" anywhere — strip any unpaid phase rows. Paid
+        #     phases (rare — rejection after payment) are left alone for records.
+        c.execute("DELETE FROM project_payments WHERE project_id=%s AND is_paid=FALSE", (id,))
+        conn.commit()
+        log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Rejected project',
+                  target_type='project', target_id=id, new_state=reason, category='project')
+    except Exception:
+        conn.rollback()
+    conn.close()
+    return redirect(url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/suspend', methods=['POST'])
+@ceo_required
+def suspend_project(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE projects SET status='suspended', updated_at=NOW() WHERE id=%s AND status='approved'", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Suspended project',
+              target_type='project', target_id=id, category='project')
+    conn.close()
+    flash('Project suspended.')
+    return redirect(url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/resume', methods=['POST'])
+@ceo_required
+def resume_project(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE projects SET status='approved', updated_at=NOW() WHERE id=%s AND status='suspended'", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Resumed project',
+              target_type='project', target_id=id, category='project')
+    conn.close()
+    flash('Project resumed.')
+    return redirect(url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/cancel', methods=['POST'])
+@ceo_required
+def cancel_project(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE projects SET status='rejected', rejection_reason='Cancelled by CEO', updated_at=NOW() WHERE id=%s", (id,))
+    c.execute("DELETE FROM project_payments WHERE project_id=%s AND is_paid=FALSE", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Cancelled project',
+              target_type='project', target_id=id, category='project')
+    conn.close()
+    flash('Project cancelled.')
+    return redirect(url_for('ceo_projects'))
+
+
+# ─── CEO: CUSTOMER ACTIONS ──────────────────
+@app.route('/suspend-customer/<int:id>')
+@ceo_required
+def suspend_customer(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Suspended client',
+              target_type='customer', target_id=id, category='client')
+    conn.close()
+    return redirect(url_for('ceo_clients'))
+
+
+@app.route('/reinstate-customer/<int:id>')
+@ceo_required
+def reinstate_customer(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET suspended=FALSE WHERE id=%s", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Reinstated client',
+              target_type='customer', target_id=id, category='client')
+    conn.close()
+    return redirect(url_for('ceo_clients'))
+
+
+@app.route('/ban-customer/<int:id>')
+@ceo_required
+def ban_customer(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE customers SET banned=TRUE, suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Banned client',
+              target_type='customer', target_id=id, category='client')
+    conn.close()
+    return redirect(url_for('ceo_clients'))
+
+
+@app.route('/delete-customer/<int:id>')
+@ceo_required
+def delete_customer(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM customers WHERE id=%s", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Deleted client',
+              target_type='customer', target_id=id, category='client')
+    conn.close()
+    return redirect(url_for('ceo_clients'))
+
+
+@app.route('/ceo/team/add', methods=['POST'])
+@ceo_required
+def team_add():
+    name = request.form['name'].strip()
+    role = request.form.get('role','').strip()
+    specialties = request.form.get('specialties','').strip()
+    bio = request.form.get('bio','').strip()
+    projects_count = request.form.get('projects_count', 0)
+    photo_name = None
+    photo = request.files.get('photo')
+    if photo and allowed_file(photo.filename):
+        photo_name = secure_filename(f'team_{name}_{photo.filename}')
+        photo.save(os.path.join(app.config['UPLOAD_FOLDER'], photo_name))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO team_members (name,role,specialties,bio,projects_count,photo) VALUES (%s,%s,%s,%s,%s,%s)",
+              (name,role,specialties,bio,projects_count,photo_name))
+    conn.commit(); conn.close()
+    flash(f'{name} added to team.','success')
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/team/delete/<int:tid>')
+@ceo_required
+def team_delete(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM team_members WHERE id=%s",(tid,))
+    conn.commit(); conn.close()
+    flash('Team member removed.','success')
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/api/team')
+def api_team():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id,name,role,specialties,bio,projects_count,photo FROM team_members ORDER BY created_at")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{'id':r[0],'name':r[1],'role':r[2],'specialties':r[3],'bio':r[4],'projects':r[5],'photo':r[6]} for r in rows])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# PORTFOLIO & TEAM — CEO management + public pages
+# ═══════════════════════════════════════════════════════════════════════
