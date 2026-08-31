@@ -733,3 +733,124 @@ def get_business_health():
             'satisfaction': satisfaction, 'avg_delivery': avg_delivery}
 
 
+
+def get_morning_brief():
+    conn = get_db(); c = conn.cursor()
+    # ─── FIXED: server runs in UTC, but the CEO is in Pakistan (UTC+5) —
+    #     using raw UTC hour was producing wrong greetings (e.g. "Good
+    #     Afternoon" at night). Offset to local time for the greeting only.
+    local_hour = (datetime.utcnow() + timedelta(hours=5)).hour
+    time_of_day = 'Morning' if local_hour < 12 else ('Afternoon' if local_hour < 18 else 'Evening')
+
+    summary = []
+    c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n: summary.append(f"{n} contractor(s) awaiting approval")
+
+    try:
+        c.execute('''SELECT COUNT(*) FROM projects WHERE status='approved' AND deadline IS NOT NULL
+                     AND deadline != '' AND deadline::date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days' ''')
+        n = c.fetchone()[0]
+    except Exception:
+        conn.rollback(); n = 0
+    if n: summary.append(f"{n} project(s) nearing deadline")
+
+    c.execute('''SELECT COUNT(*) FROM project_payments WHERE is_paid=FALSE''')
+    n = c.fetchone()[0]
+    summary.append(f"{n} invoice(s) still unpaid" if n else "No overdue invoices")
+
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW())''')
+    month_rev = float(c.fetchone()[0])
+    summary.append(f"Revenue this month: ${month_rev:,.2f}")
+
+    c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
+    pending_ct = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='pending'")
+    pending_pr = c.fetchone()[0]
+    if pending_ct:
+        focus = "Approve contractor applications."
+    elif pending_pr:
+        focus = "Review pending project submissions."
+    else:
+        focus = "You're all caught up — great time to plan ahead."
+
+    conn.close()
+    return time_of_day, summary, focus
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# MRK AI — implemented in ai_assistant.py (Blueprint, url_prefix='/ai').
+# Client-facing chat lives at POST /ai/chat. /ceo/ai-center below still
+# shows "Coming Soon" cards — swap those for real links whenever ready.
+# ═══════════════════════════════════════════════════════════════════════
+
+
+# ─── HOME ───────────────────────────────────────────────
+@app.route('/')
+def home():
+    conn, c = get_dict_db()
+    c.execute("SELECT * FROM portfolio_projects WHERE is_published=TRUE AND is_featured=TRUE ORDER BY display_order LIMIT 3")
+    featured_projects = c.fetchall()
+    c.execute("SELECT * FROM team_members WHERE is_published=TRUE ORDER BY display_order LIMIT 3")
+    featured_team = c.fetchall()
+    c.execute('''SELECT t.rating, t.review_text, t.created_at, cu.first_name, cu.last_name
+                 FROM testimonials t JOIN customers cu ON cu.id = t.customer_id
+                 WHERE t.is_published=TRUE ORDER BY t.created_at DESC LIMIT 12''')
+    testimonials = c.fetchall()
+    conn.close()
+    return render_template('index.html', featured_projects=featured_projects,
+                           featured_team=featured_team, testimonials=testimonials)
+
+
+# ─── CUSTOMER AUTH ──────────────────────────────────────
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        try:
+            fn = request.form['first_name'].strip()
+            ln = request.form['last_name'].strip()
+            email = request.form['email'].strip()
+            phone = request.form.get('phone', '').strip()
+            whatsapp = request.form.get('whatsapp', '').strip()
+            pw = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('INSERT INTO customers (first_name,last_name,email,password,phone,whatsapp) VALUES (%s,%s,%s,%s,%s,%s)',
+                      (fn, ln, email, pw.decode(), phone, whatsapp))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
+        except:
+            return render_template('register.html', error='Email already exists or invalid data.')
+    return render_template('register.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email'].strip()
+        pw = request.form['password'].encode()
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM customers WHERE email=%s', (email,))
+        user = c.fetchone()
+        conn.close()
+        if user and bcrypt.checkpw(pw, user[4].encode()):
+            if user[6]:
+                return render_template('login.html', error='Your account has been suspended. Contact MRK Agency.')
+            session['customer_id'] = user[0]
+            session['customer_name'] = user[1]
+            return redirect(url_for('dashboard'))
+        return render_template('login.html', error='Invalid email or password.')
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('customer_id', None)
+    session.pop('customer_name', None)
+    return redirect(url_for('login'))
+
+
+# ─── CLIENT DASHBOARD (Workplace home) ─────────────────
