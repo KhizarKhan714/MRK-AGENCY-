@@ -1762,4 +1762,217 @@ def delete_announcement(id):
 
 
 # ─── CEO: PROJECTS PAGE ───────────────────────────────────
+@app.route('/ceo/projects')
+@ceo_required
+def ceo_projects():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM projects WHERE status='pending'")
+    pending_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='approved'")
+    approved_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='completed'")
+    completed_projects = c.fetchall()
+    c.execute("SELECT * FROM projects WHERE status='rejected'")
+    rejected_projects = c.fetchall()
+    c.execute("SELECT * FROM contractors WHERE status='approved' AND (suspended IS NULL OR suspended=FALSE)")
+    approved_contractors = c.fetchall()
 
+    c.execute('''SELECT project_id, phase_number, phase_label, amount, is_paid
+                 FROM project_payments ORDER BY project_id, phase_number''')
+    payment_phases = {}
+    for row in c.fetchall():
+        payment_phases.setdefault(row[0], []).append(
+            {'phase_number': row[1], 'phase_label': row[2], 'amount': row[3], 'is_paid': row[4]})
+
+    c.execute('''SELECT project_id, phase_number, phase_label, contractor_proof,
+                        contractor_submitted_at, client_approved, ceo_review_status, ceo_feedback
+                 FROM project_payments WHERE contractor_proof IS NOT NULL
+                 ORDER BY project_id, phase_number''')
+    milestone_submissions = {}
+    for row in c.fetchall():
+        milestone_submissions.setdefault(row[0], []).append(
+            {'phase_number': row[1], 'phase_label': row[2], 'proof': row[3],
+             'submitted_at': row[4], 'client_approved': row[5],
+             'ceo_review_status': row[6], 'ceo_feedback': row[7]})
+
+    c.execute('''SELECT project_id, id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts ORDER BY project_id, created_at''')
+    contractor_payouts = {}
+    for row in c.fetchall():
+        contractor_payouts.setdefault(row[0], []).append(
+            {'id': row[1], 'payout_type': row[2], 'amount': row[3], 'status': row[4], 'paid_at': row[5]})
+
+    c.execute("SELECT * FROM projects WHERE status='suspended'")
+    suspended_projects = c.fetchall()
+
+    all_project_ids = [p[0] for p in (pending_projects + approved_projects + completed_projects
+                                       + rejected_projects + suspended_projects)]
+    project_stage_info = get_project_stage_info(c, all_project_ids) if all_project_ids else {}
+
+    conn.close()
+    return render_template('ceo_projects.html', active_page='projects',
+        pending_projects=pending_projects, approved_projects=approved_projects,
+        completed_projects=completed_projects, rejected_projects=rejected_projects,
+        suspended_projects=suspended_projects,
+        approved_contractors=approved_contractors, payment_phases=payment_phases,
+        milestone_submissions=milestone_submissions, contractor_payouts=contractor_payouts,
+        project_stage_info=project_stage_info)
+
+
+@app.route('/ceo/project/<int:id>/approve-submission/<int:phase_number>', methods=['POST'])
+@ceo_required
+def approve_submission(id, phase_number):
+    conn = get_db(); c = conn.cursor()
+    c.execute('''UPDATE project_payments SET ceo_review_status='approved', ceo_reviewed_at=NOW()
+                 WHERE project_id=%s AND phase_number=%s''', (id, phase_number))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Approved milestone submission',
+              target_type='project', target_id=id, new_state=f'phase {phase_number} approved',
+              category='project')
+    conn.close()
+    flash('Submission approved — now visible to the client.')
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/request-submission-revision/<int:phase_number>', methods=['POST'])
+@ceo_required
+def request_submission_revision(id, phase_number):
+    feedback = request.form.get('feedback', '').strip()
+    if not feedback:
+        flash('Feedback is required when requesting a revision.')
+        return redirect(request.referrer or url_for('ceo_projects'))
+    conn = get_db(); c = conn.cursor()
+    c.execute('''UPDATE project_payments SET ceo_review_status='revision_requested',
+                 ceo_feedback=%s, ceo_reviewed_at=NOW(), contractor_submitted_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (feedback, id, phase_number))
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (id,))
+    row = c.fetchone()
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Requested submission revision',
+              target_type='project', target_id=id, new_state=feedback, category='project')
+    if row and row[0]:
+        send_notification('contractor', row[0], 'Revision requested',
+                           f'The CEO requested changes on your submission: {feedback}',
+                           link=url_for('contractor_dashboard'))
+    conn.close()
+    flash('Sent back to the contractor for revision.')
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/reject-submission/<int:phase_number>', methods=['POST'])
+@ceo_required
+def reject_submission(id, phase_number):
+    conn = get_db(); c = conn.cursor()
+    c.execute('''UPDATE project_payments SET ceo_review_status=NULL, ceo_feedback=NULL,
+                 contractor_proof=NULL, contractor_submitted_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (id, phase_number))
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (id,))
+    row = c.fetchone()
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Rejected milestone submission',
+              target_type='project', target_id=id, category='project')
+    if row and row[0]:
+        send_notification('contractor', row[0], 'Submission rejected',
+                           'Your milestone submission was rejected — please submit again.',
+                           link=url_for('contractor_dashboard'))
+    conn.close()
+    flash('Submission rejected — the contractor will need to submit again.')
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/assign-contractor', methods=['POST'])
+@ceo_required
+def assign_contractor(id):
+    contractor_id = request.form.get('contractor_id')
+    if not contractor_id:
+        flash('Please select a contractor.')
+        return redirect(request.referrer or url_for('ceo_projects'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE projects SET assigned_contractor_id=%s, accepted_by=%s, updated_at=NOW() WHERE id=%s',
+              (contractor_id, contractor_id, id))
+    c.execute('SELECT contractor_pay FROM projects WHERE id=%s', (id,))
+    pay_row = c.fetchone()
+    if pay_row and pay_row[0]:
+        create_contractor_payouts(c, id, contractor_id, pay_row[0])
+    conn.commit()
+    conn.close()
+    flash('Contractor assigned.')
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/approve-stage', methods=['POST'])
+@ceo_required
+def approve_stage(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT contractor_stage_pending FROM projects WHERE id=%s', (id,))
+    row = c.fetchone()
+    if row and row[0]:
+        c.execute('''UPDATE projects SET client_visible_stage=%s, stage_pending_approval=FALSE,
+                     contractor_stage_pending=NULL, updated_at=NOW() WHERE id=%s''', (row[0], id))
+        c.execute('SELECT customer_id FROM projects WHERE id=%s', (id,))
+        cust_row = c.fetchone()
+        if cust_row:
+            log_client_activity(c, cust_row[0], f'Project stage updated: {row[0]}')
+        conn.commit()
+        flash(f'Stage approved — now visible to the client as "{row[0]}".')
+    conn.close()
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+@app.route('/ceo/project/<int:id>/reject-stage', methods=['POST'])
+@ceo_required
+def reject_stage(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE projects SET stage_pending_approval=FALSE, contractor_stage_pending=NULL WHERE id=%s', (id,))
+    conn.commit()
+    conn.close()
+    flash('Stage update rejected.')
+    return redirect(request.referrer or url_for('ceo_projects'))
+
+
+# ─── CEO: CLIENTS PAGE ──────────────────────────
+@app.route('/ceo/clients')
+@ceo_required
+def ceo_clients():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM customers WHERE (suspended=FALSE OR suspended IS NULL) AND (banned=FALSE OR banned IS NULL)")
+    customers = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE suspended=TRUE AND (banned=FALSE OR banned IS NULL)")
+    suspended_customers = c.fetchall()
+    c.execute("SELECT * FROM customers WHERE banned=TRUE")
+    banned_customers = c.fetchall()
+
+    c.execute("SELECT customer_id, COUNT(*) FROM projects GROUP BY customer_id")
+    project_counts = {row[0]: row[1] for row in c.fetchall()}
+
+    client_totals_paid = {}
+    client_totals_due = {}
+    client_projects = {}
+    client_activity = {}
+    for cu in (customers + suspended_customers + banned_customers):
+        c.execute('''SELECT p.id, p.title, p.status, COALESCE(SUM(pp.amount) FILTER (WHERE pp.is_paid), 0),
+                            COALESCE(SUM(pp.amount) FILTER (WHERE NOT pp.is_paid), 0)
+                     FROM projects p LEFT JOIN project_payments pp ON pp.project_id = p.id
+                     WHERE p.customer_id=%s GROUP BY p.id, p.title, p.status''', (cu[0],))
+        rows = c.fetchall()
+        client_totals_paid[cu[0]] = sum(float(r[3]) for r in rows)
+        client_totals_due[cu[0]] = sum(float(r[4]) for r in rows)
+        client_projects[cu[0]] = [{'title': r[1], 'status': r[2]} for r in rows]
+
+        c.execute('''SELECT action, created_at FROM client_activity
+                     WHERE customer_id=%s ORDER BY created_at DESC LIMIT 10''', (cu[0],))
+        client_activity[cu[0]] = [{'action': r[0], 'created_at': r[1]} for r in c.fetchall()]
+
+    conn.close()
+    return render_template('ceo_clients.html', active_page='clients',
+        customers=customers, suspended_customers=suspended_customers, banned_customers=banned_customers,
+        project_counts=project_counts, client_totals_paid=client_totals_paid,
+        client_totals_due=client_totals_due, client_projects=client_projects, client_activity=client_activity)
+
+
+# ─── CEO: FINANCE PAGE ────────────────────────────
