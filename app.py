@@ -563,3 +563,173 @@ def init_db():
 # notifications, business health, and the contractor→CEO→client stage flow.
 # ════════════════════════════════════════════════════════════════  
 
+def log_contractor_activity(c, contractor_id, action):
+    c.execute("INSERT INTO contractor_activity (contractor_id, action) VALUES (%s,%s)", (contractor_id, action))
+
+def log_client_activity(c, customer_id, action):
+    c.execute("INSERT INTO client_activity (customer_id, action) VALUES (%s,%s)", (customer_id, action))
+
+def touch_project(c, project_id):
+    c.execute("UPDATE projects SET updated_at=NOW() WHERE id=%s", (project_id,))
+
+
+def get_next_review_phase(c, project_id):
+    c.execute('''SELECT phase_number, phase_label, contractor_proof, contractor_submitted_at,
+                        client_approved, client_notes, ceo_review_status, ceo_feedback
+                 FROM project_payments
+                 WHERE project_id=%s AND client_approved=FALSE
+                 ORDER BY phase_number LIMIT 1''', (project_id,))
+    return c.fetchone()
+
+
+def get_client_reviewable_phase(c, project_id):
+    """Client-facing gated lookup — only shows a submission the CEO has
+    already approved. Mirrors get_next_review_phase's shape/order."""
+    c.execute('''SELECT phase_number, phase_label, contractor_proof, contractor_submitted_at,
+                        client_approved, client_notes, ceo_review_status, ceo_feedback
+                 FROM project_payments
+                 WHERE project_id=%s AND client_approved=FALSE AND ceo_review_status='approved'
+                 ORDER BY phase_number LIMIT 1''', (project_id,))
+    return c.fetchone()
+
+
+def get_service_availability(c):
+    c.execute("SELECT service_name, available FROM service_availability")
+    return {row[0]: row[1] for row in c.fetchall()}
+
+
+def get_project_stage_info(c, project_ids=None):
+    if project_ids is not None and not project_ids:
+        return {}
+    if project_ids is None:
+        c.execute("SELECT id, client_visible_stage, contractor_stage_pending, stage_pending_approval FROM projects")
+    else:
+        c.execute("""SELECT id, client_visible_stage, contractor_stage_pending, stage_pending_approval
+                     FROM projects WHERE id = ANY(%s)""", (list(project_ids),))
+    info = {}
+    for row in c.fetchall():
+        info[row[0]] = {'current': row[1] or 'Submitted', 'pending': row[2] if row[3] else None}
+    return info
+
+
+def get_merged_activity(c, limit=None):
+    c.execute('''SELECT action, created_at, 'contractor' AS src FROM contractor_activity
+                 UNION ALL
+                 SELECT action, created_at, 'client' AS src FROM client_activity
+                 ORDER BY created_at DESC''' + (f' LIMIT {int(limit)}' if limit else ''))
+    return c.fetchall()
+
+
+def get_ceo_notifications(c, limit=None):
+    notifs = []
+
+    c.execute("SELECT COUNT(*) FROM contractors WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔴', 'text': f'{n} new contractor application(s) waiting', 'sub': 'Review and approve or reject', 'link': '/ceo/contractors'})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔴', 'text': f'{n} new project submission(s) waiting', 'sub': 'Review and approve or reject', 'link': '/ceo/projects'})
+
+    c.execute('''SELECT COUNT(*) FROM project_payments
+                 WHERE contractor_proof IS NOT NULL AND client_approved=FALSE''')
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔵', 'text': f'{n} milestone submission(s) awaiting client review', 'sub': 'Contractor has submitted proof', 'link': '/ceo/projects'})
+
+    c.execute("SELECT COUNT(*) FROM bank_edit_requests WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟡', 'text': f'{n} bank detail change request(s) pending', 'sub': 'Contractor payout details', 'link': '/ceo/contractors'})
+
+    c.execute("SELECT COUNT(*) FROM advance_requests WHERE status='pending'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟡', 'text': f'{n} advance payment request(s) pending', 'sub': 'Contractor requesting funds', 'link': '/ceo/finance'})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE stage_pending_approval=TRUE")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🔵', 'text': f'{n} project stage update(s) proposed by contractors', 'sub': 'Awaiting your approval', 'link': '/ceo/projects'})
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='completed'")
+    n = c.fetchone()[0]
+    if n > 0:
+        notifs.append({'dot': '🟢', 'text': f'{n} project(s) completed', 'sub': 'All-time', 'link': '/ceo/projects'})
+
+    return notifs[:limit] if limit else notifs
+
+
+def get_pending_approvals(c, limit=None):
+    approvals = []
+    c.execute("SELECT id, name, expertise FROM contractors WHERE status='pending' ORDER BY id DESC")
+    for row in c.fetchall():
+        approvals.append({'text': f'Contractor application — {row[1]}', 'sub': row[2] or 'General', 'link': '/ceo/contractors'})
+    c.execute("SELECT id, title FROM projects WHERE status='pending' ORDER BY id DESC")
+    for row in c.fetchall():
+        approvals.append({'text': f'Project submission — {row[1]}', 'sub': f'Project #{row[0]}', 'link': '/ceo/projects'})
+    return approvals[:limit] if limit else approvals
+
+
+def get_monthly_revenue(months=6):
+    conn = get_db(); c = conn.cursor()
+    c.execute('''SELECT TO_CHAR(paid_at, 'Mon YYYY') AS month, SUM(amount)
+                 FROM project_payments WHERE is_paid=TRUE AND paid_at IS NOT NULL
+                 GROUP BY TO_CHAR(paid_at, 'Mon YYYY'), DATE_TRUNC('month', paid_at)
+                 ORDER BY DATE_TRUNC('month', paid_at) DESC LIMIT %s''', (months,))
+    rows = c.fetchall()
+    conn.close()
+    return [{'month': r[0], 'amount': float(r[1])} for r in reversed(rows)]
+
+
+def get_business_health():
+    conn = get_db(); c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE status IN ('approved','completed')")
+    total_started = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE status='completed'")
+    completed = c.fetchone()[0]
+    completion_rate = f"{round(completed/total_started*100)}%" if total_started else "No Data Yet"
+
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW())''')
+    this_month = float(c.fetchone()[0])
+    c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                 WHERE is_paid=TRUE AND paid_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+                 AND paid_at < DATE_TRUNC('month', NOW())''')
+    last_month = float(c.fetchone()[0])
+    if this_month == 0 and last_month == 0:
+        revenue_trend = "No Data Yet"
+    elif this_month > last_month:
+        revenue_trend = "Growing"
+    elif this_month < last_month:
+        revenue_trend = "Declining"
+    else:
+        revenue_trend = "Stable"
+
+    c.execute("SELECT AVG(rating) FROM testimonials WHERE is_published=TRUE")
+    avg_rating = c.fetchone()[0]
+    satisfaction = f"{round(float(avg_rating),1)} / 5" if avg_rating else "No Data Yet"
+
+    c.execute('''SELECT AVG(EXTRACT(EPOCH FROM (updated_at - created_at))/86400.0)
+                 FROM projects WHERE status='completed' AND created_at IS NOT NULL''')
+    avg_days = c.fetchone()[0]
+    avg_delivery = f"{round(float(avg_days),1)} Days" if avg_days else "No Data Yet"
+
+    try:
+        c.execute('''SELECT COUNT(*) FROM projects p
+                     WHERE p.status='approved' AND p.deadline IS NOT NULL
+                     AND p.deadline != '' AND p.deadline::date < CURRENT_DATE''')
+        overdue = c.fetchone()[0]
+    except Exception:
+        conn.rollback()
+        overdue = 0
+    status = "Healthy" if overdue == 0 else "Needs Attention"
+
+    conn.close()
+    return {'status': status, 'revenue_trend': revenue_trend, 'completion_rate': completion_rate,
+            'satisfaction': satisfaction, 'avg_delivery': avg_delivery}
+
+
