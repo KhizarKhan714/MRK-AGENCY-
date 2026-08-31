@@ -854,3 +854,198 @@ def logout():
 
 
 # ─── CLIENT DASHBOARD (Workplace home) ─────────────────
+@app.route('/dashboard')
+def dashboard():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    cid = session['customer_id']
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('SELECT * FROM projects WHERE customer_id=%s ORDER BY updated_at DESC', (cid,))
+    projects = c.fetchall()
+    total_project_count = len(projects)
+
+    active_count = sum(1 for p in projects if p[8] == 'approved')
+    completed_count = sum(1 for p in projects if p[8] == 'completed')
+
+    pending_payments_total = 0.0
+    open_requests_count = 0
+    latest_project_id = projects[0][0] if projects else None
+
+    stage_info = get_project_stage_info(c, [p[0] for p in projects]) if projects else {}
+
+    recent_projects = []
+    project_health = None
+    timeline_project = None
+
+    for p in projects:
+        c.execute('''SELECT COALESCE(SUM(amount),0) FROM project_payments
+                     WHERE project_id=%s AND is_paid=FALSE''', (p[0],))
+        due = float(c.fetchone()[0])
+        pending_payments_total += due
+
+        rv = get_client_reviewable_phase(c, p[0])
+        if rv and rv[3]:
+            open_requests_count += 1
+
+        info = stage_info.get(p[0], {'current': 'Submitted', 'pending': None})
+        try:
+            stage_idx = PROJECT_STAGES.index(info['current'])
+        except ValueError:
+            stage_idx = 0
+        progress_pct = round((stage_idx / (len(PROJECT_STAGES) - 1)) * 100)
+
+        status_map = {'pending': 'pending', 'approved': 'approved', 'completed': 'completed', 'rejected': 'rejected'}
+        status_label_map = {'pending': '⏳ Pending', 'approved': '🟢 In Progress', 'completed': '🏁 Completed', 'rejected': '❌ Rejected'}
+
+        if len(recent_projects) < 3:
+            recent_projects.append({
+                'title': p[2],
+                'status': status_map.get(p[8], p[8]),
+                'status_label': status_label_map.get(p[8], p[8]),
+                'progress_pct': progress_pct,
+                'last_updated': p[16].strftime('%b %d') if len(p) > 16 and p[16] else 'Recently'
+            })
+
+        if p[8] == 'approved' and timeline_project is None:
+            timeline_project = {'title': p[2], 'stage_index': stage_idx}
+
+        if p[8] == 'approved' and project_health is None:
+            rv_notes = rv[5] if rv else None
+            overdue = False
+            if p[6]:
+                try:
+                    overdue = datetime.strptime(p[6], '%Y-%m-%d').date() < datetime.utcnow().date()
+                except Exception:
+                    overdue = False
+            if rv_notes:
+                project_health = {'status': 'warn', 'message': 'Delivery has been extended.', 'reason': 'Client requested additional revisions.'}
+            elif overdue:
+                project_health = {'status': 'warn', 'message': 'This project has passed its original deadline.', 'reason': 'Timeline extended — check in with your account manager.'}
+            else:
+                project_health = {'status': 'good', 'message': 'Everything is on schedule.', 'expected_delivery': p[6] or 'TBD'}
+
+    c.execute("SELECT action, created_at FROM client_activity WHERE customer_id=%s ORDER BY created_at DESC LIMIT 6", (cid,))
+    recent_activity = [{'time': r[1].strftime('%b %d, %-I:%M %p') if r[1] else '', 'text': r[0]} for r in c.fetchall()]
+
+    c.execute("SELECT action FROM client_activity WHERE customer_id=%s ORDER BY created_at DESC LIMIT 4", (cid,))
+    notifications = [r[0] for r in c.fetchall()]
+
+    site_copy = get_site_copy()
+    c.execute("SELECT photo FROM ceo LIMIT 1")
+    ceo_row = c.fetchone()
+    ceo_photo = ceo_row[0] if ceo_row else None
+    conn.close()
+
+    return render_template('dashboard.html', name=session['customer_name'],
+        total_project_count=total_project_count, active_count=active_count, completed_count=completed_count,
+        pending_payments_total=pending_payments_total, open_requests_count=open_requests_count,
+        recent_projects=recent_projects, project_health=project_health, timeline_project=timeline_project,
+        recent_activity=recent_activity, notifications=notifications,
+        contact_whatsapp=site_copy.get('contact_whatsapp'), latest_project_id=latest_project_id,
+        ceo_photo=ceo_photo)
+
+
+# ─── CUSTOMER PROFILE ───────────────────────────────────
+@app.route('/profile')
+def profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT id, first_name, last_name, email, photo, phone, whatsapp,
+                        business_name, business_website FROM customers WHERE id=%s''', (session['customer_id'],))
+    row = c.fetchone()
+    conn.close()
+    customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4],
+                'phone': row[5], 'whatsapp': row[6], 'business_name': row[7], 'business_website': row[8]}
+    return render_template('profile.html', customer=customer)
+
+
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    action = request.form.get('action')
+    conn = get_db()
+    c = conn.cursor()
+
+    def get_customer():
+        c.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        return {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+
+    if action == 'update_info':
+        fn = request.form['first_name'].strip()
+        ln = request.form['last_name'].strip()
+        email = request.form['email'].strip()
+        try:
+            c.execute('UPDATE customers SET first_name=%s, last_name=%s, email=%s WHERE id=%s',
+                      (fn, ln, email, session['customer_id']))
+            conn.commit()
+            session['customer_name'] = fn
+            customer = get_customer()
+            conn.close()
+            return render_template('profile.html', customer=customer, success='Profile updated successfully.')
+        except:
+            conn.close()
+            conn2 = get_db(); c2 = conn2.cursor()
+            c2.execute('SELECT id, first_name, last_name, email, photo FROM customers WHERE id=%s', (session['customer_id'],))
+            row = c2.fetchone()
+            customer = {'id': row[0], 'first_name': row[1], 'last_name': row[2], 'email': row[3], 'photo': row[4]}
+            conn2.close()
+            return render_template('profile.html', customer=customer, error='Email already in use.')
+
+    elif action == 'change_password':
+        current_pw = request.form['current_password'].encode()
+        new_pw = request.form['new_password']
+        confirm_pw = request.form['confirm_password']
+        c.execute('SELECT password FROM customers WHERE id=%s', (session['customer_id'],))
+        row = c.fetchone()
+        customer = get_customer()
+        if not bcrypt.checkpw(current_pw, row[0].encode()):
+            conn.close()
+            return render_template('profile.html', customer=customer, error='Current password is incorrect.')
+        if new_pw != confirm_pw:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='New passwords do not match.')
+        if len(new_pw) < 6:
+            conn.close()
+            return render_template('profile.html', customer=customer, error='Password must be at least 6 characters.')
+        hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+        c.execute('UPDATE customers SET password=%s WHERE id=%s', (hashed, session['customer_id']))
+        conn.commit()
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Password changed successfully.')
+
+    elif action == 'update_photo':
+        photo_file = request.files.get('photo')
+        if photo_file and photo_file.filename:
+            photo_data = photo_file.read()
+            b64 = base64.b64encode(photo_data).decode()
+            mime = photo_file.content_type
+            data_url = f'data:{mime};base64,{b64}'
+            c.execute('UPDATE customers SET photo=%s WHERE id=%s', (data_url, session['customer_id']))
+            conn.commit()
+        customer = get_customer()
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Profile photo updated.')
+
+    elif action == 'update_company':
+        business_name = request.form.get('business_name', '').strip()
+        business_website = request.form.get('business_website', '').strip()
+        c.execute('UPDATE customers SET business_name=%s, business_website=%s WHERE id=%s',
+                  (business_name, business_website, session['customer_id']))
+        conn.commit()
+        customer = get_customer()
+        customer['business_name'] = business_name
+        customer['business_website'] = business_website
+        conn.close()
+        return render_template('profile.html', customer=customer, success='Company info updated.')
+
+    conn.close()
+    return redirect(url_for('profile'))
+
+
+# ─── PROJECTS ────────────────────────────
