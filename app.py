@@ -234,4 +234,332 @@ def init_db():
     #     stage flow. client_visible_stage is the ONLY one ever shown to
     #     the client; contractor_stage_pending + stage_pending_approval
     #     hold the contractor's proposed change until the CEO approves it.
-    
+        for col, ddl in [
+        ('created_at', 'TIMESTAMP DEFAULT NOW()'),
+        ('updated_at', 'TIMESTAMP DEFAULT NOW()'),
+        ('contractor_stage_pending', 'TEXT'),
+        ('stage_pending_approval', 'BOOLEAN DEFAULT FALSE'),
+        ('client_visible_stage', "TEXT DEFAULT 'Submitted'"),
+    ]:
+        try: c.execute(f'ALTER TABLE projects ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (consolidated pass): contractor availability (CEO-controlled,
+    #     shown on the contractor's own Overview tab) + last login tracking.
+    for col, ddl in [
+        ('availability_status', "TEXT DEFAULT 'Available'"),
+        ('last_login', 'TIMESTAMP'),
+    ]:
+        try: c.execute(f'ALTER TABLE contractors ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (consolidated pass): company announcements (CEO posts,
+    #     every contractor sees them on their Overview tab).
+    c.execute('''CREATE TABLE IF NOT EXISTS announcements (
+        id SERIAL PRIMARY KEY,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (consolidated pass): activity feeds — one per side, merged
+    #     together for the CEO's Recent Activity / Activity Center.
+    c.execute('''CREATE TABLE IF NOT EXISTS contractor_activity (
+        id SERIAL PRIMARY KEY,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        action TEXT,
+        created_at TIMESTAMP DEFAULT NOW())''')
+    c.execute('''CREATE TABLE IF NOT EXISTS client_activity (
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+        action TEXT,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (consolidated pass): CEO login hardening — every attempt is
+    #     logged; repeated failures from the same IP get locked out.
+    c.execute('''CREATE TABLE IF NOT EXISTS ceo_login_attempts (
+        id SERIAL PRIMARY KEY,
+        ip TEXT,
+        success BOOLEAN,
+        attempted_at TIMESTAMP DEFAULT NOW())''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS ceo (
+        id SERIAL PRIMARY KEY,
+        name TEXT, password TEXT, secret_key TEXT,
+        security_answer TEXT)''')
+    c.execute("SELECT COUNT(*) FROM ceo")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO ceo (name, password, secret_key, security_answer) VALUES (%s,%s,%s,%s)",
+             ('Khizar Khan', 'CEOMRKAgencyKhizarKhan', 'KhizarKhanCEOMRK7', 'Kiran'))
+
+    # ─── ADDED: CEO Account page fields — runs every startup (IF NOT EXISTS
+    #     makes re-runs safe), unconditional so it always applies regardless
+    #     of whether the ceo row already existed.
+    for col, ddl in [
+        ('photo', 'TEXT'),
+        ('email', 'TEXT'),
+        ('backup_email', 'TEXT'),
+        ('phone', 'TEXT'),
+        ('whatsapp', 'TEXT'),
+    ]:
+        try: c.execute(f'ALTER TABLE ceo ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS team_members (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    role TEXT,
+    specialties TEXT,
+    bio TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    projects_count INTEGER DEFAULT 0,
+    photo TEXT
+)''')
+    try: c.execute('ALTER TABLE team_members ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT FALSE')
+    except: conn.rollback()
+    try: c.execute('ALTER TABLE team_members ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0')
+    except: conn.rollback()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS portfolio_projects (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        category TEXT NOT NULL,
+        package_tier TEXT,
+        short_summary TEXT,
+        full_description TEXT,
+        tech_stack TEXT,
+        client_name TEXT,
+        is_confidential BOOLEAN DEFAULT FALSE,
+        live_url TEXT,
+        cover_image TEXT,
+        gallery_images TEXT,
+        is_published BOOLEAN DEFAULT FALSE,
+        is_featured BOOLEAN DEFAULT FALSE,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS team_project_links (
+        id SERIAL PRIMARY KEY,
+        team_member_id INTEGER REFERENCES team_members(id) ON DELETE CASCADE,
+        portfolio_project_id INTEGER REFERENCES portfolio_projects(id) ON DELETE CASCADE)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS site_settings (
+        id SERIAL PRIMARY KEY,
+        portfolio_visible BOOLEAN DEFAULT FALSE,
+        team_visible BOOLEAN DEFAULT FALSE)''')
+    c.execute("SELECT COUNT(*) FROM site_settings")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO site_settings (portfolio_visible, team_visible) VALUES (FALSE, FALSE)")
+
+    for col, ddl in [
+        ('hero_tagline', "TEXT DEFAULT 'Where Your Brand Achieves Glory'"),
+        ('hero_subtext', 'TEXT'),
+        ('agency_bio', 'TEXT'),
+        ('contact_email', "TEXT DEFAULT 'ceo@mrkagency.com'"),
+        ('contact_phone', 'TEXT'),
+        ('contact_whatsapp', 'TEXT'),
+        ('payoneer_email', 'TEXT'),
+        ('payoneer_account_name', 'TEXT'),
+        ('payment_instructions', 'TEXT'),
+    ]:
+        try: c.execute(f'ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS project_payments (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        phase_number INTEGER,
+        phase_label TEXT,
+        amount NUMERIC(10,2),
+        is_paid BOOLEAN DEFAULT FALSE,
+        paid_at TIMESTAMP,
+        payment_method TEXT DEFAULT 'Payoneer')''')
+
+    for col, ddl in [
+        ('bank_account_title', 'TEXT'),
+        ('bank_account_number', 'TEXT'),
+        ('bank_name', 'TEXT'),
+        ('bank_swift_iban', 'TEXT'),
+        ('photo', 'TEXT'),
+    ]:
+        try: c.execute(f'ALTER TABLE contractors ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS bank_edit_requests (
+        id SERIAL PRIMARY KEY,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        new_bank_account_title TEXT,
+        new_bank_account_number TEXT,
+        new_bank_name TEXT,
+        new_bank_swift_iban TEXT,
+        status TEXT DEFAULT 'pending',
+        requested_at TIMESTAMP DEFAULT NOW(),
+        decided_at TIMESTAMP)''')
+
+    for col, ddl in [
+        ('contractor_proof', 'TEXT'),
+        ('contractor_submitted_at', 'TIMESTAMP'),
+        ('client_approved', 'BOOLEAN DEFAULT FALSE'),
+        ('client_approved_at', 'TIMESTAMP'),
+        ('client_notes', 'TEXT'),
+    ]:
+        try: c.execute(f'ALTER TABLE project_payments ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS contractor_payouts (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        payout_type TEXT,
+        amount NUMERIC(10,2),
+        status TEXT DEFAULT 'pending',
+        paid_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS advance_requests (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        contractor_id INTEGER REFERENCES contractors(id) ON DELETE CASCADE,
+        amount_requested NUMERIC(10,2),
+        reason TEXT,
+        status TEXT DEFAULT 'pending',
+        requested_at TIMESTAMP DEFAULT NOW(),
+        decided_at TIMESTAMP)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS testimonials (
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+        rating INTEGER,
+        review_text TEXT,
+        is_published BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    for col, ddl in [
+        ('linkedin_url', 'TEXT'),
+        ('facebook_url', 'TEXT'),
+        ('instagram_url', 'TEXT'),
+        ('twitter_url', 'TEXT'),
+    ]:
+        try: c.execute(f'ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (backend build pass): customers business info + ban flag
+    for col, ddl in [
+        ('business_name', 'TEXT'),
+        ('business_website', 'TEXT'),
+        ('banned', 'BOOLEAN DEFAULT FALSE'),
+    ]:
+        try: c.execute(f'ALTER TABLE customers ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (backend build pass): submit_project expanded intake fields
+    #     + contractor-role/task/CEO-instructions display (indices 20,21,22
+    #     on the projects tuple — added after the existing 20 columns).
+    for col, ddl in [
+        ('contractor_role', 'TEXT'),
+        ('current_task', 'TEXT'),
+        ('ceo_instructions', 'TEXT'),
+        ('main_objective', 'TEXT'),
+        ('main_objective_other', 'TEXT'),
+        ('has_existing_website', 'TEXT'),
+        ('existing_website_url', 'TEXT'),
+        ('specific_requirements', 'TEXT'),
+        ('reference_sites', 'TEXT'),
+        ('contact_preference', 'TEXT'),
+        ('confirm_accurate', 'BOOLEAN DEFAULT FALSE'),
+    ]:
+        try: c.execute(f'ALTER TABLE projects ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (backend build pass): CEO review gate on contractor
+    #     milestone submissions, before the client ever sees them.
+    for col, ddl in [
+        ('ceo_review_status', 'TEXT'),
+        ('ceo_feedback', 'TEXT'),
+        ('ceo_reviewed_at', 'TIMESTAMP'),
+    ]:
+        try: c.execute(f'ALTER TABLE project_payments ADD COLUMN IF NOT EXISTS {col} {ddl}')
+        except: conn.rollback()
+
+    # ─── ADDED (backend build pass): client/contractor file uploads
+    c.execute('''CREATE TABLE IF NOT EXISTS files (
+        id SERIAL PRIMARY KEY,
+        project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+        uploaded_by TEXT,
+        filename TEXT,
+        url TEXT,
+        milestone_label TEXT,
+        uploaded_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (backend build pass): discount codes
+    c.execute('''CREATE TABLE IF NOT EXISTS discounts (
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        code TEXT,
+        discount_type TEXT,
+        value NUMERIC(10,2),
+        applies_to TEXT,
+        usage_limit INTEGER,
+        used_count INTEGER DEFAULT 0,
+        start_date DATE,
+        end_date DATE,
+        status TEXT DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (backend build pass): public site-wide update banners
+    c.execute('''CREATE TABLE IF NOT EXISTS public_updates (
+        id SERIAL PRIMARY KEY,
+        text TEXT,
+        active BOOLEAN DEFAULT FALSE,
+        published_at TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (backend build pass): per-service on/off availability toggle
+    c.execute('''CREATE TABLE IF NOT EXISTS service_availability (
+        service_name TEXT PRIMARY KEY,
+        available BOOLEAN DEFAULT TRUE)''')
+    for svc in PACKAGE_INFO.keys():
+        c.execute('''INSERT INTO service_availability (service_name, available)
+                     VALUES (%s, TRUE) ON CONFLICT (service_name) DO NOTHING''', (svc,))
+
+    # ─── ADDED (backend build pass): site-wide maintenance/status mode
+    c.execute('''CREATE TABLE IF NOT EXISTS site_status (
+        id SERIAL PRIMARY KEY,
+        mode TEXT DEFAULT 'online',
+        headline TEXT,
+        message TEXT,
+        eta TEXT,
+        updated_at TIMESTAMP DEFAULT NOW())''')
+    c.execute("SELECT COUNT(*) FROM site_status")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO site_status (mode) VALUES ('online')")
+
+    # ─── ADDED (backend build pass): administrative-action audit trail
+    c.execute('''CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        actor TEXT,
+        action TEXT,
+        target TEXT,
+        kind TEXT,
+        relevant_id INTEGER,
+        previous_state TEXT,
+        new_state TEXT,
+        category TEXT,
+        timestamp TIMESTAMP DEFAULT NOW())''')
+
+    # ─── ADDED (backend build pass): in-app notifications (client/contractor/CEO)
+    c.execute('''CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        recipient_type TEXT,
+        recipient_id INTEGER,
+        title TEXT,
+        message TEXT,
+        link TEXT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW())''')
+
+    conn.commit()
+    conn.close()
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED (consolidated pass) — shared helpers for activity logging,
+# notifications, business health, and the contractor→CEO→client stage flow.
+# ════════════════════════════════════════════════════════════════  
+
