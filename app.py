@@ -2085,3 +2085,153 @@ def unmark_phase_paid(project_id, phase_number):
 
 
 # ─── CEO: ANALYTICS PAGE ────────
+@app.route('/ceo/analytics')
+@ceo_required
+def ceo_analytics():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute('''SELECT status, COUNT(*) FROM projects GROUP BY status''')
+    status_rows = c.fetchall()
+    status_labels = {'pending': 'Pending', 'approved': 'Active', 'completed': 'Completed', 'rejected': 'Rejected'}
+    project_status_breakdown = [{'label': status_labels.get(r[0], r[0]), 'count': r[1]} for r in status_rows]
+
+    c.execute("SELECT COUNT(*) FROM customers")
+    total_clients = c.fetchone()[0]
+    new_clients_this_month = None
+
+    c.execute("SELECT COUNT(*) FROM projects")
+    total_submitted = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE status IN ('approved','completed')")
+    total_approved = c.fetchone()[0]
+    conversion_rate = f"{round(total_approved/total_submitted*100)}%" if total_submitted else "No Data Yet"
+
+    c.execute('''SELECT TO_CHAR(created_at, 'Mon YYYY') AS month, COUNT(*)
+                 FROM projects WHERE status IN ('approved','completed') AND created_at IS NOT NULL
+                 GROUP BY TO_CHAR(created_at, 'Mon YYYY'), DATE_TRUNC('month', created_at)
+                 ORDER BY DATE_TRUNC('month', created_at) DESC LIMIT 6''')
+    monthly_sales = [{'month': r[0], 'count': r[1]} for r in reversed(c.fetchall())]
+
+    conn.close()
+    monthly_revenue = get_monthly_revenue()
+
+    return render_template('ceo_analytics.html', active_page='analytics',
+        monthly_revenue=monthly_revenue, project_status_breakdown=project_status_breakdown,
+        total_clients=total_clients, new_clients_this_month=new_clients_this_month,
+        conversion_rate=conversion_rate, monthly_sales=monthly_sales)
+
+
+# ─── CEO: NOTIFICATIONS CENTER ───────────────────────────
+@app.route('/ceo/notifications')
+@ceo_required
+def ceo_notifications():
+    conn = get_db()
+    c = conn.cursor()
+    notifications = get_ceo_notifications(c)
+    conn.close()
+    return render_template('ceo_notifications.html', active_page='notifications', notifications=notifications)
+
+
+# ─── CEO: ACTIVITY CENTER ────────────────────────────────
+@app.route('/ceo/activity')
+@ceo_required
+def ceo_activity():
+    conn = get_db()
+    c = conn.cursor()
+    rows = get_merged_activity(c, limit=200)
+    conn.close()
+    activity_feed = [{'day': r[1].strftime('%B %d, %Y') if r[1] else '', 'time': r[1].strftime('%-I:%M %p') if r[1] else '', 'text': r[0]} for r in rows]
+    return render_template('ceo_activity.html', active_page='activity', activity_feed=activity_feed)
+
+
+# ─── CEO: AI CENTER (placeholder) ────────────────────────
+@app.route('/ceo/ai-center')
+@ceo_required
+def ceo_ai_center():
+    return render_template('ceo_ai_center.html', active_page='ai')
+
+
+# ─── CEO: CONTRACTOR ACTIONS ────────────────────────────
+@app.route('/approve-contractor/<int:id>')
+@ceo_required
+def approve_contractor(id):
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='approved', cin=%s, suspended=FALSE WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/reject-contractor/<int:id>')
+@ceo_required
+def reject_contractor(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET status='rejected' WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/suspend-contractor/<int:id>')
+@ceo_required
+def suspend_contractor(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=TRUE, cin=NULL WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/reinstate-contractor/<int:id>')
+@ceo_required
+def reinstate_contractor(id):
+    cin = 'MRK' + str(random.randint(10000, 99999))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET suspended=FALSE, status='approved', cin=%s WHERE id=%s", (cin, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/delete-contractor/<int:id>')
+@ceo_required
+def delete_contractor(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM contractors WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/ban-cin/<int:id>')
+@ceo_required
+def ban_cin(id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET cin=NULL, status='banned', suspended=TRUE WHERE id=%s", (id,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Banned contractor',
+              target_type='contractor', target_id=id, category='contractor')
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+@app.route('/award-badge/<int:id>', methods=['POST'])
+@ceo_required
+def award_badge(id):
+    badge = request.form.get('badge', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractors SET badge=%s WHERE id=%s", (badge, id))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_contractors'))
+
+
+# ─── CEO: PROJECT ACTIONS ───────────────
