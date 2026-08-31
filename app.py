@@ -1976,3 +1976,112 @@ def ceo_clients():
 
 
 # ─── CEO: FINANCE PAGE ────────────────────────────
+@app.route('/ceo/finance')
+@ceo_required
+def ceo_finance():
+    conn = get_db()
+    c = conn.cursor()
+
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM project_payments WHERE is_paid=TRUE")
+    total_revenue = float(c.fetchone()[0])
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM project_payments WHERE is_paid=FALSE")
+    pending_payments_total = float(c.fetchone()[0])
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE status='paid'")
+    payouts_paid_total = float(c.fetchone()[0])
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE status='pending'")
+    payouts_pending_total = float(c.fetchone()[0])
+    net_profit = total_revenue - payouts_paid_total
+
+    c.execute('''SELECT pp.project_id, p.title, p.customer_id, pp.phase_number, pp.phase_label, pp.amount, pp.is_paid
+                 FROM project_payments pp JOIN projects p ON p.id = pp.project_id
+                 ORDER BY pp.is_paid ASC, p.id DESC''')
+    payment_phases_list = [{'project_id': r[0], 'project_title': r[1], 'customer_id': r[2],
+                             'phase_number': r[3], 'phase_label': r[4], 'amount': float(r[5]), 'is_paid': r[6]}
+                            for r in c.fetchall()]
+
+    c.execute('''SELECT co.id, con.name, p.title, co.payout_type, co.amount, co.status
+                 FROM contractor_payouts co
+                 JOIN contractors con ON con.id = co.contractor_id
+                 JOIN projects p ON p.id = co.project_id
+                 ORDER BY co.status ASC, co.id DESC''')
+    contractor_payouts_list = [{'id': r[0], 'contractor_name': r[1], 'project_title': r[2],
+                                 'payout_type': r[3], 'amount': float(r[4]), 'status': r[5]}
+                                for r in c.fetchall()]
+
+    conn.close()
+    monthly_revenue = get_monthly_revenue()
+
+    return render_template('ceo_finance.html', active_page='finance',
+        total_revenue=total_revenue, pending_payments_total=pending_payments_total,
+        payouts_paid_total=payouts_paid_total, payouts_pending_total=payouts_pending_total,
+        net_profit=net_profit, payment_phases_list=payment_phases_list,
+        contractor_payouts_list=contractor_payouts_list, monthly_revenue=monthly_revenue)
+
+
+# ─── CEO: WEBSITE SETTINGS PAGE ─────────────────
+@app.route('/ceo/website-settings')
+@ceo_required
+def ceo_website_settings():
+    settings = get_site_copy()
+    return render_template('ceo_website_settings.html', active_page='website', settings=settings)
+
+
+@app.route('/ceo/site-settings', methods=['POST'])
+@ceo_required
+def ceo_site_settings():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE site_settings SET
+        hero_tagline=%s, hero_subtext=%s, agency_bio=%s,
+        contact_email=%s, contact_phone=%s, contact_whatsapp=%s,
+        payoneer_email=%s, payoneer_account_name=%s, payment_instructions=%s,
+        linkedin_url=%s, facebook_url=%s, instagram_url=%s, twitter_url=%s
+        WHERE id=1''',
+        (request.form.get('hero_tagline'), request.form.get('hero_subtext'), request.form.get('agency_bio'),
+         request.form.get('contact_email'), request.form.get('contact_phone'), request.form.get('contact_whatsapp'),
+         request.form.get('payoneer_email'), request.form.get('payoneer_account_name'),
+         request.form.get('payment_instructions'),
+         request.form.get('linkedin_url'), request.form.get('facebook_url'),
+         request.form.get('instagram_url'), request.form.get('twitter_url')))
+    conn.commit()
+    conn.close()
+    flash('Settings updated.')
+    return redirect(url_for('ceo_website_settings'))
+
+
+@app.route('/ceo/project/<int:project_id>/mark-phase-paid/<int:phase_number>', methods=['POST'])
+@ceo_required
+def mark_phase_paid(project_id, phase_number):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE project_payments SET is_paid=TRUE, paid_at=NOW()
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if row:
+        log_client_activity(c, row[0], 'Invoice paid')
+    touch_project(c, project_id)
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Marked payment received',
+              target_type='project', target_id=project_id, new_state=f'phase {phase_number}', category='finance')
+    conn.close()
+    flash('Payment marked as received.')
+    return redirect(request.referrer or url_for('ceo_finance'))
+
+
+@app.route('/ceo/project/<int:project_id>/unmark-phase-paid/<int:phase_number>', methods=['POST'])
+@ceo_required
+def unmark_phase_paid(project_id, phase_number):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE project_payments SET is_paid=FALSE, paid_at=NULL
+                 WHERE project_id=%s AND phase_number=%s''', (project_id, phase_number))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Undid payment marking',
+              target_type='project', target_id=project_id, new_state=f'phase {phase_number}', category='finance')
+    conn.close()
+    flash('Payment marking undone.')
+    return redirect(request.referrer or url_for('ceo_finance'))
+
+
+# ─── CEO: ANALYTICS PAGE ────────
