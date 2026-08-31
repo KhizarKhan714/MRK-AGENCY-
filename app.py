@@ -2929,3 +2929,508 @@ def client_request_changes(project_id, phase_number):
 # ═══════════════════════════════════════════════════════════════════════
 # CONTRACTOR PAYOUTS: 25% advance, requests, remaining balance
 # ═══════════════════════════════════════════════════════════════════════
+
+def create_contractor_payouts(c, project_id, contractor_id, contractor_pay):
+    total = float(contractor_pay or 0)
+    advance = round(total * 0.25, 2)
+    remaining = round(total - advance, 2)
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'advance',%s)''', (project_id, contractor_id, advance))
+    c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                 VALUES (%s,%s,'remaining',%s)''', (project_id, contractor_id, remaining))
+
+
+@app.route('/contractor/request-advance/<int:project_id>', methods=['POST'])
+def contractor_request_advance(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    amount = request.form.get('amount', '').strip()
+    reason = request.form.get('reason', '').strip()
+    if not amount or not reason:
+        flash('An amount and a reason are both required to request an advance.')
+        return redirect(url_for('contractor_dashboard'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO advance_requests (project_id, contractor_id, amount_requested, reason)
+                 VALUES (%s,%s,%s,%s)''', (project_id, session['contractor_id'], amount, reason))
+    conn.commit()
+    conn.close()
+    flash('Advance request submitted for CEO review.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/approve', methods=['POST'])
+@ceo_required
+def approve_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT project_id, contractor_id, amount_requested FROM advance_requests WHERE id=%s', (req_id,))
+    r = c.fetchone()
+    if r:
+        c.execute('''INSERT INTO contractor_payouts (project_id, contractor_id, payout_type, amount)
+                     VALUES (%s,%s,'extra',%s)''', (r[0], r[1], r[2]))
+        c.execute("UPDATE advance_requests SET status='approved', decided_at=NOW() WHERE id=%s", (req_id,))
+        conn.commit()
+        flash('Advance request approved.')
+    conn.close()
+    return redirect(url_for('ceo_finance'))
+
+
+@app.route('/ceo/advance-request/<int:req_id>/reject', methods=['POST'])
+@ceo_required
+def reject_advance_request(req_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE advance_requests SET status='rejected', decided_at=NOW() WHERE id=%s", (req_id,))
+    conn.commit()
+    conn.close()
+    flash('Advance request rejected.')
+    return redirect(url_for('ceo_finance'))
+
+
+@app.route('/ceo/payout/<int:payout_id>/mark-paid', methods=['POST'])
+@ceo_required
+def mark_payout_paid(payout_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE contractor_payouts SET status='paid', paid_at=NOW() WHERE id=%s", (payout_id,))
+    conn.commit()
+    conn.close()
+    flash('Payout marked as sent.')
+    return redirect(url_for('ceo_finance'))
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# TESTIMONIALS
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/submit-testimonial', methods=['POST'])
+def submit_testimonial():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    rating = request.form.get('rating', '').strip()
+    review_text = request.form.get('review_text', '').strip()
+    if not rating or not review_text:
+        flash('A rating and a review are both required.')
+        return redirect(url_for('my_projects'))
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO testimonials (customer_id, rating, review_text)
+                 VALUES (%s,%s,%s)''', (session['customer_id'], int(rating), review_text))
+    conn.commit()
+    conn.close()
+    flash('Thank you — your review has been posted.')
+    return redirect(url_for('my_projects'))
+
+
+@app.route('/ceo/testimonial/<int:tid>/toggle', methods=['POST'])
+@ceo_required
+def toggle_testimonial(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE testimonials SET is_published = NOT is_published WHERE id=%s', (tid,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+@app.route('/ceo/testimonial/<int:tid>/delete', methods=['POST'])
+@ceo_required
+def delete_testimonial(tid):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM testimonials WHERE id=%s', (tid,))
+    conn.commit()
+    conn.close()
+    flash('Testimonial deleted.')
+    return redirect(url_for('ceo_portfolio_list'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# DEDICATED SERVICES PAGE
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/services')
+def services_page():
+    services = [
+        {'key': k, 'name': k.replace(' (Service)', ''), 'price': v['price'],
+         'weeks': v['weeks'], 'desc': v.get('desc', '')}
+        for k, v in PACKAGE_INFO.items() if v.get('category') == 'service'
+    ]
+    return render_template('services.html', services=services)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# FILES — client/contractor project file uploads (Cloudinary-backed,
+# ownership-checked). Client uploads land as 'client', contractor
+# uploads as 'contractor', so files.html can split them into
+# "client_files" / "mrk_deliverables" columns.
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/files')
+def files_view():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    project_id = request.args.get('project_id', type=int)
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, customer_id, title FROM projects WHERE customer_id=%s ORDER BY updated_at DESC',
+              (session['customer_id'],))
+    projects = c.fetchall()
+    if not project_id and projects:
+        project_id = projects[0][0]
+
+    selected_project = None
+    client_files, mrk_deliverables = [], []
+    if project_id:
+        c.execute('SELECT id, customer_id, title FROM projects WHERE id=%s', (project_id,))
+        selected_project = c.fetchone()
+        if not selected_project or selected_project[1] != session['customer_id']:
+            conn.close()
+            abort(403)
+        c.execute('''SELECT id, uploaded_by, filename, url, milestone_label, uploaded_at
+                     FROM files WHERE project_id=%s ORDER BY uploaded_at DESC''', (project_id,))
+        for r in c.fetchall():
+            entry = {'id': r[0], 'filename': r[2], 'url': r[3], 'milestone_label': r[4], 'uploaded_at': r[5]}
+            (client_files if r[1] == 'client' else mrk_deliverables).append(entry)
+
+    conn.close()
+    return render_template('files.html', projects=projects, selected_project=selected_project,
+                            client_files=client_files, mrk_deliverables=mrk_deliverables)
+
+
+@app.route('/files/upload', methods=['POST'])
+def files_upload():
+    if 'customer_id' not in session:
+        return redirect(url_for('login'))
+    project_id = request.form.get('project_id', type=int)
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT customer_id FROM projects WHERE id=%s', (project_id,))
+    owner = c.fetchone()
+    if not owner or owner[0] != session['customer_id']:
+        conn.close()
+        abort(403)
+    f = request.files.get('file')
+    if f and f.filename:
+        url = upload_image(f, folder="mrk_agency/project_files") or None
+        if not url:
+            # non-image files (docs, pdfs) — Cloudinary raw upload
+            result = cloudinary.uploader.upload(f, folder="mrk_agency/project_files", resource_type="raw")
+            url = result.get('secure_url')
+        c.execute('''INSERT INTO files (project_id, uploaded_by, filename, url)
+                     VALUES (%s,'client',%s,%s)''', (project_id, f.filename, url))
+        log_client_activity(c, session['customer_id'], f'Uploaded file: {f.filename}')
+        conn.commit()
+        flash('File uploaded.')
+    conn.close()
+    return redirect(url_for('files_view', project_id=project_id))
+
+
+@app.route('/contractor/files/upload', methods=['POST'])
+def contractor_files_upload():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    project_id = request.form.get('project_id', type=int)
+    milestone_label = request.form.get('milestone_label', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (project_id,))
+    owner = c.fetchone()
+    if not owner or owner[0] != session['contractor_id']:
+        conn.close()
+        abort(403)
+    f = request.files.get('file')
+    if f and f.filename:
+        url = upload_image(f, folder="mrk_agency/project_files") or None
+        if not url:
+            result = cloudinary.uploader.upload(f, folder="mrk_agency/project_files", resource_type="raw")
+            url = result.get('secure_url')
+        c.execute('''INSERT INTO files (project_id, uploaded_by, filename, url, milestone_label)
+                     VALUES (%s,'contractor',%s,%s,%s)''', (project_id, f.filename, url, milestone_label))
+        log_contractor_activity(c, session['contractor_id'], f'Uploaded deliverable: {f.filename}')
+        conn.commit()
+        flash('File uploaded.')
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: WEBSITE STATUS (maintenance mode)
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/website-status')
+@ceo_required
+def ceo_website_status():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, mode, headline, message, eta, updated_at FROM site_status ORDER BY id LIMIT 1')
+    row = c.fetchone()
+    conn.close()
+    mode_labels = {'maintenance': 'Maintenance', 'upgrading': 'Upgrading',
+                   'unavailable': 'Temporarily Unavailable', 'emergency': 'Emergency Maintenance'}
+    site_status = {'id': row[0], 'mode': row[1], 'mode_label': mode_labels.get(row[1]),
+                   'headline': row[2], 'message': row[3], 'eta': row[4], 'updated_at': row[5]} if row else None
+    return render_template('ceo_website_status.html', active_page='website-status', site_status=site_status)
+
+
+@app.route('/ceo/website-status/update', methods=['POST'])
+@ceo_required
+def ceo_website_status_update():
+    mode = request.form.get('mode', 'online').strip()
+    headline = request.form.get('headline', '').strip()
+    message = request.form.get('message', '').strip()
+    eta = request.form.get('eta', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id, mode FROM site_status ORDER BY id LIMIT 1')
+    row = c.fetchone()
+    if row:
+        c.execute('''UPDATE site_status SET mode=%s, headline=%s, message=%s, eta=%s, updated_at=NOW()
+                     WHERE id=%s''', (mode, headline, message, eta, row[0]))
+    else:
+        c.execute('''INSERT INTO site_status (mode, headline, message, eta) VALUES (%s,%s,%s,%s)''',
+                  (mode, headline, message, eta))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Updated site status',
+              previous_state=row[1] if row else None, new_state=mode, category='system')
+    conn.close()
+    flash('Site status updated.')
+    return redirect(url_for('ceo_website_status'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: DISCOUNTS
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/discounts')
+@ceo_required
+def ceo_discounts():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT id, name, code, discount_type, value, applies_to, usage_limit,
+                        used_count, start_date, end_date, status, created_at
+                 FROM discounts ORDER BY created_at DESC''')
+    rows = c.fetchall()
+    conn.close()
+    discounts = [{'id': r[0], 'name': r[1], 'code': r[2], 'discount_type': r[3], 'value': r[4],
+                  'applies_to': r[5], 'usage_limit': r[6], 'used_count': r[7], 'start_date': r[8],
+                  'end_date': r[9], 'status': r[10], 'created_at': r[11]} for r in rows]
+    return render_template('ceo_discounts.html', active_page='discounts', discounts=discounts)
+
+
+@app.route('/ceo/discounts/create', methods=['POST'])
+@ceo_required
+def ceo_discounts_create():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''INSERT INTO discounts (name, code, discount_type, value, applies_to,
+                                         usage_limit, start_date, end_date)
+                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s)''',
+              (request.form.get('name', '').strip(), request.form.get('code', '').strip(),
+               request.form.get('discount_type', 'percent'), request.form.get('value', 0) or 0,
+               request.form.get('applies_to', 'all'), request.form.get('usage_limit') or None,
+               request.form.get('start_date') or None, request.form.get('end_date') or None))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Created discount',
+              new_state=request.form.get('code', ''), category='finance')
+    conn.close()
+    flash('Discount created.')
+    return redirect(url_for('ceo_discounts'))
+
+
+@app.route('/ceo/discounts/<int:id>/activate', methods=['POST'])
+@ceo_required
+def ceo_discount_activate(id):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE discounts SET status='active' WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_discounts'))
+
+
+@app.route('/ceo/discounts/<int:id>/deactivate', methods=['POST'])
+@ceo_required
+def ceo_discount_deactivate(id):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE discounts SET status='inactive' WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('ceo_discounts'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: SERVICE AVAILABILITY TOGGLE
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/settings/toggle-service-availability', methods=['POST'])
+@ceo_required
+def toggle_service_availability():
+    service_name = request.form.get('service_name', '').strip()
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''UPDATE service_availability SET available = NOT available WHERE service_name=%s''',
+              (service_name,))
+    conn.commit()
+    log_audit('ceo', get_ceo_id(c), session.get('ceo_name'), 'Toggled service availability',
+              new_state=service_name, category='system')
+    conn.close()
+    return redirect(request.referrer or url_for('ceo_website_settings'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: PUBLIC UPDATES (site-wide banner announcements)
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/public-updates/create', methods=['POST'])
+@ceo_required
+def public_update_create():
+    text = request.form.get('text', '').strip()
+    if text:
+        conn = get_db(); c = conn.cursor()
+        c.execute("INSERT INTO public_updates (text, active) VALUES (%s, FALSE)", (text,))
+        conn.commit()
+        conn.close()
+        flash('Update created.')
+    return redirect(request.referrer or url_for('ceo_website_settings'))
+
+
+@app.route('/ceo/public-updates/<int:id>/publish', methods=['POST'])
+@ceo_required
+def public_update_publish(id):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE public_updates SET active=TRUE, published_at=NOW() WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(request.referrer or url_for('ceo_website_settings'))
+
+
+@app.route('/ceo/public-updates/<int:id>/unpublish', methods=['POST'])
+@ceo_required
+def public_update_unpublish(id):
+    conn = get_db(); c = conn.cursor()
+    c.execute("UPDATE public_updates SET active=FALSE WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(request.referrer or url_for('ceo_website_settings'))
+
+
+@app.route('/ceo/public-updates/<int:id>/delete', methods=['POST'])
+@ceo_required
+def public_update_delete(id):
+    conn = get_db(); c = conn.cursor()
+    c.execute("DELETE FROM public_updates WHERE id=%s", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(request.referrer or url_for('ceo_website_settings'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: SECURITY CENTER
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/security')
+@ceo_required
+def ceo_security():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT ip, success, attempted_at FROM ceo_login_attempts
+                 ORDER BY attempted_at DESC LIMIT 50''')
+    login_activity = [{'account': 'CEO', 'role': 'CEO Account', 'ip': r[0],
+                        'success': r[1], 'timestamp': r[2]} for r in c.fetchall()]
+    c.execute('''SELECT COUNT(*) FROM ceo_login_attempts WHERE attempted_at >= NOW() - INTERVAL '24 hours' ''')
+    logins_24h = c.fetchone()[0]
+    c.execute('''SELECT COUNT(*) FROM ceo_login_attempts
+                 WHERE success=FALSE AND attempted_at >= NOW() - INTERVAL '24 hours' ''')
+    failed_logins_24h = c.fetchone()[0]
+    c.execute('''SELECT actor, action, timestamp FROM audit_log
+                 WHERE category='security' ORDER BY timestamp DESC LIMIT 30''')
+    security_changes = [{'text': r[1], 'account': r[0], 'timestamp': r[2]} for r in c.fetchall()]
+    c.execute('''SELECT COUNT(*) FROM audit_log
+                 WHERE category='security' AND timestamp >= NOW() - INTERVAL '7 days' ''')
+    security_changes_7d = c.fetchone()[0]
+    conn.close()
+    return render_template('ceo_security.html', active_page='security',
+        login_activity=login_activity, logins_24h=logins_24h,
+        failed_logins_24h=failed_logins_24h, security_changes=security_changes,
+        security_changes_7d=security_changes_7d)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CEO: SYSTEM HEALTH
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/ceo/system-health')
+@ceo_required
+def ceo_system_health():
+    system_health = {}
+    try:
+        conn = get_db(); c = conn.cursor()
+        c.execute('SELECT 1')
+        c.fetchone()
+        conn.close()
+        system_health['database'] = 'ok'
+    except Exception:
+        system_health['database'] = 'down'
+
+    cloud_configured = bool(os.environ.get('CLOUDINARY_CLOUD_NAME') and
+                             os.environ.get('CLOUDINARY_API_KEY') and
+                             os.environ.get('CLOUDINARY_API_SECRET'))
+    system_health['storage'] = 'ok' if cloud_configured else 'down'
+
+    # If this route is executing at all, the Flask app itself is up.
+    system_health['app'] = 'ok'
+
+    groq_configured = bool(os.environ.get('GROQ_API_KEY'))
+    system_health['ai'] = 'ok' if groq_configured else 'down'
+
+    # No backup pipeline or error-tracking table exists yet — the template
+    # degrades gracefully to "Not Set Up" / "No recent errors logged" for these.
+    backup_info = None
+    recent_errors = []
+
+    return render_template('ceo_system_health.html', active_page='system-health',
+        system_health=system_health, backup_info=backup_info, recent_errors=recent_errors)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# MAINTENANCE-MODE GATE — public visitors see a status page while
+# site_status.mode != 'online'; CEO and contractor sessions always bypass
+# so work can continue behind the scenes during maintenance.
+# ═══════════════════════════════════════════════════════════════════════
+
+_MAINTENANCE_EXEMPT_PREFIXES = ('/static', '/mrkceokhan7', '/ceo-login', '/ceo/', '/contractor-login', '/ai/')
+
+@app.before_request
+def maintenance_gate():
+    if session.get('ceo') or session.get('contractor_id'):
+        return None
+    path = request.path
+    if any(path.startswith(p) for p in _MAINTENANCE_EXEMPT_PREFIXES):
+        return None
+    try:
+        conn = get_db(); c = conn.cursor()
+        c.execute('SELECT mode, headline, message, eta FROM site_status ORDER BY id LIMIT 1')
+        row = c.fetchone()
+        conn.close()
+    except Exception:
+        return None  # never let a status-check failure take the whole site down
+    if row and row[0] and row[0] != 'online':
+        return render_template('maintenance.html', headline=row[1], message=row[2], eta=row[3]), 503
+    return None
+
+
+# ─── RUN ────────────────────────────────────────────────
+init_db()
+init_ai_db()
+
+if __name__ == '__main__':
+    app.run(debug=True)
+    
