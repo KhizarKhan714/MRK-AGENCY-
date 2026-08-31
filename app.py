@@ -1258,3 +1258,241 @@ def contractor_apply():
 
 
 # ─── CONTRACTOR LOGIN ──────────────────────────
+app.route('/contractor-login', methods=['GET', 'POST'])
+def contractor_login():
+    if request.method == 'POST':
+        cin = request.form['cin'].strip()
+        pw = request.form['password'].encode()
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT * FROM contractors WHERE cin=%s', (cin,))
+        contractor = c.fetchone()
+        if contractor and bcrypt.checkpw(pw, contractor[2].encode()):
+            if contractor[15]:
+                conn.close()
+                return render_template('contractor_login.html', error='Your account has been suspended. Contact MRK Agency.')
+            session['contractor_id'] = contractor[0]
+            session['contractor_name'] = contractor[1]
+            c.execute("UPDATE contractors SET last_login=NOW() WHERE id=%s", (contractor[0],))
+            log_contractor_activity(c, contractor[0], 'Logged in')
+            conn.commit()
+            conn.close()
+            return redirect(url_for('contractor_dashboard'))
+        conn.close()
+        return render_template('contractor_login.html', error='Invalid CIN or password.')
+    return render_template('contractor_login.html')
+
+
+@app.route('/contractor-logout')
+def contractor_logout():
+    session.pop('contractor_id', None)
+    session.pop('contractor_name', None)
+    return redirect(url_for('contractor_login'))
+
+
+# ─── CONTRACTOR DASHBOARD (Workplace) ───────────────────
+@app.route('/contractor-dashboard')
+def contractor_dashboard():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (cid,))
+    contractor = c.fetchone()
+
+    c.execute('SELECT availability_status, last_login FROM contractors WHERE id=%s', (cid,))
+    avail_row = c.fetchone()
+    availability_status = avail_row[0] or 'Available'
+    last_login = avail_row[1]
+
+    c.execute("""SELECT * FROM projects
+                 WHERE status='approved' AND contractor_pay IS NOT NULL
+                 AND (accepted_by IS NULL OR accepted_by=%s)
+                 AND (completed IS NULL OR completed=FALSE)""", (cid,))
+    projects = c.fetchall()
+
+    review_status = {}
+    for p in projects:
+        if p[11] == cid:
+            phase = get_next_review_phase(c, p[0])
+            if phase:
+                review_status[p[0]] = {
+                    'phase_number': phase[0], 'phase_label': phase[1],
+                    'proof': phase[2], 'submitted_at': phase[3],
+                    'client_approved': phase[4], 'client_notes': phase[5],
+                    'ceo_review_status': phase[6], 'ceo_feedback': phase[7]
+                }
+
+    c.execute('''SELECT project_id, payout_type, amount, status, paid_at
+                 FROM contractor_payouts WHERE contractor_id=%s
+                 ORDER BY project_id, created_at''', (cid,))
+    payouts = {}
+    for row in c.fetchall():
+        payouts.setdefault(row[0], []).append(
+            {'payout_type': row[1], 'amount': row[2], 'status': row[3], 'paid_at': row[4]})
+
+    project_stage_info = get_project_stage_info(c, [p[0] for p in projects]) if projects else {}
+
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND (completed IS NULL OR completed=FALSE)", (cid,))
+    assigned_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND completed=TRUE", (cid,))
+    completed_count = c.fetchone()[0]
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE contractor_id=%s AND status='paid'", (cid,))
+    current_earnings = float(c.fetchone()[0])
+    performance_rating = 'New' if completed_count == 0 else 'Good Standing'
+
+    c.execute("SELECT message, created_at FROM announcements ORDER BY created_at DESC LIMIT 10")
+    announcements = c.fetchall()
+    c.execute("SELECT action, created_at FROM contractor_activity WHERE contractor_id=%s ORDER BY created_at DESC LIMIT 6", (cid,))
+    recent_activity = c.fetchall()
+
+    # ─── ADDED: deliverables performance stats (contractor_dashboard.html "Submitted/Approved/Revision" tiles)
+    c.execute('''SELECT pp.ceo_review_status, COUNT(*) FROM project_payments pp
+                 JOIN projects p ON p.id = pp.project_id
+                 WHERE p.accepted_by=%s AND pp.contractor_proof IS NOT NULL
+                 GROUP BY pp.ceo_review_status''', (cid,))
+    deliv_counts = {row[0]: row[1] for row in c.fetchall()}
+    deliverables_submitted = sum(deliv_counts.values())
+    deliverables_approved = deliv_counts.get('approved', 0)
+    deliverables_revision = deliv_counts.get('revision_requested', 0)
+
+    # ─── ADDED: Files tab — client-provided assets, MRK resources, and this
+    #     contractor's own submissions, scoped to their assigned projects.
+    c.execute('''SELECT f.filename, f.url, f.uploaded_at, p.title FROM files f
+                 JOIN projects p ON p.id = f.project_id
+                 WHERE p.accepted_by=%s AND f.uploaded_by='client'
+                 ORDER BY f.uploaded_at DESC''', (cid,))
+    client_provided_files = [{'filename': r[0], 'url': r[1], 'uploaded_at': r[2], 'project_title': r[3]} for r in c.fetchall()]
+
+    c.execute('''SELECT f.filename, f.url, f.uploaded_at, p.title FROM files f
+                 JOIN projects p ON p.id = f.project_id
+                 WHERE p.accepted_by=%s AND f.uploaded_by='ceo'
+                 ORDER BY f.uploaded_at DESC''', (cid,))
+    mrk_resource_files = [{'filename': r[0], 'url': r[1], 'uploaded_at': r[2], 'project_title': r[3]} for r in c.fetchall()]
+
+    c.execute('''SELECT f.filename, f.url, f.uploaded_at, p.title FROM files f
+                 JOIN projects p ON p.id = f.project_id
+                 WHERE p.accepted_by=%s AND f.uploaded_by='contractor'
+                 ORDER BY f.uploaded_at DESC''', (cid,))
+    contractor_submitted_files = [{'filename': r[0], 'url': r[1], 'uploaded_at': r[2], 'project_title': r[3]} for r in c.fetchall()]
+
+    # ─── ADDED: Notifications tab
+    c.execute('''SELECT title, message, created_at, is_read FROM notifications
+                 WHERE recipient_type='contractor' AND recipient_id=%s
+                 ORDER BY created_at DESC LIMIT 30''', (cid,))
+    contractor_notifications = [{'text': f"{r[0]}: {r[1]}" if r[0] else r[1],
+                                  'time': r[2].strftime('%b %d, %Y %H:%M') if r[2] else ''} for r in c.fetchall()]
+    c.execute('''SELECT COUNT(*) FROM notifications
+                 WHERE recipient_type='contractor' AND recipient_id=%s AND is_read=FALSE''', (cid,))
+    unread_notification_count = c.fetchone()[0]
+
+    site_copy = get_site_copy()
+    c.execute("SELECT photo FROM ceo LIMIT 1")
+    ceo_row = c.fetchone()
+    ceo_photo = ceo_row[0] if ceo_row else None
+    conn.close()
+
+    return render_template('contractor_dashboard.html',
+        contractor=contractor, projects=projects, review_status=review_status, payouts=payouts,
+        availability_status=availability_status, last_login=last_login,
+        assigned_count=assigned_count, completed_count=completed_count,
+        current_earnings=current_earnings, performance_rating=performance_rating,
+        announcements=announcements, recent_activity=recent_activity,
+        deliverables_submitted=deliverables_submitted, deliverables_approved=deliverables_approved,
+        deliverables_revision=deliverables_revision,
+        client_provided_files=client_provided_files, mrk_resource_files=mrk_resource_files,
+        contractor_submitted_files=contractor_submitted_files,
+        contractor_notifications=contractor_notifications, unread_notification_count=unread_notification_count,
+        contact_whatsapp=site_copy.get('contact_whatsapp'), project_stage_info=project_stage_info,
+        ceo_photo=ceo_photo)
+
+
+@app.route('/contractor-change-password', methods=['POST'])
+def contractor_change_password():
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    cid = session['contractor_id']
+    current_pw = request.form['current_password'].encode()
+    new_pw = request.form['new_password']
+    confirm_pw = request.form['confirm_password']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM contractors WHERE id=%s', (cid,))
+    contractor = c.fetchone()
+    if not bcrypt.checkpw(current_pw, contractor[2].encode()):
+        conn.close(); flash('Current password is incorrect.'); return redirect(url_for('contractor_dashboard'))
+    if new_pw != confirm_pw:
+        conn.close(); flash('New passwords do not match.'); return redirect(url_for('contractor_dashboard'))
+    if len(new_pw) < 6:
+        conn.close(); flash('Password must be at least 6 characters.'); return redirect(url_for('contractor_dashboard'))
+    hashed = bcrypt.hashpw(new_pw.encode(), bcrypt.gensalt()).decode()
+    c.execute('UPDATE contractors SET password=%s WHERE id=%s', (hashed, cid))
+    log_contractor_activity(c, cid, 'Password changed')
+    conn.commit(); conn.close()
+    flash('Password changed successfully.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/accept-project/<int:id>')
+def accept_project(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE projects SET accepted_by=%s, assigned_contractor_id=%s WHERE id=%s',
+              (session['contractor_id'], session['contractor_id'], id))
+    c.execute('SELECT contractor_pay FROM projects WHERE id=%s', (id,))
+    pay_row = c.fetchone()
+    if pay_row and pay_row[0]:
+        create_contractor_payouts(c, id, session['contractor_id'], pay_row[0])
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+@app.route('/mark-complete/<int:id>')
+def mark_complete(id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    conn = get_db()
+    c = conn.cursor()
+    invoice_ref = 'INV-MRK-' + str(random.randint(100000, 999999))
+    c.execute("""UPDATE projects SET completed=TRUE, status='completed', invoice_ref=%s, updated_at=NOW()
+                 WHERE id=%s AND accepted_by=%s""",
+              (invoice_ref, id, session['contractor_id']))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('contractor_dashboard'))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADDED (consolidated pass) — contractor availability, announcements,
+# and the project stage flow (contractor proposes → CEO approves → client sees)
+# ═══════════════════════════════════════════════════════════════════════
+
+@app.route('/contractor/update-stage/<int:project_id>', methods=['POST'])
+def contractor_update_stage(project_id):
+    if 'contractor_id' not in session:
+        return redirect(url_for('contractor_login'))
+    new_stage = request.form.get('new_stage', '').strip()
+    if new_stage not in PROJECT_STAGES:
+        flash('Invalid stage.')
+        return redirect(url_for('contractor_dashboard'))
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT accepted_by FROM projects WHERE id=%s', (project_id,))
+    row = c.fetchone()
+    if not row or row[0] != session['contractor_id']:
+        conn.close()
+        return redirect(url_for('contractor_dashboard'))
+    c.execute('''UPDATE projects SET contractor_stage_pending=%s, stage_pending_approval=TRUE
+                 WHERE id=%s''', (new_stage, project_id))
+    conn.commit()
+    conn.close()
+    flash('Stage update submitted for CEO approval.')
+    return redirect(url_for('contractor_dashboard'))
+
+
+# ─── CEO PORTAL ─────────────────────────────────────────
+                         
