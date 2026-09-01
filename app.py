@@ -234,7 +234,7 @@ def init_db():
     #     stage flow. client_visible_stage is the ONLY one ever shown to
     #     the client; contractor_stage_pending + stage_pending_approval
     #     hold the contractor's proposed change until the CEO approves it.
-        for col, ddl in [
+    for col, ddl in [
         ('created_at', 'TIMESTAMP DEFAULT NOW()'),
         ('updated_at', 'TIMESTAMP DEFAULT NOW()'),
         ('contractor_stage_pending', 'TEXT'),
