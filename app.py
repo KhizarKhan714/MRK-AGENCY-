@@ -1258,7 +1258,7 @@ def contractor_apply():
 
 
 # ─── CONTRACTOR LOGIN ──────────────────────────
-app.route('/contractor-login', methods=['GET', 'POST'])
+@app.route('/contractor-login', methods=['GET', 'POST'])
 def contractor_login():
     if request.method == 'POST':
         cin = request.form['cin'].strip()
