@@ -23,6 +23,12 @@ WHAT THIS FILE DOES
 
 ENV VARS REQUIRED (set these in Railway):
   GROQ_API_KEY        - free API key from console.groq.com, no card required
+  GROQ_MODEL          - optional, defaults to openai/gpt-oss-120b. Set this to
+                         switch models without a code change — Groq
+                         periodically deprecates/decommissions models (this
+                         file previously hardcoded llama-3.3-70b-versatile,
+                         which Groq decommissioned Aug 16, 2026, silently
+                         breaking every AI feature at once until fixed here).
   TWILIO_ACCOUNT_SID  - from twilio.com console
   TWILIO_AUTH_TOKEN   - from twilio.com console
   TWILIO_FROM_NUMBER  - the Twilio number that sends the SMS (e.g. +1415...)
@@ -44,6 +50,7 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
 TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
 TWILIO_FROM_NUMBER = os.environ.get('TWILIO_FROM_NUMBER', '')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
 CEO_PHONE_NUMBER = os.environ.get('CEO_PHONE_NUMBER', '')
 
 
@@ -149,7 +156,7 @@ def call_groq(system_prompt, user_message, history):
             "Content-Type": "application/json",
         },
         json={
-            "model": "llama-3.3-70b-versatile",
+            "model": GROQ_MODEL,
             "max_tokens": 700,
             "messages": messages,
         },
@@ -310,7 +317,6 @@ def ceo_leads():
                             counts=counts,
                             active_filter=filter_score)
   
-
 # ═══════════════════════════════════════════════════════════════════════
 # MRK AI — CONTRACTOR INTELLIGENCE & ASSISTANCE SYSTEM
 # ═══════════════════════════════════════════════════════════════════════
