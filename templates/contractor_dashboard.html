@@ -312,7 +312,7 @@
     .vs-pending  { background:#FEF3C7; color:#92400E; }
 
     /* ===== MRK AI WIDGET ===== */
-    #mrk-ai-bubble{
+     #mrk-ai-bubble{
       position:fixed;bottom:24px;right:24px;z-index:999;
       display:flex;align-items:center;gap:10px;
       background:var(--blue);color:#fff;
@@ -363,6 +363,13 @@
     }
     #mrk-ai-send:hover{opacity:0.9;}
     #mrk-ai-send:disabled{opacity:0.5;cursor:not-allowed;}
+    #mrk-ai-project-row{padding:10px 18px;border-bottom:1px solid #1A2744;}
+    #mrk-ai-project-select{
+      width:100%;background:rgba(255,255,255,0.06);border:1px solid #1A2744;
+      border-radius:8px;padding:8px 10px;color:#fff;font-size:12.5px;font-family:'Inter',sans-serif;
+    }
+    #mrk-ai-project-select:focus{outline:none;border-color:var(--blue);}
+    .mrk-ai-msg.bot{white-space:pre-line;}
     @media (max-width:560px){
       #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
       #mrk-ai-bubble{right:16px;bottom:16px;}
@@ -1005,7 +1012,7 @@
   }
   </script>  
 
-<!-- ===== MRK AI WIDGET — limited, read-only productivity assistant (spec section 13) ===== -->
+<!-- ===== MRK AI WIDGET — Contractor Intelligence & Assistance (advisory only, no CEO authority) ===== -->
 <div id="mrk-ai-bubble" onclick="mrkAiToggle()">
   <span class="dot"></span> MRK AI
 </div>
@@ -1014,28 +1021,36 @@
   <div id="mrk-ai-header">
     <div class="title-block">
       <div class="t1">MRK AI</div>
-      <div class="t2">Built in-house by MRK Agency</div>
+      <div class="t2">Your project assistant — advisory only</div>
     </div>
     <span id="mrk-ai-close" onclick="mrkAiToggle()">×</span>
   </div>
+  {% if projects and projects|length > 1 %}
+  <div id="mrk-ai-project-row">
+    <select id="mrk-ai-project-select" onchange="mrkAiSwitchProject()">
+      {% for p in projects %}
+      <option value="{{ p[0] }}">{{ p[2] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
   <div id="mrk-ai-messages">
-    <div id="mrk-ai-empty">Ask about your projects, deadlines, or MRK Agency.</div>
+    <div id="mrk-ai-empty">Ask about your project — role, tasks, deadline, requirements, what's next, or get help with the work itself.</div>
   </div>
   <div id="mrk-ai-input-row">
-    <input id="mrk-ai-input" type="text" placeholder="Ask MRK AI…" onkeydown="if(event.key==='Enter') mrkAiSend();">
+    <input id="mrk-ai-input" type="text" placeholder="Ask MRK AI about this project…" onkeydown="if(event.key==='Enter') mrkAiSend();">
     <button id="mrk-ai-send" onclick="mrkAiSend()">Send</button>
   </div>
 </div>
 
 <script>
-  function mrkAiSessionId(){
-    let id = localStorage.getItem('mrk_ai_session');
-    if(!id){
-      id = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem('mrk_ai_session', id);
-    }
-    return id;
-  }
+  {% if projects %}
+  const mrkAiProjectIds = [{% for p in projects %}{{ p[0] }}{% if not loop.last %},{% endif %}{% endfor %}];
+  {% else %}
+  const mrkAiProjectIds = [];
+  {% endif %}
+  let mrkAiCurrentProject = mrkAiProjectIds.length ? mrkAiProjectIds[0] : null;
+  let mrkAiHistoryLoaded = {};
 
   function mrkAiAppendMessage(text, role){
     const box = document.getElementById('mrk-ai-messages');
@@ -1050,7 +1065,37 @@
   }
 
   function mrkAiToggle(){
-    document.getElementById('mrk-ai-window').classList.toggle('open');
+    const win = document.getElementById('mrk-ai-window');
+    win.classList.toggle('open');
+    if(win.classList.contains('open') && mrkAiCurrentProject && !mrkAiHistoryLoaded[mrkAiCurrentProject]){
+      mrkAiLoadHistory(mrkAiCurrentProject);
+    }
+  }
+
+  function mrkAiSwitchProject(){
+    const sel = document.getElementById('mrk-ai-project-select');
+    mrkAiCurrentProject = parseInt(sel.value, 10);
+    const box = document.getElementById('mrk-ai-messages');
+    box.innerHTML = '<div id="mrk-ai-empty">Ask about your project — role, tasks, deadline, requirements, what\'s next, or get help with the work itself.</div>';
+    if(!mrkAiHistoryLoaded[mrkAiCurrentProject]){
+      mrkAiLoadHistory(mrkAiCurrentProject);
+    }
+  }
+
+  async function mrkAiLoadHistory(projectId){
+    try{
+      const res = await fetch('/ai/contractor/history?project_id=' + projectId);
+      const data = await res.json();
+      mrkAiHistoryLoaded[projectId] = true;
+      if(data.history && data.history.length){
+        const empty = document.getElementById('mrk-ai-empty');
+        if(empty) empty.remove();
+        data.history.forEach(h => {
+          mrkAiAppendMessage(h.message, 'user');
+          mrkAiAppendMessage(h.response, 'bot');
+        });
+      }
+    } catch(err){ /* silent — history is a nice-to-have, chat still works without it */ }
   }
 
   async function mrkAiSend(){
@@ -1065,15 +1110,21 @@
     const typingEl = mrkAiAppendMessage('MRK AI is typing…', 'bot typing');
 
     try{
-      const res = await fetch('/ai/chat', {
+      const res = await fetch('/ai/contractor/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ message: message, visitor_session: mrkAiSessionId() })
+        body: JSON.stringify({ message: message, project_id: mrkAiCurrentProject })
       });
       const data = await res.json();
       typingEl.remove();
       if(data.reply){
         mrkAiAppendMessage(data.reply, 'bot');
+        if(data.project_id){
+          mrkAiCurrentProject = data.project_id;
+          mrkAiHistoryLoaded[data.project_id] = true;
+        }
+      } else if(data.error){
+        mrkAiAppendMessage(data.error, 'bot');
       } else {
         mrkAiAppendMessage("Sorry, something went wrong. Please try again in a moment.", 'bot');
       }
