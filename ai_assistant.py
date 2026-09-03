@@ -316,7 +316,8 @@ def ceo_leads():
                             conversations=conversations,
                             counts=counts,
                             active_filter=filter_score)
-  
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # MRK AI — CONTRACTOR INTELLIGENCE & ASSISTANCE SYSTEM
 # ═══════════════════════════════════════════════════════════════════════
@@ -326,28 +327,32 @@ def ceo_leads():
 # project data — so it can never leak one contractor's project into
 # another's conversation, and it never has to be manually edited when
 # assignments change.
-
 CONTRACTOR_AI_RULES = """
 You are MRK AI, the internal assistant inside the MRK Agency Contractor Portal.
-You are speaking with an authenticated, assigned contractor about their own
-assigned work. You are NOT the client-facing sales assistant.
+You are speaking with an authenticated, assigned contractor. You are NOT the
+client-facing sales assistant, and you are significantly more capable than it —
+you have full, standing knowledge of everything this contractor is authorized
+to see: every project assigned to them, their role and current task on each,
+CEO instructions, requirements, deadlines, milestone status, and their own
+performance stats (assigned/completed counts, earnings, availability). You
+never need the contractor to explain which project or what their role is —
+it's already below. Never ask "which project do you mean?" — the full roster
+is provided every time; read it and answer directly, spanning as many of
+their projects as the question calls for.
 
-WHO YOU ARE TALKING TO: the contractor named {contractor_name}, viewing the
-project context provided below. Use it to give specific, grounded answers —
-never ask them to re-explain what project or role they're asking about if it's
-already in the context below.
+WHO YOU ARE TALKING TO: the contractor named {contractor_name}.
 
 SOURCE-OF-TRUTH HIERARCHY — when multiple things could answer a question, prefer
-information in this order and say so if it matters:
-1. CEO-approved instructions (labeled "CEO DIRECTION" below)
+information in this order, and say so if it matters:
+1. CEO-approved instructions (labeled "CEO DIRECTION" per project below)
 2. Official project requirements (labeled "REQUIREMENTS" below)
 3. Authorized client requirements included in the project description/objective
-4. The contractor's own assigned role/task (labeled "YOUR ROLE" / "CURRENT TASK")
+4. The contractor's own assigned role/task on that project
 5. Other project/system data below (stage, deadline, deliverable status, files)
 6. General technical knowledge (frameworks, tools, best practices — clearly
-   your own knowledge, not project-specific fact)
+   your own knowledge, not a project-specific fact)
 7. Your own recommendations — ALWAYS label these explicitly as your suggestion,
-   never phrase a recommendation as if it were a CEO or client instruction.
+   never phrase a recommendation as if the CEO or client specifically asked for it.
 
 WHAT YOU MUST NEVER DO:
 - Never invent or guess a deadline, requirement, client instruction, project
@@ -360,11 +365,34 @@ WHAT YOU MUST NEVER DO:
   You have no authority to do any of this — you can only explain, advise,
   and help the contractor do their own work better.
 - Never present your own suggestion (a tool choice, an approach, a priority
-  order) as if the CEO or client specifically asked for it.
+  order, a time estimate) as if the CEO or client specifically asked for it —
+  always frame it plainly as your own estimate/recommendation.
+
+PROJECT-TYPE INTELLIGENCE — this is what makes you genuinely useful, not just a
+Q&A box. For every project in the roster below, actively read its title,
+objective, and description to infer what kind of website/software it actually
+is (e.g. a restaurant site, a portfolio, a booking system, an e-commerce store,
+internal software) — then proactively ground your help in that inference:
+- Suggest which sections/pages that kind of project typically needs (e.g. a
+  restaurant site commonly needs a menu page, location/hours, a reservation or
+  contact flow, a gallery, mobile-first design, and local SEO — adapt this
+  reasoning to whatever the project actually is instead of a fixed template).
+- Suggest suitable languages/frameworks/tools for the work, and briefly say why.
+- When asked for a time estimate (how long a task/project should take, or how
+  much daily time to budget), give a grounded, honest estimate based on the
+  scope described — clearly labeled as your own estimate, not a CEO-set deadline
+  (state the real deadline from the context if one exists, separately).
+Always keep the CEO-instructions/requirements hierarchy above intact: your own
+project-type inferences and tool suggestions are recommendations, never
+presented as if they were specified by the CEO or client.
 
 WHAT YOU SHOULD DO WELL:
-- When asked "what am I working on" / "explain my project" / "what's next",
-  organize the context below into a clear, logical briefing — not a raw dump.
+- "What am I working on" / "explain my project(s)" / "what's next" — organize
+  the context below into a clear, logical briefing, not a raw dump.
+- "What should I do today" / a daily briefing — look across ALL assigned
+  projects in the roster, not just one: state the highest-priority task and
+  why, secondary tasks, each relevant deadline, anything currently blocked or
+  awaiting the CEO/client, tools needed, and a suggested order to tackle them.
 - Break tasks into concrete steps or checklists when helpful.
 - Identify required vs. recommended vs. optional tools for a task, and explain
   why each matters — always distinguishing official requirements from your
@@ -374,64 +402,40 @@ WHAT YOU SHOULD DO WELL:
   and whether work can reasonably continue without it in the meantime.
 - Help debug, review work-in-progress against the stated requirements, explain
   APIs/frameworks, and help prepare a checklist before submission.
-- If asked for a "today's work" briefing, summarize: top priority, secondary
-  tasks, deadline, anything pending/blocked, tools needed, and a suggested
-  order — grounded only in the context below.
+- If asked about earnings, performance, or how many projects completed, answer
+  directly from the CONTRACTOR OVERVIEW block below — it's the same data shown
+  on their dashboard, so your numbers must always match what they see on screen.
 
 Keep replies focused and practical — a working assistant, not a wall of text.
 """
 
 
-def build_contractor_context(project, phases, client_files):
-    """project is the explicit-column row from get_contractor_project();
-    phases is a list of dicts from project_payments; client_files is a
-    list of filenames. Builds the per-project context block injected
-    into CONTRACTOR_AI_RULES for this one conversation."""
-    lines = [f"PROJECT: {project['title']}"]
-    if project['main_objective']:
-        obj = project['main_objective']
-        if project['main_objective_other']:
-            obj += f" ({project['main_objective_other']})"
-        lines.append(f"OBJECTIVE: {obj}")
-    if project['description']:
-        lines.append(f"DESCRIPTION: {project['description']}")
-    if project['contractor_role']:
-        lines.append(f"YOUR ROLE: {project['contractor_role']}")
-    if project['current_task']:
-        lines.append(f"CURRENT TASK: {project['current_task']}")
-    if project['ceo_instructions']:
-        lines.append(f"CEO DIRECTION: {project['ceo_instructions']}")
-    if project['specific_requirements']:
-        lines.append(f"REQUIREMENTS: {project['specific_requirements']}")
-    if project['reference_sites']:
-        lines.append(f"REFERENCE SITES PROVIDED: {project['reference_sites']}")
-    lines.append(f"DEADLINE: {project['deadline'] or 'Not specified — ask the CEO if this matters for your planning.'}")
-    lines.append(f"CLIENT-VISIBLE STAGE: {project['client_visible_stage'] or 'Not yet set'}")
-    lines.append(f"PROJECT STATUS: {project['status']}")
+def get_contractor_stats(c, contractor_id):
+    """Mirrors app.py's contractor_dashboard() stat queries exactly, so the
+    AI never reports a different number than what's on the contractor's
+    own screen. Kept here (not imported from app.py) since this file is
+    deliberately self-contained — but the underlying SQL logic is the same."""
+    c.execute('SELECT availability_status FROM contractors WHERE id=%s', (contractor_id,))
+    row = c.fetchone()
+    availability_status = (row[0] if row else None) or 'Available'
 
-    if phases:
-        lines.append("MILESTONE STATUS:")
-        for ph in phases:
-            if ph['client_approved']:
-                st = "Completed and approved by the client"
-            elif ph['ceo_review_status'] == 'approved':
-                st = "Approved by the CEO, now visible to the client for their review"
-            elif ph['ceo_review_status'] == 'pending':
-                st = "Submitted by you, awaiting CEO review"
-            elif ph['ceo_review_status'] == 'revision_requested':
-                st = f"CEO requested a revision: {ph['ceo_feedback'] or 'no detail given'}"
-            else:
-                st = "Not yet submitted"
-            lines.append(f"  - Phase {ph['phase_number']} ({ph['phase_label']}): {st}")
-    else:
-        lines.append("MILESTONE STATUS: No payment phases found for this project.")
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND (completed IS NULL OR completed=FALSE)",
+              (contractor_id,))
+    assigned_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM projects WHERE accepted_by=%s AND completed=TRUE", (contractor_id,))
+    completed_count = c.fetchone()[0]
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM contractor_payouts WHERE contractor_id=%s AND status='paid'",
+              (contractor_id,))
+    current_earnings = float(c.fetchone()[0])
+    performance_rating = 'New' if completed_count == 0 else 'Good Standing'
 
-    if client_files:
-        lines.append("CLIENT-PROVIDED FILES/ASSETS: " + ", ".join(client_files))
-    else:
-        lines.append("CLIENT-PROVIDED FILES/ASSETS: none uploaded yet.")
-
-    return "\n".join(lines)
+    return {
+        'availability_status': availability_status,
+        'assigned_count': assigned_count,
+        'completed_count': completed_count,
+        'current_earnings': current_earnings,
+        'performance_rating': performance_rating,
+    }
 
 
 def get_contractor_projects(c, contractor_id):
@@ -473,11 +477,95 @@ def get_project_client_files(c, project_id):
     return [r[0] for r in c.fetchall()]
 
 
+def build_project_block(project, phases, client_files):
+    """One project's full detail block — same fields as before, just
+    reused per-project now that every request covers the whole roster."""
+    lines = [f"— PROJECT: {project['title']} (id #{project['id']}, status: {project['status']})"]
+    if project['main_objective']:
+        obj = project['main_objective']
+        if project['main_objective_other']:
+            obj += f" ({project['main_objective_other']})"
+        lines.append(f"  OBJECTIVE: {obj}")
+    if project['description']:
+        lines.append(f"  DESCRIPTION: {project['description']}")
+    if project['contractor_role']:
+        lines.append(f"  YOUR ROLE: {project['contractor_role']}")
+    if project['current_task']:
+        lines.append(f"  CURRENT TASK: {project['current_task']}")
+    if project['ceo_instructions']:
+        lines.append(f"  CEO DIRECTION: {project['ceo_instructions']}")
+    if project['specific_requirements']:
+        lines.append(f"  REQUIREMENTS: {project['specific_requirements']}")
+    if project['reference_sites']:
+        lines.append(f"  REFERENCE SITES PROVIDED: {project['reference_sites']}")
+    lines.append(f"  DEADLINE: {project['deadline'] or 'Not specified — flag this if it matters for planning.'}")
+    lines.append(f"  CLIENT-VISIBLE STAGE: {project['client_visible_stage'] or 'Not yet set'}")
+
+    if phases:
+        lines.append("  MILESTONE STATUS:")
+        for ph in phases:
+            if ph['client_approved']:
+                st = "Completed and approved by the client"
+            elif ph['ceo_review_status'] == 'approved':
+                st = "Approved by the CEO, now visible to the client for their review"
+            elif ph['ceo_review_status'] == 'pending':
+                st = "Submitted by you, awaiting CEO review"
+            elif ph['ceo_review_status'] == 'revision_requested':
+                st = f"CEO requested a revision: {ph['ceo_feedback'] or 'no detail given'}"
+            else:
+                st = "Not yet submitted"
+            lines.append(f"    - Phase {ph['phase_number']} ({ph['phase_label']}): {st}")
+    else:
+        lines.append("  MILESTONE STATUS: No payment phases found for this project.")
+
+    if client_files:
+        lines.append("  CLIENT-PROVIDED FILES/ASSETS: " + ", ".join(client_files))
+    else:
+        lines.append("  CLIENT-PROVIDED FILES/ASSETS: none uploaded yet.")
+
+    return "\n".join(lines)
+
+
+def build_full_contractor_context(c, contractor_id):
+    """The whole point of this rebuild: one context covering EVERYTHING
+    the contractor is authorized to see — every assigned project in full
+    detail, plus their own dashboard stats — assembled fresh on every
+    request. No project selection step, no disambiguation, no risk of
+    stale data: this always reflects the database at the moment asked."""
+    stats = get_contractor_stats(c, contractor_id)
+    roster = get_contractor_projects(c, contractor_id)
+
+    lines = [
+        "CONTRACTOR OVERVIEW (matches their dashboard exactly):",
+        f"  Availability: {stats['availability_status']}",
+        f"  Active assigned projects: {stats['assigned_count']}",
+        f"  Completed projects: {stats['completed_count']}",
+        f"  Current earnings (paid out): ${stats['current_earnings']:.0f}",
+        f"  Performance rating: {stats['performance_rating']}",
+        "",
+    ]
+
+    if not roster:
+        lines.append("ASSIGNED PROJECTS: none yet — no project has been assigned by the CEO.")
+    else:
+        lines.append(f"ASSIGNED PROJECTS ({len(roster)}):")
+        for p in roster:
+            project = get_contractor_project(c, contractor_id, p['id'])
+            if not project:
+                continue
+            phases = get_project_phases(c, p['id'])
+            client_files = get_project_client_files(c, p['id'])
+            lines.append(build_project_block(project, phases, client_files))
+            lines.append("")
+
+    return "\n".join(lines)
+
+
 @ai_bp.route('/contractor/projects')
 def contractor_ai_projects():
-    """Lightweight list for the widget's project picker — id/title/status
-    only, so a contractor with multiple assignments can pick which one
-    they're asking about."""
+    """Lightweight roster list — still useful for a quick dashboard
+    summary card, though the chat itself no longer needs a selection
+    step since every request already carries full context."""
     if 'contractor_id' not in session:
         return jsonify({'error': 'not authenticated'}), 401
     conn = get_db()
@@ -489,19 +577,16 @@ def contractor_ai_projects():
 
 @ai_bp.route('/contractor/history')
 def contractor_ai_history():
-    """Last exchanges for one project, so reopening the widget doesn't
-    lose context — mirrors the client chat's history pull, but scoped
-    per contractor+project instead of per anonymous visitor_session."""
+    """Last exchanges for this contractor, so reopening the widget
+    doesn't lose context. No longer scoped by project_id — there's no
+    more per-project chat thread, just one ongoing conversation that
+    already spans every assigned project."""
     if 'contractor_id' not in session:
         return jsonify({'error': 'not authenticated'}), 401
-    project_id = request.args.get('project_id', type=int)
-    if not project_id:
-        return jsonify({'error': 'project_id is required'}), 400
     conn = get_db()
     c = conn.cursor()
     c.execute('''SELECT message, response, created_at FROM contractor_ai_conversations
-                 WHERE contractor_id=%s AND project_id=%s ORDER BY id DESC LIMIT 12''',
-              (session['contractor_id'], project_id))
+                 WHERE contractor_id=%s ORDER BY id DESC LIMIT 12''', (session['contractor_id'],))
     rows = list(reversed(c.fetchall()))
     conn.close()
     return jsonify({'history': [{'message': r[0], 'response': r[1]} for r in rows]})
@@ -509,15 +594,18 @@ def contractor_ai_history():
 
 @ai_bp.route('/contractor/chat', methods=['POST'])
 def contractor_chat():
-    """The contractor-facing counterpart to /ai/chat. Gated by an actual
-    session check (the client route intentionally has none — this one
-    must, since it exposes per-project CEO instructions and client data)."""
+    """The contractor-facing counterpart to /ai/chat — and deliberately
+    more capable, per spec: no project-selection step, no disambiguation.
+    Every request is answered with full standing knowledge of every
+    project this contractor is assigned to, plus their own dashboard
+    stats, assembled fresh from the database each time. Gated by an
+    actual session check (the client route intentionally has none —
+    this one must, since it exposes CEO instructions and client data)."""
     if 'contractor_id' not in session:
         return jsonify({'error': 'not authenticated'}), 401
 
     data = request.get_json(silent=True) or {}
     user_message = (data.get('message') or '').strip()
-    project_id = data.get('project_id')
     if not user_message:
         return jsonify({'error': 'message is required'}), 400
 
@@ -527,35 +615,11 @@ def contractor_chat():
     conn = get_db()
     c = conn.cursor()
 
-    projects = get_contractor_projects(c, contractor_id)
-    if not projects:
-        conn.close()
-        return jsonify({'reply': "You don't have any assigned projects yet — once the CEO assigns you one, I'll be able to help with it."})
-
-    if not project_id:
-        if len(projects) == 1:
-            project_id = projects[0]['id']
-        else:
-            conn.close()
-            options = "\n".join(f"- {p['title']} (#{p['id']}, {p['status']})" for p in projects)
-            return jsonify({
-                'reply': f"You have {len(projects)} assigned projects — which one is this about?\n{options}",
-                'projects': projects
-            })
-
-    project = get_contractor_project(c, contractor_id, project_id)
-    if not project:
-        conn.close()
-        return jsonify({'error': 'That project is not assigned to you.'}), 403
-
-    phases = get_project_phases(c, project_id)
-    client_files = get_project_client_files(c, project_id)
-    context_block = build_contractor_context(project, phases, client_files)
-    system_prompt = CONTRACTOR_AI_RULES.format(contractor_name=contractor_name) + "\n\nCURRENT PROJECT CONTEXT:\n" + context_block
+    context_block = build_full_contractor_context(c, contractor_id)
+    system_prompt = CONTRACTOR_AI_RULES.format(contractor_name=contractor_name) + "\n\n" + context_block
 
     c.execute('''SELECT message, response FROM contractor_ai_conversations
-                 WHERE contractor_id=%s AND project_id=%s ORDER BY id DESC LIMIT 6''',
-              (contractor_id, project_id))
+                 WHERE contractor_id=%s ORDER BY id DESC LIMIT 6''', (contractor_id,))
     rows = c.fetchall()
     history = []
     for msg, resp in reversed(rows):
@@ -569,9 +633,9 @@ def contractor_chat():
         return jsonify({'error': 'AI is temporarily unavailable, please try again shortly.'}), 503
 
     c.execute('''INSERT INTO contractor_ai_conversations (contractor_id, project_id, message, response)
-                 VALUES (%s,%s,%s,%s)''', (contractor_id, project_id, user_message, reply))
+                 VALUES (%s,NULL,%s,%s)''', (contractor_id, user_message, reply))
     conn.commit()
     conn.close()
 
-    return jsonify({'reply': reply, 'project_id': project_id})
+    return jsonify({'reply': reply})
   
