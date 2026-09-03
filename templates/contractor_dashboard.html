@@ -22,8 +22,9 @@
     body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
     nav {
-      background: var(--dark);
-      border-bottom: 2px solid var(--blue);
+      background: linear-gradient(135deg, var(--dark) 0%, #10192f 100%);
+      border-bottom: 1px solid rgba(26,86,219,0.35);
+      box-shadow: 0 4px 20px -8px rgba(0,0,0,0.4);
       padding: 0 2rem;
       height: 64px;
       display: flex;
@@ -33,42 +34,56 @@
     }
     .nav-brand { color: var(--white); font-size: 1.2rem; font-weight: 700; letter-spacing: 0.05em; text-decoration: none; }
     .nav-brand span { color: var(--blue); }
+    .nav-brand-row { display: flex; align-items: center; gap: 0.85rem; }
+    .nav-portal-badge {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #93B4F5; background: rgba(26,86,219,0.18); border: 1px solid rgba(26,86,219,0.4);
+      padding: 0.28rem 0.7rem; border-radius: 999px;
+    }
     .nav-links { display: flex; gap: 1.5rem; align-items: center; }
     .nav-links a { color: #CBD5E1; text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
     .nav-links a:hover { color: var(--white); }
 
     .page { max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.5rem; }
 
-    /* TABS */
-    .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 2rem; overflow-x: auto; }
+    /* TABS — segmented pill control instead of a plain underline bar */
+    .tabs {
+      display: flex; gap: 0.3rem; background: var(--white);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.35rem; margin-bottom: 2rem; overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(10,15,30,0.05);
+    }
     .tab-btn {
-      padding: 0.75rem 1.5rem;
-      font-size: 0.9rem;
+      padding: 0.6rem 1.15rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--muted);
       background: none;
       border: none;
+      border-radius: 8px;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: all 0.2s;
       white-space: nowrap;
+      transition: all 0.18s ease;
     }
-    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn .tb-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--red); margin-left:5px; vertical-align:middle; }
+    .tab-btn.active { color: var(--white); background: var(--blue); box-shadow: 0 3px 10px -3px rgba(26,86,219,0.5); }
+    .tab-btn:not(.active):hover { color: var(--dark); background: var(--bg); }
+    .tab-btn .tb-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#FCA5A5; margin-left:5px; vertical-align:middle; }
+    .tab-btn.active .tb-dot { background:#FEE2E2; }
 
-    .tab-content { display: none; }
+    .tab-content { display: none; animation: mrkFadeIn 0.25s ease; }
     .tab-content.active { display: block; }
+    @keyframes mrkFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
     /* CARDS */
     .card {
       background: var(--white);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.5rem;
       margin-bottom: 1.25rem;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
+    .card:hover { box-shadow: 0 8px 22px -12px rgba(10,15,30,0.15); }
     .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
     .card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
 
@@ -96,16 +111,17 @@
       text-decoration: none;
       cursor: pointer;
       border: none;
-      transition: opacity 0.2s;
+      transition: all 0.18s ease;
     }
-    .btn:hover { opacity: 0.88; }
-    .btn-blue { background: var(--blue); color: var(--white); }
-    .btn-green { background: var(--green); color: var(--white); }
-    .btn-red { background: var(--red); color: var(--white); }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-blue { background: var(--blue); color: var(--white); box-shadow: 0 3px 10px -4px rgba(26,86,219,0.6); }
+    .btn-blue:hover { box-shadow: 0 6px 16px -4px rgba(26,86,219,0.7); }
+    .btn-green { background: var(--green); color: var(--white); box-shadow: 0 3px 10px -4px rgba(22,163,74,0.5); }
+    .btn-red { background: var(--red); color: var(--white); box-shadow: 0 3px 10px -4px rgba(220,38,38,0.5); }
     .btn-outline { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
-    .btn-outline:hover { border-color: var(--blue); color: var(--blue); opacity: 1; }
+    .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
     .btn-disabled { background: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
-    .btn-disabled:hover { opacity: 1; }
+    .btn-disabled:hover { transform: none; opacity: 1; }
 
     .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
@@ -163,13 +179,37 @@
     /* ═══ OVERVIEW TAB ═══ */
 
     .welcome-card {
-      background: var(--dark);
-      border-radius: 12px;
-      padding: 1.75rem 2rem;
+      background: linear-gradient(135deg, var(--dark) 0%, #142248 100%);
+      border-radius: 16px;
+      padding: 2rem 2.25rem;
       margin-bottom: 1.5rem;
       color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px -12px rgba(10,15,30,0.5);
     }
-    .welcome-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .welcome-card::before {
+      content: '';
+      position: absolute; top: -60%; right: -10%;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(26,86,219,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .welcome-avatar {
+      width: 58px; height: 58px; border-radius: 14px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue), #3B7AF7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700; color: #fff;
+      box-shadow: 0 6px 16px -4px rgba(26,86,219,0.5);
+      position: relative; z-index: 1;
+    }
+    .welcome-avatar img { width: 100%; height: 100%; border-radius: 14px; object-fit: cover; }
+    .welcome-text { position: relative; z-index: 1; flex: 1; min-width: 200px; }
+    .welcome-card h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: -0.01em; }
     .welcome-card .welcome-sub { color: #CBD5E1; font-size: 0.9rem; margin-bottom: 1rem; }
     .welcome-card .welcome-meta { display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; font-size: 0.82rem; color: #94A3B8; }
 
@@ -195,11 +235,20 @@
     .stat-card {
       background: var(--white);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.25rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(10,15,30,0.18); }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--stat-accent, var(--blue));
+    }
+    .stat-card .stat-icon { font-size: 1.15rem; margin-bottom: 0.6rem; display: block; }
     .stat-card label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem; }
-    .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--dark); }
+    .stat-card .stat-value { font-size: 1.7rem; font-weight: 700; color: var(--dark); letter-spacing: -0.01em; }
 
     .premium-empty {
       text-align: center;
@@ -312,7 +361,7 @@
     .vs-pending  { background:#FEF3C7; color:#92400E; }
 
     /* ===== MRK AI WIDGET ===== */
-     #mrk-ai-bubble{
+    #mrk-ai-bubble{
       position:fixed;bottom:24px;right:24px;z-index:999;
       display:flex;align-items:center;gap:10px;
       background:var(--blue);color:#fff;
@@ -363,12 +412,6 @@
     }
     #mrk-ai-send:hover{opacity:0.9;}
     #mrk-ai-send:disabled{opacity:0.5;cursor:not-allowed;}
-    #mrk-ai-project-row{padding:10px 18px;border-bottom:1px solid #1A2744;}
-    #mrk-ai-project-select{
-      width:100%;background:rgba(255,255,255,0.06);border:1px solid #1A2744;
-      border-radius:8px;padding:8px 10px;color:#fff;font-size:12.5px;font-family:'Inter',sans-serif;
-    }
-    #mrk-ai-project-select:focus{outline:none;border-color:var(--blue);}
     .mrk-ai-msg.bot{white-space:pre-line;}
     @media (max-width:560px){
       #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
@@ -379,7 +422,10 @@
 <body>
 
   <nav>
-  <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+  <div class="nav-brand-row">
+    <a href="/" class="nav-brand">MRK <span>AGENCY</span></a>
+    <span class="nav-portal-badge">Contractor Portal</span>
+  </div>
   <div class="nav-links">
     <a href="/contractor-logout">Logout</a>
   </div>
@@ -401,12 +447,12 @@
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
-    <button class="tab-btn" onclick="showTab('projects')">Projects</button>
-    <button class="tab-btn" onclick="showTab('files')">Files</button>
-    <button class="tab-btn" onclick="showTab('notifications')">Notifications{% if unread_notification_count and unread_notification_count > 0 %}<span class="tb-dot"></span>{% endif %}</button>
-    <button class="tab-btn" onclick="showTab('resources')">Resources</button>
-    <button class="tab-btn" onclick="showTab('profile')">My Profile</button>
+    <button class="tab-btn active" onclick="showTab('overview')">🏠 Overview</button>
+    <button class="tab-btn" onclick="showTab('projects')">📁 Projects</button>
+    <button class="tab-btn" onclick="showTab('files')">📎 Files</button>
+    <button class="tab-btn" onclick="showTab('notifications')">🔔 Notifications{% if unread_notification_count and unread_notification_count > 0 %}<span class="tb-dot"></span>{% endif %}</button>
+    <button class="tab-btn" onclick="showTab('resources')">📚 Resources</button>
+    <button class="tab-btn" onclick="showTab('profile')">👤 My Profile</button>
   </div>
 
   <!-- TAB: OVERVIEW -->
@@ -414,39 +460,48 @@
 
     <!-- 1. Welcome header -->
     <div class="welcome-card">
-      <h1>Welcome back, {{ contractor[1] }}!</h1>
-      <div class="welcome-sub">
-        {% if availability_status == 'Available' %}
-          You're currently available for new assignments.
-        {% elif availability_status == 'Busy' %}
-          You're currently marked busy — the CEO knows to hold off on new assignments.
-        {% else %}
-          You're currently marked offline.
-        {% endif %}
+      <div class="welcome-avatar">
+        {% if contractor[25] %}<img src="{{ contractor[25] }}" alt="{{ contractor[1] }}"/>{% else %}{{ contractor[1][0]|upper }}{% endif %}
       </div>
-      <div class="welcome-meta">
-        <span class="availability-badge {% if availability_status == 'Available' %}avail-available{% elif availability_status == 'Busy' %}avail-busy{% else %}avail-offline{% endif %}">
-          {% if availability_status == 'Available' %}🟢 Available{% elif availability_status == 'Busy' %}🟡 Busy{% else %}🔴 Offline{% endif %}
-        </span>
-        <span>Last login: {{ last_login.strftime('%b %d, %Y • %-I:%M %p') if last_login else 'First login' }}</span>
+      <div class="welcome-text">
+        <h1>Welcome back, {{ contractor[1] }}!</h1>
+        <div class="welcome-sub">
+          {% if availability_status == 'Available' %}
+            You're currently available for new assignments.
+          {% elif availability_status == 'Busy' %}
+            You're currently marked busy — the CEO knows to hold off on new assignments.
+          {% else %}
+            You're currently marked offline.
+          {% endif %}
+        </div>
+        <div class="welcome-meta">
+          <span class="availability-badge {% if availability_status == 'Available' %}avail-available{% elif availability_status == 'Busy' %}avail-busy{% else %}avail-offline{% endif %}">
+            {% if availability_status == 'Available' %}🟢 Available{% elif availability_status == 'Busy' %}🟡 Busy{% else %}🔴 Offline{% endif %}
+          </span>
+          <span>Last login: {{ last_login.strftime('%b %d, %Y • %-I:%M %p') if last_login else 'First login' }}</span>
+        </div>
       </div>
     </div>
 
     <!-- 2. Quick statistics cards -->
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-accent:#1A56DB;">
+        <span class="stat-icon">📁</span>
         <label>Assigned Projects</label>
         <div class="stat-value">{{ assigned_count }}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-accent:#16A34A;">
+        <span class="stat-icon">✅</span>
         <label>Completed Projects</label>
         <div class="stat-value">{{ completed_count }}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-accent:#D97706;">
+        <span class="stat-icon">💰</span>
         <label>Current Earnings</label>
         <div class="stat-value">${{ '%.0f'|format(current_earnings) }}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" style="--stat-accent:#7C3AED;">
+        <span class="stat-icon">⭐</span>
         <label>Performance Rating</label>
         <div class="stat-value">{{ performance_rating }}</div>
       </div>
@@ -564,7 +619,7 @@
   </div>
 
   <!-- TAB: PROJECTS -->
-  <div class="tab-content" id="tab-projects">
+   <div class="tab-content" id="tab-projects">
     {% if not projects %}
     <div class="card premium-empty">
       <div class="icon">📂</div>
@@ -960,7 +1015,7 @@
     </div>
 
     <!-- PAYOUTS -->
-    {% if payouts %}
+         {% if payouts %}
     <div class="card">
       <div class="section-title">Payouts</div>
       {% for project_id, plist in payouts.items() %}
@@ -1013,6 +1068,13 @@
   </script>  
 
 <!-- ===== MRK AI WIDGET — Contractor Intelligence & Assistance (advisory only, no CEO authority) ===== -->
+<!-- Deliberately simple: this widget's only job is forwarding whatever the
+     contractor types. ALL reasoning — which project(s) a question relates
+     to, project-type inference, tool suggestions, daily briefings — lives
+     entirely in ai_assistant.py's system prompt and context builder, not
+     in this file. There is no project picker, no disambiguation flow: the
+     backend already has full standing knowledge of every assigned project
+     on every request, so it never needs the frontend to narrow things down. -->
 <div id="mrk-ai-bubble" onclick="mrkAiToggle()">
   <span class="dot"></span> MRK AI
 </div>
@@ -1021,36 +1083,21 @@
   <div id="mrk-ai-header">
     <div class="title-block">
       <div class="t1">MRK AI</div>
-      <div class="t2">Your project assistant — advisory only</div>
+      <div class="t2">Knows all your assigned work — advisory only</div>
     </div>
     <span id="mrk-ai-close" onclick="mrkAiToggle()">×</span>
   </div>
-  {% if projects and projects|length > 1 %}
-  <div id="mrk-ai-project-row">
-    <select id="mrk-ai-project-select" onchange="mrkAiSwitchProject()">
-      {% for p in projects %}
-      <option value="{{ p[0] }}">{{ p[2] }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% endif %}
   <div id="mrk-ai-messages">
-    <div id="mrk-ai-empty">Ask about your project — role, tasks, deadline, requirements, what's next, or get help with the work itself.</div>
+    <div id="mrk-ai-empty">Ask anything — what's on your plate today, a specific project's requirements, what tools to use, or help with the work itself.</div>
   </div>
   <div id="mrk-ai-input-row">
-    <input id="mrk-ai-input" type="text" placeholder="Ask MRK AI about this project…" onkeydown="if(event.key==='Enter') mrkAiSend();">
+    <input id="mrk-ai-input" type="text" placeholder="Ask MRK AI…" onkeydown="if(event.key==='Enter') mrkAiSend();">
     <button id="mrk-ai-send" onclick="mrkAiSend()">Send</button>
   </div>
 </div>
 
 <script>
-  {% if projects %}
-  const mrkAiProjectIds = [{% for p in projects %}{{ p[0] }}{% if not loop.last %},{% endif %}{% endfor %}];
-  {% else %}
-  const mrkAiProjectIds = [];
-  {% endif %}
-  let mrkAiCurrentProject = mrkAiProjectIds.length ? mrkAiProjectIds[0] : null;
-  let mrkAiHistoryLoaded = {};
+  let mrkAiHistoryLoaded = false;
 
   function mrkAiAppendMessage(text, role){
     const box = document.getElementById('mrk-ai-messages');
@@ -1064,38 +1111,24 @@
     return el;
   }
 
-  function mrkAiToggle(){
+  async function mrkAiToggle(){
     const win = document.getElementById('mrk-ai-window');
     win.classList.toggle('open');
-    if(win.classList.contains('open') && mrkAiCurrentProject && !mrkAiHistoryLoaded[mrkAiCurrentProject]){
-      mrkAiLoadHistory(mrkAiCurrentProject);
+    if(win.classList.contains('open') && !mrkAiHistoryLoaded){
+      mrkAiHistoryLoaded = true;
+      try{
+        const res = await fetch('/ai/contractor/history');
+        const data = await res.json();
+        if(data.history && data.history.length){
+          const empty = document.getElementById('mrk-ai-empty');
+          if(empty) empty.remove();
+          data.history.forEach(h => {
+            mrkAiAppendMessage(h.message, 'user');
+            mrkAiAppendMessage(h.response, 'bot');
+          });
+        }
+      } catch(err){ /* silent — history is a nice-to-have, chat still works without it */ }
     }
-  }
-
-  function mrkAiSwitchProject(){
-    const sel = document.getElementById('mrk-ai-project-select');
-    mrkAiCurrentProject = parseInt(sel.value, 10);
-    const box = document.getElementById('mrk-ai-messages');
-    box.innerHTML = '<div id="mrk-ai-empty">Ask about your project — role, tasks, deadline, requirements, what\'s next, or get help with the work itself.</div>';
-    if(!mrkAiHistoryLoaded[mrkAiCurrentProject]){
-      mrkAiLoadHistory(mrkAiCurrentProject);
-    }
-  }
-
-  async function mrkAiLoadHistory(projectId){
-    try{
-      const res = await fetch('/ai/contractor/history?project_id=' + projectId);
-      const data = await res.json();
-      mrkAiHistoryLoaded[projectId] = true;
-      if(data.history && data.history.length){
-        const empty = document.getElementById('mrk-ai-empty');
-        if(empty) empty.remove();
-        data.history.forEach(h => {
-          mrkAiAppendMessage(h.message, 'user');
-          mrkAiAppendMessage(h.response, 'bot');
-        });
-      }
-    } catch(err){ /* silent — history is a nice-to-have, chat still works without it */ }
   }
 
   async function mrkAiSend(){
@@ -1113,16 +1146,12 @@
       const res = await fetch('/ai/contractor/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ message: message, project_id: mrkAiCurrentProject })
+        body: JSON.stringify({ message: message })
       });
       const data = await res.json();
       typingEl.remove();
       if(data.reply){
         mrkAiAppendMessage(data.reply, 'bot');
-        if(data.project_id){
-          mrkAiCurrentProject = data.project_id;
-          mrkAiHistoryLoaded[data.project_id] = true;
-        }
       } else if(data.error){
         mrkAiAppendMessage(data.error, 'bot');
       } else {
