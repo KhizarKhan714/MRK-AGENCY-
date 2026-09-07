@@ -66,17 +66,51 @@
     .ai-box { background:#F0F4FF; border:1.5px solid #C7D7FF; border-radius:8px; padding:0.7rem 1rem; font-size:0.83rem; color:#3B4FC8; font-weight:500; display:flex; align-items:center; gap:0.5rem; }
 
     /* PACKAGES */
-    .pkg-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .pkg-grid { display:grid; grid-template-columns:1fr; gap:1.25rem; }
+    @media (min-width:820px) { .pkg-grid { grid-template-columns:1fr 1fr; } }
     .pkg-option { display:none; }
     .pkg-option + label {
-      display:block; padding:0.9rem 1rem; border:1.5px solid var(--border);
-      border-radius:9px; cursor:pointer; transition:all 0.2s;
-      background:var(--bg);
+      display:block; padding:1.85rem 2rem; border:1.5px solid var(--border);
+      border-radius:18px; cursor:pointer; transition:all 0.2s;
+      background:var(--white); position:relative; overflow:hidden;
     }
-    .pkg-option:checked + label { border-color:var(--blue); background:#EFF6FF; }
-    .pkg-option + label .pkg-name { font-size:0.8rem; font-weight:700; color:var(--dark); }
-    .pkg-option + label .pkg-price { font-size:1rem; font-weight:800; color:var(--blue); margin-top:0.15rem; }
-    .pkg-option + label .pkg-desc { font-size:0.7rem; color:var(--muted); margin-top:0.2rem; }
+    .pkg-option + label::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:4px;
+      background:var(--pkg-accent, var(--blue)); opacity:0.85;
+    }
+    .pkg-option + label:hover { border-color:#B8C7F0; transform:translateY(-3px); box-shadow:0 10px 24px -12px rgba(10,15,30,0.14); }
+    .pkg-option:checked + label { border-color:var(--blue); border-width:2px; background:#F5F8FF; box-shadow:0 14px 32px -12px rgba(26,86,219,0.32); transform:translateY(-3px); }
+    .pkg-check {
+      position:absolute; top:1.4rem; right:1.4rem; width:26px; height:26px; border-radius:50%;
+      border:1.5px solid var(--border); background:var(--white); display:flex; align-items:center; justify-content:center;
+      font-size:0.78rem; color:transparent; transition:all 0.2s;
+    }
+    .pkg-option:checked + label .pkg-check { background:var(--blue); border-color:var(--blue); color:#fff; }
+    .pkg-icon {
+      width:52px; height:52px; border-radius:14px; margin-bottom:1.1rem;
+      background:var(--pkg-tint, #E8EEFC); display:flex; align-items:center; justify-content:center;
+      font-size:1.6rem;
+    }
+    .pkg-option + label .pkg-name { font-size:1.2rem; font-weight:800; color:var(--dark); margin-bottom:0.3rem; }
+    .pkg-option + label .pkg-price { font-size:2.1rem; font-weight:800; color:var(--blue); letter-spacing:-0.02em; margin-bottom:0.9rem; }
+    .pkg-meta { display:flex; gap:0.7rem; margin:0 0 1rem; font-size:0.8rem; font-weight:600; color:var(--muted); flex-wrap:wrap; }
+    .pkg-meta span { display:flex; align-items:center; gap:0.35rem; background:#F1F5F9; padding:0.4rem 0.8rem; border-radius:8px; }
+    .pkg-option + label .pkg-desc { font-size:0.88rem; color:var(--muted); line-height:1.65; padding-top:0.9rem; border-top:1px solid var(--border); }
+
+    .pkg-premium + label {
+      background:linear-gradient(135deg, var(--dark) 0%, #1a1040 100%); border-color:#4C3A99;
+    }
+    .pkg-premium + label::before { background:linear-gradient(90deg, #8B6FE0, #B79CFF); opacity:1; }
+    .pkg-premium + label:hover { border-color:#6B4FC7; }
+    .pkg-premium:checked + label { border-color:#8B6FE0; background:linear-gradient(135deg, var(--dark) 0%, #241558 100%); }
+    .pkg-premium + label .pkg-icon { background:rgba(255,255,255,0.1); }
+    .pkg-premium + label .pkg-name,
+    .pkg-premium + label .pkg-price { color:#fff; }
+    .pkg-premium + label .pkg-price { color:#B79CFF; }
+    .pkg-premium + label .pkg-desc { color:#C4B5E8; border-top-color:rgba(255,255,255,0.12); }
+    .pkg-premium + label .pkg-meta span { background:rgba(255,255,255,0.08); color:#C4B5E8; }
+    .pkg-premium + label .pkg-check { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.25); }
+    .pkg-premium:checked + label .pkg-check { background:#8B6FE0; border-color:#8B6FE0; }
 
     /* PILL TOGGLES — used for Existing Website yes/no and Contact Preference */
     .pill-group { display:flex; gap:0.6rem; flex-wrap:wrap; }
@@ -104,6 +138,7 @@
     .review-row { display:flex; justify-content:space-between; gap:1rem; padding:0.55rem 0; border-bottom:1px solid var(--border); font-size:0.83rem; }
     .review-row:last-child { border-bottom:none; }
     .review-row.hidden-row { display:none; }
+    .confirm-alt-hidden { display:none; }
     .review-label { color:var(--muted); font-weight:600; white-space:nowrap; }
     .review-value { color:var(--text); text-align:right; word-break:break-word; }
     .confirm-row { display:flex; gap:0.6rem; align-items:flex-start; margin-top:1.1rem; padding-top:1.1rem; border-top:1px solid var(--border); }
@@ -246,48 +281,74 @@
       <div class="form-card-body">
         <div class="pkg-grid">
 
-          <div>
+          <div style="--pkg-accent:#CD7F32;--pkg-tint:#FBEEE0;">
             <input class="pkg-option" type="radio" name="package" id="pkg1" value="Bronze" onchange="onPackageChange()" required/>
             <label for="pkg1">
+              <span class="pkg-check">✓</span>
+              <span class="pkg-icon">🥉</span>
               <div class="pkg-name">Bronze</div>
               <div class="pkg-price">$1,499</div>
-              <div class="pkg-desc">5 pages · 2 weeks · Web Development, Web Design &amp; Basic SEO</div>
+              <div class="pkg-meta">
+                <span>📄 5 pages</span>
+                <span>⏱ 2 weeks</span>
+              </div>
+              <div class="pkg-desc">Web Development, Web Design &amp; Basic SEO</div>
             </label>
           </div>
 
-          <div>
+          <div style="--pkg-accent:#1A56DB;--pkg-tint:#E8EEFC;">
             <input class="pkg-option" type="radio" name="package" id="pkg2" value="Consular" onchange="onPackageChange()"/>
             <label for="pkg2">
+              <span class="pkg-check">✓</span>
+              <span class="pkg-icon">🥈</span>
               <div class="pkg-name">Consular</div>
               <div class="pkg-price">$2,999</div>
-              <div class="pkg-desc">10 pages · 3 weeks · Web Development, Web Design, Graphic Design &amp; Full SEO</div>
+              <div class="pkg-meta">
+                <span>📄 10 pages</span>
+                <span>⏱ 3 weeks</span>
+              </div>
+              <div class="pkg-desc">Web Development, Web Design, Graphic Design &amp; Full SEO</div>
             </label>
           </div>
 
-          <div>
+          <div style="--pkg-accent:#D97706;--pkg-tint:#FEF3C7;">
             <input class="pkg-option" type="radio" name="package" id="pkg3" value="Gold" onchange="onPackageChange()"/>
             <label for="pkg3">
+              <span class="pkg-check">✓</span>
+              <span class="pkg-icon">🥇</span>
               <div class="pkg-name">Gold</div>
               <div class="pkg-price">$4,999</div>
-              <div class="pkg-desc">20 pages · 5 weeks · Everything in Consular, plus UI/UX Design &amp; Analytics Setup</div>
+              <div class="pkg-meta">
+                <span>📄 20 pages</span>
+                <span>⏱ 5 weeks</span>
+              </div>
+              <div class="pkg-desc">Everything in Consular, plus UI/UX Design &amp; Analytics Setup</div>
             </label>
           </div>
 
-          <div>
+          <div style="--pkg-accent:#0EA5E9;--pkg-tint:#E0F2FE;">
             <input class="pkg-option" type="radio" name="package" id="pkg4" value="Diamond" onchange="onPackageChange()"/>
             <label for="pkg4">
+              <span class="pkg-check">✓</span>
+              <span class="pkg-icon">💎</span>
               <div class="pkg-name">Diamond</div>
               <div class="pkg-price">$8,499</div>
-              <div class="pkg-desc">40 pages · 10 weeks · Everything in Gold, plus Premium Branding &amp; Priority Support</div>
+              <div class="pkg-meta">
+                <span>📄 40 pages</span>
+                <span>⏱ 10 weeks</span>
+              </div>
+              <div class="pkg-desc">Everything in Gold, plus Premium Branding &amp; Priority Support</div>
             </label>
           </div>
 
           <div style="grid-column:1/-1;">
-            <input class="pkg-option" type="radio" name="package" id="pkg5" value="Custom Executive" onchange="onPackageChange()"/>
+            <input class="pkg-option pkg-premium" type="radio" name="package" id="pkg5" value="Custom Executive" onchange="onPackageChange()"/>
             <label for="pkg5">
+              <span class="pkg-check">✓</span>
+              <span class="pkg-icon">👑</span>
               <div class="pkg-name">Custom Executive</div>
               <div class="pkg-price">$10,000+</div>
-              <div class="pkg-desc">Everything in Diamond + custom software + much more, anything you ask for!</div>
+              <div class="pkg-desc">Everything in Diamond, plus custom software built around exactly what you need — timeline and scope discussed directly with the CEO.</div>
             </label>
           </div>
 
@@ -410,7 +471,10 @@
 
         <div class="confirm-row">
           <input type="checkbox" id="confirm-check" name="confirm_accurate" required/>
-          <label for="confirm-check">I confirm that the information provided above is accurate to the best of my knowledge and I understand that MRK AGENCY may contact me to discuss the project before final scope, pricing, or delivery arrangements are confirmed.</label>
+          <label for="confirm-check">
+            <span id="confirm-text-fixed">I confirm that the information provided above is accurate to the best of my knowledge. This package's price and delivery timeline are fixed as shown — work can begin once submitted, no further pricing discussion needed.</span>
+            <span id="confirm-text-discuss" class="confirm-alt-hidden">I confirm that the information provided above is accurate to the best of my knowledge, and understand MRK AGENCY will follow up to confirm the final budget and timeline before work begins.</span>
+          </label>
         </div>
       </div>
     </div>
@@ -542,6 +606,17 @@
     }
     if (budgetRow) budgetRow.classList.toggle('hidden-row', !budgetVisible);
     set('rv-budget', budgetVal);
+
+    // Fixed-price packages (Bronze/Consular/Gold/Diamond) have no scope/pricing
+    // left to discuss once submitted — only à la carte and Custom Executive
+    // (the same two cases that show a budget row above) still need a
+    // follow-up conversation, so the confirmation text reuses that exact flag.
+    const confirmFixed = document.getElementById('confirm-text-fixed');
+    const confirmDiscuss = document.getElementById('confirm-text-discuss');
+    if (confirmFixed && confirmDiscuss) {
+      confirmFixed.classList.toggle('confirm-alt-hidden', budgetVisible);
+      confirmDiscuss.classList.toggle('confirm-alt-hidden', !budgetVisible);
+    }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -637,3 +712,4 @@
 </script>
 </body>
 </html>
+  
