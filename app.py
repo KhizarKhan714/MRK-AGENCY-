@@ -20,6 +20,8 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgr
 from ai_assistant import ai_bp, init_ai_db
 app.register_blueprint(ai_bp)
 
+from seo_routes import seo_bp
+app.register_blueprint(seo_bp)
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
