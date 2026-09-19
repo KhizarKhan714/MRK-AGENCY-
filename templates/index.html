@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MRK Agency — Where Your Brand Achieves Glory</title>
-<meta name="description" content="MRK Agency is a full-stack digital partner — web development, design, and software engineering delivered with enterprise discipline, at agency speed.">
+<meta name="description" content="MRK Agency is a Pakistan-based full-stack digital partner serving clients internationally — web development, design, UI/UX, SEO, SaaS and AI integration delivered with enterprise discipline.">
+<link rel="canonical" href="https://mrkagency.com/">
 
 <!-- Favicons -->
 <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicons/favicon.ico') }}">
@@ -20,7 +21,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="MRK Agency">
 <meta property="og:title" content="MRK Agency — Where Your Brand Achieves Glory">
-<meta property="og:description" content="A full-stack digital partner — web development, design, UI/UX, SEO and software engineering delivered with enterprise discipline, at agency speed.">
+<meta property="og:description" content="MRK Agency is a Pakistan-based full-stack digital partner serving clients internationally — web development, design, UI/UX, SEO, SaaS and AI integration delivered with enterprise discipline.">
 <meta property="og:image" content="https://mrkagency.com/static/images/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -29,26 +30,54 @@
 <!-- Twitter/X Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MRK Agency — Where Your Brand Achieves Glory">
-<meta name="twitter:description" content="A full-stack digital partner — web development, design, UI/UX, SEO and software engineering delivered with enterprise discipline, at agency speed.">
+<meta name="twitter:description" content="MRK Agency is a Pakistan-based full-stack digital partner serving clients internationally — web development, design, UI/UX, SEO, SaaS and AI integration delivered with enterprise discipline.">
 <meta name="twitter:image" content="https://mrkagency.com/static/images/og-image.jpg">
 
-<!-- Structured data: tells Google exactly which logo belongs to MRK Agency -->
+<!-- Structured data: Organization entity — tells search/AI systems who MRK Agency is,
+     its official logo, founder relationship, and genuine international service scope.
+     No physical foreign offices claimed — areaServed signals service market only. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "MRK Agency",
   "alternateName": "MRK",
-  "url": "https://mrkagency.com",
+  "url": "https://mrkagency.com/",
   "logo": "https://mrkagency.com/static/favicons/android-chrome-512x512.png",
   "image": "https://mrkagency.com/static/images/og-image.jpg",
-  "description": "MRK Agency is a full-stack digital partner — web development, design, UI/UX, SEO and software engineering delivered with enterprise discipline, at agency speed.",
+  "description": "MRK Agency is a Pakistan-based full-stack digital partner serving clients internationally — web development, design, UI/UX, SEO, SaaS and AI integration delivered with enterprise discipline.",
   "foundingDate": "2023-10-23",
   "founder": {
     "@type": "Person",
-    "name": "Khizar Khan"
+    "name": "Muhammad Khizar Asad",
+    "alternateName": "Khizar Khan",
+    "jobTitle": "Founder & CEO",
+    "worksFor": {
+      "@type": "Organization",
+      "name": "MRK Agency",
+      "url": "https://mrkagency.com/"
+    }
   },
+  "areaServed": [    
+    {"@type": "Country", "name": "United Kingdom"},
+    {"@type": "Country", "name": "United States"},
+    {"@type": "Country", "name": "Canada"},
+    {"@type": "Country", "name": "United Arab Emirates"},
+    {"@type": "Country", "name": "Saudi Arabia"},
+    {"@type": "Country", "name": "Kuwait"}
+  ],
   "sameAs": []
+}
+</script>
+
+<!-- Structured data: WebSite entity — separate from Organization by design -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "MRK Agency",
+  "alternateName": "MRK",
+  "url": "https://mrkagency.com/"
 }
 </script>
 
@@ -73,8 +102,8 @@
   html{scroll-behavior:smooth;}
   body{
     font-family:var(--sans);
-    background:var(--bg);
-    color:var(--dark);
+    background:var(--dark);
+    color:#fff;
     -webkit-font-smoothing:antialiased;
   }
   a{color:inherit;text-decoration:none;}
@@ -134,16 +163,23 @@
   .btn-ghost:hover{border-color:var(--blue-bright);background:rgba(59,124,255,0.08);}
   .menu-toggle{display:none;}
 
-  /* ===== HERO v2 — real photo background ===== */
+  /* ===== SITE-WIDE FIXED PHOTO — same image behind every section ===== */
+  .bg-fixed{
+    position:fixed;inset:0;z-index:-2;
+    background:url('{{ url_for("static", filename="images/hero-bg.jpg") }}') center right / cover no-repeat;
+  }
+  .bg-fixed::after{
+    content:'';position:absolute;inset:0;
+    background:rgba(4,6,14,0.5);
+  }
+  body.mrk-home{background:var(--dark);}
+
+  /* ===== HERO v2 — extra darkening on top of the site-wide photo, for the big text ===== */
   .hero{
     position:relative;
     background:
-      linear-gradient(100deg, rgba(3,5,13,0.94) 0%, rgba(3,5,13,0.82) 26%, rgba(3,5,13,0.42) 50%, rgba(3,5,13,0.08) 68%),
-      linear-gradient(180deg, rgba(3,5,13,0.45) 0%, rgba(3,5,13,0) 22%, rgba(3,5,13,0.1) 78%, rgba(3,5,13,0.7) 100%),
-      url('{{ url_for("static", filename="images/hero-bg.jpg") }}');
-    background-size: cover, cover, cover;
-    background-position: center, center, center right;
-    background-repeat: no-repeat, no-repeat, no-repeat;
+      linear-gradient(100deg, rgba(3,5,13,0.9) 0%, rgba(3,5,13,0.72) 26%, rgba(3,5,13,0.32) 50%, rgba(3,5,13,0.04) 68%),
+      linear-gradient(180deg, rgba(3,5,13,0.4) 0%, rgba(3,5,13,0) 22%, rgba(3,5,13,0.05) 78%, rgba(3,5,13,0.55) 100%);
     overflow:hidden;
     padding:112px 32px 0;
     }
@@ -345,9 +381,60 @@
     #mrk-ai-window{right:16px;bottom:88px;width:calc(100vw - 32px);}
     #mrk-ai-bubble{right:16px;bottom:16px;}
   }
+
+  /* ===== VISUAL OVERHAUL — scoped to body.mrk-home only, style.css untouched ===== */
+  .mrk-home .section{position:relative;}
+  .mrk-home .section.veil-light{background:linear-gradient(180deg, rgba(6,9,20,0.5), rgba(6,9,20,0.68));}
+  .mrk-home .section.veil-heavy{background:rgba(6,9,20,0.87);}
+  .mrk-home .section.section-dark.veil-heavy{background:rgba(6,9,20,0.87);}
+
+  .mrk-home .eyebrow-sm{
+    font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue-bright);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:block;
+  }
+  .mrk-home .section-title{color:#fff;}
+  .mrk-home .section-sub{color:var(--text-dim);}
+
+  .mrk-home .card{
+    background:rgba(255,255,255,0.05);border:1px solid var(--line);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .mrk-home .card:hover{transform:translateY(-4px);border-color:rgba(59,124,255,0.5);box-shadow:0 12px 30px rgba(0,0,0,0.35);}
+  .mrk-home .card-tag{background:rgba(59,124,255,0.12);color:var(--blue-bright);}
+  .mrk-home .card-title{color:#fff;}
+  .mrk-home .card-text{color:var(--text-dim);}
+  .mrk-home .card-img{background:rgba(255,255,255,0.05);}
+
+  .mrk-home .price-card{background:rgba(255,255,255,0.05);border:1px solid var(--line);backdrop-filter:blur(6px);}
+  .mrk-home .price-card.featured{border-color:var(--blue-bright);box-shadow:0 0 0 1px var(--blue-bright);}
+  .mrk-home .price-meta{font-family:var(--mono);font-size:12px;color:var(--blue-bright);margin-top:-8px;}
+  .mrk-home .price-tier{color:var(--blue-bright);}
+  .mrk-home .price-amount{color:#fff;}
+  .mrk-home .price-amount span{color:var(--text-dim);}
+  .mrk-home .price-list{color:var(--text-dim);}
+  .mrk-home .price-list li::before{color:var(--blue-bright);}
+  .mrk-home .btn-outline{border-color:var(--line);color:#fff;}
+  .mrk-home .btn-outline:hover{border-color:var(--blue-bright);color:var(--blue-bright);background:rgba(59,124,255,0.08);}
+
+  .mrk-home .services-diagram{max-width:760px;margin:0 auto 52px;opacity:0.95;}
+  .mrk-home .sd-node{fill:rgba(19,34,72,0.55);stroke:#3B7CFF;stroke-width:1.5;}
+  .mrk-home .sd-node-ai{stroke:#3DDC84;}
+  .mrk-home .sd-hub{fill:#1A56DB;stroke:#3B7CFF;}
+  .mrk-home .sd-label{font-family:var(--mono);font-size:13px;fill:#C7D3F5;letter-spacing:.03em;}
+  .mrk-home .sd-hub-label{fill:#fff;font-weight:600;font-size:14px;}
+  .mrk-home .sd-conn{stroke:rgba(59,124,255,0.32);stroke-width:1.2;fill:none;}
+  .mrk-home .sd-pulse{fill:#3B7CFF;}
+  .mrk-home .sd-pa{animation:sd-travel 4s linear infinite;}
+  @keyframes sd-travel{0%{offset-distance:0%;opacity:0;}8%{opacity:1;}92%{opacity:1;}100%{offset-distance:100%;opacity:0;}}
+  @media (max-width:640px){.mrk-home .services-diagram{margin-bottom:36px;}}
+
+  .mrk-home .team-photo{background:rgba(255,255,255,0.05);}
+  .mrk-home .empty-state{border-color:var(--line);color:var(--text-dim);}
+  .mrk-home .empty-state h3{color:#fff;}
 </style>
 </head>
-<body>
+<body class="mrk-home">
+<div class="bg-fixed"></div>
 
 <header>
   <div class="nav-inner">
@@ -401,13 +488,36 @@
 </section>
 
 <!-- ===== SERVICES ===== -->
-<section class="section" id="services">
+<section class="section veil-light" id="services">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">What we do</span>
+      <span class="eyebrow-sm">What we do</span>
       <h2 class="section-title">Six disciplines. One team.</h2>
       <p class="section-sub">No ecommerce builds, no marketing retainers — just the disciplines we've actually built our process around.</p>
     </div>
+
+    <div class="services-diagram" aria-hidden="true">
+      <svg viewBox="0 0 900 360" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <path class="sd-conn" d="M 150 90 L 450 55 L 750 110"/>
+        <path class="sd-conn" d="M 150 90 L 150 270"/>
+        <path class="sd-conn" d="M 150 270 L 450 320 L 750 270"/>
+        <path class="sd-conn" d="M 450 55 L 450 320"/>
+        <path class="sd-conn" d="M 750 110 L 750 270"/>
+        <path class="sd-conn" d="M 150 90 L 450 320"/>
+        <path class="sd-conn" d="M 750 110 L 450 320"/>
+        <circle class="sd-pulse sd-pa" r="3.4" style="offset-path:path('M 150 90 L 450 55 L 750 110');animation-delay:0s"/>
+        <circle class="sd-pulse sd-pa" r="3.4" style="offset-path:path('M 150 270 L 450 320 L 750 270');animation-delay:1.3s"/>
+        <circle class="sd-pulse sd-pa" r="3.4" style="offset-path:path('M 450 55 L 450 320');animation-delay:2.4s"/>
+        <g><rect class="sd-node" x="100" y="70" width="100" height="42" rx="6"/><text class="sd-label" x="150" y="96" text-anchor="middle">WEB</text></g>
+        <g><rect class="sd-node" x="400" y="34" width="100" height="42" rx="6"/><text class="sd-label" x="450" y="60" text-anchor="middle">UI / UX</text></g>
+        <g><rect class="sd-node" x="700" y="89" width="100" height="42" rx="6"/><text class="sd-label" x="750" y="115" text-anchor="middle">SEO</text></g>
+        <g><rect class="sd-node" x="100" y="249" width="100" height="42" rx="6"/><text class="sd-label" x="150" y="275" text-anchor="middle">SAAS</text></g>
+        <g><rect class="sd-node" x="700" y="249" width="100" height="42" rx="6"/><text class="sd-label" x="750" y="275" text-anchor="middle">BRAND</text></g>
+        <g><rect class="sd-node sd-node-ai" x="392" y="296" width="116" height="42" rx="6"/><text class="sd-label" x="450" y="322" text-anchor="middle">AI</text></g>
+        <g><circle class="sd-node sd-hub" cx="450" cy="180" r="34"/><text class="sd-label sd-hub-label" x="450" y="186" text-anchor="middle">MRK</text></g>
+      </svg>
+    </div>
+
     <div class="grid grid-3">
       {% set services = [
         ('Web Development', 'Custom-built sites and web apps — not templates, not page builders.'),
@@ -432,18 +542,18 @@
 
 <!-- ===== PORTFOLIO PREVIEW — only renders once the CEO turns it on ===== -->
 {% if site_settings.portfolio_section_visible %}
-<section class="section section-dark" id="portfolio">
+<section class="section section-dark veil-heavy" id="portfolio">
   <div class="container">
     <div class="section-head flex-between">
       <div>
-        <span class="eyebrow">Proof of work</span>
+        <span class="eyebrow-sm">Proof of work</span>
         <h2 class="section-title">Selected projects.</h2>
       </div>
       <a href="/portfolio" class="btn-ghost">View full portfolio →</a>
     </div>
     <div class="grid grid-3">
       {% for p in featured_projects %}
-      <a href="/portfolio/{{ p.id }}" class="card" style="background:var(--dark-2);border-color:var(--line);">
+      <a href="/portfolio/{{ p.id }}" class="card">
         {% if p.cover_image %}<img src="{{ p.cover_image }}" class="card-img" alt="{{ p.title }}">{% else %}<div class="card-img"></div>{% endif %}
         <div class="card-body">
           <span class="card-tag">{{ p.category }}</span>
@@ -459,14 +569,14 @@
 
 <!-- ===== TEAM PREVIEW — only renders once the CEO turns it on ===== -->
 {% if site_settings.team_section_visible %}
-<section class="section" id="team">
+<section class="section veil-light" id="team">
   <div class="container">
     <div class="section-head flex-between">
       <div>
-        <span class="eyebrow">Who builds it</span>
+        <span class="eyebrow-sm">Who builds it</span>
         <h2 class="section-title">Meet the team.</h2>
       </div>
-      <a href="/team" class="btn-ghost" style="color:var(--dark);border-color:var(--line-soft);">View full team →</a>
+      <a href="/team" class="btn-ghost">View full team →</a>
     </div>
     <div class="grid grid-3">
       {% for m in featured_team %}
@@ -484,10 +594,10 @@
 {% endif %}
 
   {% if testimonials %}
-<section class="section" id="testimonials">
+<section class="section veil-heavy" id="testimonials">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">What clients say</span>
+      <span class="eyebrow-sm">What clients say</span>
       <h2 class="section-title">Real feedback, real work.</h2>
     </div>
     <div class="grid grid-3">
@@ -506,27 +616,28 @@
 {% endif %}
 
 <!-- ===== PRICING ===== -->
-<section class="section" id="pricing">
+<section class="section veil-heavy" id="pricing">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Packages</span>
+      <span class="eyebrow-sm">Packages</span>
       <h2 class="section-title">Pricing that scales with scope.</h2>
       <p class="section-sub">No revision limits on any tier. Custom Executive is for projects that need custom software and a dedicated point of contact.</p>
     </div>
     <div class="grid grid-3">
       {% set tiers = [
-        ('Bronze', '1,499', '5 pages · 2 weeks · Web Development, Web Design & Basic SEO', false),
-        ('Consular', '2,999', '10 pages · 3 weeks · Web Development, Web Design, Graphic Design & Full SEO', false),
-        ('Gold', '4,999', '20 pages · 5 weeks · Everything in Consular, plus UI/UX Design & Analytics Setup', true),
-        ('Diamond', '8,499', '40 pages · 10 weeks · Everything in Gold, plus Premium Branding & Priority Support', false),
-        ('Custom Executive', '10,000+', 'Everything in Diamond + custom software + much more, anything you ask for!', false)
+        {'name':'Bronze','price':'1,499','pages':'5 pages','weeks':'2 weeks','features':['Web Development','Web Design','Basic SEO'],'featured':false},
+        {'name':'Consular','price':'2,999','pages':'10 pages','weeks':'3 weeks','features':['Web Development','Web Design','Graphic Design','Full SEO'],'featured':false},
+        {'name':'Gold','price':'4,999','pages':'20 pages','weeks':'5 weeks','features':['Web Development','Web Design','Graphic Design','Full SEO','UI/UX Design','Analytics Setup'],'featured':true},
+        {'name':'Diamond','price':'8,499','pages':'40 pages','weeks':'10 weeks','features':['Web Development','Web Design','Graphic Design','Full SEO','UI/UX Design','Analytics Setup','Premium Branding','Priority Support'],'featured':false},
+        {'name':'Custom Executive','price':'10,000+','pages':none,'weeks':'Timeline discussed after submission','features':['Everything in Diamond','Custom software development','Dedicated point of contact','Anything you ask for'],'featured':false}
       ] %}
-      {% for name, price, spec, featured in tiers %}
-      <div class="price-card {% if featured %}featured{% endif %}">
-        <span class="price-tier">{{ name }}</span>
-        <div class="price-amount">${{ price }}{% if name == 'Custom Executive' %}<span></span>{% endif %}</div>
+      {% for t in tiers %}
+      <div class="price-card {% if t.featured %}featured{% endif %}">
+        <span class="price-tier">{{ t.name }}</span>
+        <div class="price-amount">${{ t.price }}</div>
+        <div class="price-meta">{% if t.pages %}{{ t.pages }} · {% endif %}{{ t.weeks }}</div>
         <ul class="price-list">
-          <li>{{ spec }}</li>
+          {% for f in t.features %}<li>{{ f }}</li>{% endfor %}
           <li>No revision limits</li>
         </ul>
         <a href="/register" class="btn-outline" style="text-align:center;margin-top:8px;">Get started</a>
@@ -731,4 +842,3 @@
 
 </body>
 </html>
-        
