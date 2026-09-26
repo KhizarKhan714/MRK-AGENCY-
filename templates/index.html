@@ -365,8 +365,8 @@
     #net-canvas{opacity:0.06;}
   }
 
-  /* ===== MRK AI WIDGET ===== */
-  #mrk-ai-bubble{
+/* ===== MRK AI WIDGET ===== */
+#mrk-ai-bubble{
     position:fixed;bottom:24px;right:24px;z-index:999;
     display:flex;align-items:center;gap:10px;
     background:var(--blue);color:#fff;
@@ -622,6 +622,23 @@
     .feature-grid{grid-template-columns:1fr;}
     .process-rail{grid-template-columns:1fr;}
   }
+
+  /* ===== MOBILE: wider cards (less side gutter, less height), left-aligned text ===== */
+  @media (max-width:640px){
+    .mrk-home .section{padding-top:64px;padding-bottom:64px;padding-left:16px;padding-right:16px;}
+    .feature-card, .mrk-home .card-body, .mrk-home .price-card, .trust-item, .process-step{
+      padding-top:22px !important;padding-bottom:22px !important;
+      padding-left:20px !important;padding-right:20px !important;
+    }
+  }
+  .feature-card, .feature-title, .feature-text,
+  .mrk-home .card-body, .mrk-home .card-title, .mrk-home .card-text,
+  .mrk-home .price-card, .mrk-home .price-tier, .mrk-home .price-amount, .mrk-home .price-meta, .mrk-home .price-list,
+  .trust-item, .trust-item h4, .trust-item p,
+  .process-step, .process-step h4, .process-step p{
+    text-align:left !important;
+  }
+  .price-list li{text-align:left !important;}
 
   /* ===== SCROLL REVEAL ===== */
   .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,.8,.3,1), transform .7s cubic-bezier(.16,.8,.3,1);}
@@ -1052,7 +1069,8 @@
       </details>
     </div>
   </div>
-                                                                                                                                                 </section>
+</section>
+
 <!-- ===== FINAL CTA ===== -->
 <section class="section veil-heavy section-glow" id="final-cta">
   <div class="container">
@@ -1283,4 +1301,3 @@
 </script>
 </body>
 </html>
-             
