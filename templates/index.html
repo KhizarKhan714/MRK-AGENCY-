@@ -366,7 +366,7 @@
   }
 
   /* ===== MRK AI WIDGET ===== */
-  #mrk-ai-bubble{
+    #mrk-ai-bubble{
     position:fixed;bottom:24px;right:24px;z-index:999;
     display:flex;align-items:center;gap:10px;
     background:var(--blue);color:#fff;
@@ -434,6 +434,10 @@
   }
   .mrk-home .section-title{color:#fff;}
   .mrk-home .section-sub{color:var(--text-dim);}
+  .mrk-home .section{padding:96px 32px;}
+  .mrk-home .container{max-width:1240px;margin:0 auto;}
+  .mrk-home .section-head{margin-bottom:44px;max-width:640px;}
+  .mrk-home .services-diagram{margin-bottom:44px;}
 
   .mrk-home .card{
     background:rgba(255,255,255,0.05);border:1px solid var(--line);
@@ -447,6 +451,44 @@
 
   .mrk-home .price-card{background:rgba(255,255,255,0.05);border:1px solid var(--line);backdrop-filter:blur(6px);}
   .mrk-home .price-card.featured{border-color:var(--blue-bright);box-shadow:0 0 0 1px var(--blue-bright);}
+
+  /* ===== SELF-CONTAINED LAYOUT — services / testimonials / pricing grids and cards ===== */
+  .mrk-home .grid{display:grid;gap:22px;}
+  .mrk-home .grid-3{grid-template-columns:repeat(3, 1fr);}
+  @media (max-width:900px){.mrk-home .grid-3{grid-template-columns:repeat(2, 1fr);}}
+  @media (max-width:640px){.mrk-home .grid-3{grid-template-columns:1fr;}}
+
+  .mrk-home .card{
+    border-radius:14px;overflow:hidden;
+    transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .mrk-home .card-body{padding:26px 24px;}
+  .mrk-home .card-tag{
+    display:inline-block;font-family:var(--mono);font-size:12px;font-weight:700;
+    padding:3px 10px;border-radius:100px;margin-bottom:14px;
+  }
+  .mrk-home .card-title{font-size:17px;font-weight:700;margin-bottom:8px;}
+  .mrk-home .card-text{font-size:14px;line-height:1.6;}
+
+  .mrk-home .price-card{
+    border-radius:16px;padding:30px 26px;display:flex;flex-direction:column;gap:6px;
+  }
+  .mrk-home .price-tier{font-size:15px;font-weight:700;color:var(--blue-bright);}
+  .mrk-home .price-amount{font-size:32px;font-weight:800;color:#fff;margin:6px 0 2px;}
+  .mrk-home .price-meta{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-bottom:14px;}
+  .mrk-home .price-list{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-direction:column;gap:10px;}
+  .mrk-home .price-list li{
+    font-size:13.5px;color:var(--text-dim);padding-left:22px;position:relative;line-height:1.5;
+  }
+  .mrk-home .price-list li::before{
+    content:'✓';position:absolute;left:0;top:0;color:#3DDC84;font-weight:700;font-size:13px;
+  }
+  .mrk-home .btn-outline{
+    display:block;padding:12px 20px;border-radius:100px;
+    border:1px solid var(--line);color:#fff;font-size:14px;font-weight:600;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .mrk-home .btn-outline:hover{border-color:var(--blue-bright);background:rgba(59,124,255,0.1);}
 
   /* ===== FEATURE / CAPABILITY GRID ===== */
   .feature-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:18px;}
@@ -550,8 +592,9 @@
   .reveal.is-visible{opacity:1;transform:translateY(0);}
   @media (prefers-reduced-motion: reduce){
     .reveal{opacity:1;transform:none;transition:none;}
-     }
-/* ===== AMBIENT GRADIENT GLOW (identity blue, not purple) ===== */
+  }
+
+  /* ===== AMBIENT GRADIENT GLOW (identity blue, not purple) ===== */
   .section-glow{position:relative;isolation:isolate;overflow:hidden;}
   .section-glow::before{
     content:'';position:absolute;z-index:-1;pointer-events:none;
@@ -1196,5 +1239,6 @@
     }
   }
 </script>
+
 </body>
 </html>
