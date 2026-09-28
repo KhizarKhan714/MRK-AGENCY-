@@ -132,6 +132,11 @@
     -webkit-backdrop-filter:blur(14px);
     border-bottom:1px solid var(--blue);
   }
+  header{
+    position:sticky;top:0;z-index:100;
+    background:var(--dark);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
   .nav-inner{
     max-width:1240px;margin:0 auto;
     display:flex;align-items:center;justify-content:space-between;
@@ -228,15 +233,28 @@
     backdrop-filter:blur(6px);
   }
   .pulse-dot{
-    width:7px;height:7px;border-radius:50%;
-    background:#3DDC84;
-    box-shadow:0 0 0 0 rgba(61,220,132,0.6);
-    animation:pulse 2s infinite;
+    position:relative;
+    width:8px;height:8px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #7dffb8, #3DDC84 60%, #1fae63);
+    box-shadow:0 0 6px rgba(61,220,132,0.7);
+  }
+  .pulse-dot::before, .pulse-dot::after{
+    content:'';position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(61,220,132,0.7);
+    animation:pulseRing 2.4s cubic-bezier(.2,.7,.3,1) infinite;
+  }
+  .pulse-dot::after{animation-delay:1.2s;}
+  @keyframes pulseRing{
+    0%{transform:scale(1);opacity:.9;}
+    100%{transform:scale(5.5);opacity:0;}
   }
   @keyframes pulse{
     0%{box-shadow:0 0 0 0 rgba(61,220,132,0.55);}
     70%{box-shadow:0 0 0 8px rgba(61,220,132,0);}
     100%{box-shadow:0 0 0 0 rgba(61,220,132,0);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pulse-dot::before, .pulse-dot::after{animation:none;opacity:0;}
   }
 
   /* positioning kicker — "Pakistan's Premier Hybrid Digital Agency" */
@@ -365,8 +383,8 @@
     #net-canvas{opacity:0.06;}
   }
 
-/* ===== MRK AI WIDGET ===== */
-#mrk-ai-bubble{
+  /* ===== MRK AI WIDGET ===== */
+  #mrk-ai-bubble{
     position:fixed;bottom:24px;right:24px;z-index:999;
     display:flex;align-items:center;gap:10px;
     background:var(--blue);color:#fff;
@@ -518,18 +536,85 @@
     border-radius:14px;padding:32px 28px;
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     transition:transform .2s ease, border-color .2s ease;
+    perspective:700px;
   }
   .feature-card:hover{transform:translateY(-4px);border-color:rgba(59,124,255,0.5);}
   .feature-card.live{border-color:rgba(61,220,132,0.5);background:rgba(61,220,132,0.05);}
   .icon-badge{
-    width:84px;height:84px;border-radius:16px;
-    background:rgba(59,124,255,0.16);
+    width:52px;height:52px;border-radius:14px;
+    background:linear-gradient(135deg, #3B7CFF, #1A56DB);
+    box-shadow:0 6px 16px rgba(26,86,219,0.35);
     display:flex;align-items:center;justify-content:center;
-    margin-bottom:22px;
+    margin-bottom:16px;
+    transform-style:preserve-3d;
+    transition:transform .4s cubic-bezier(.2,.8,.3,1), box-shadow .4s ease;
   }
-  .icon-badge svg{width:42px;height:42px;stroke:var(--blue-bright);}
-  .feature-card.live .icon-badge{background:rgba(61,220,132,0.16);}
-  .feature-card.live .icon-badge svg{stroke:#3DDC84;}
+  .feature-card:hover .icon-badge{
+    transform:rotateY(22deg) rotateX(-8deg) scale(1.08);
+  }
+  .icon-badge svg{width:24px;height:24px;stroke:#fff;}
+  .icon-badge.tile-ai{background:linear-gradient(135deg, #8B7CF6, #5B5FEF);box-shadow:0 6px 16px rgba(91,95,239,0.35);}
+  .icon-badge.tile-portal{background:linear-gradient(135deg, #2DD4CD, #2C8EF6);box-shadow:0 6px 16px rgba(44,142,246,0.35);}
+  .icon-badge.tile-security{background:linear-gradient(135deg, #34D399, #0E9F6E);box-shadow:0 6px 16px rgba(14,159,110,0.35);}
+  .icon-badge.tile-unlimited{background:linear-gradient(135deg, #FBBF24, #F59E0B);box-shadow:0 6px 16px rgba(245,158,11,0.35);}
+  .icon-badge.tile-global{background:linear-gradient(135deg, #38BDF8, #0EA5E9);box-shadow:0 6px 16px rgba(14,165,233,0.35);}
+  .feature-card.live .icon-badge{background:linear-gradient(135deg, #8B7CF6, #5B5FEF);}
+  .feature-card.live .icon-badge svg{stroke:#fff;}
+
+  /* ===== per-icon "alive" motion — always on, subtle ===== */
+  .icon-spark-big{transform-origin:center;animation:sparkTwinkle 2.6s ease-in-out infinite;}
+  .icon-spark-small{transform-origin:center;animation:sparkTwinkle 2.6s ease-in-out infinite 1.1s;}
+  @keyframes sparkTwinkle{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.45;transform:scale(.82);}
+  }
+  .icon-anim-bracket-l{transform-origin:center;animation:bracketNudgeL 2.4s ease-in-out infinite;}
+  .icon-anim-bracket-r{transform-origin:center;animation:bracketNudgeR 2.4s ease-in-out infinite;}
+  @keyframes bracketNudgeL{0%,100%{transform:translateX(0);}50%{transform:translateX(-1.5px);}}
+  @keyframes bracketNudgeR{0%,100%{transform:translateX(0);}50%{transform:translateX(1.5px);}}
+  .icon-anim-person-a{transform-origin:center;animation:personBreathe 3s ease-in-out infinite;}
+  .icon-anim-person-b{transform-origin:center;animation:personBreathe 3s ease-in-out infinite 1.5s;}
+  @keyframes personBreathe{0%,100%{transform:translateY(0);}50%{transform:translateY(-1.2px);}}
+  /* padlock: only the U-shaped shackle moves. It lifts, swivels out to the left
+     around its left leg (like a real padlock), swivels back, then drops and locks. */
+  .icon-anim-lock-shackle{
+    transform-box:fill-box;transform-origin:0% 100%;
+    animation:lockShackle 5.2s ease-in-out infinite;
+  }
+  @keyframes lockShackle{
+    0%,8%{transform:translateY(0) scaleX(1);}
+    22%{transform:translateY(-3px) scaleX(1);}
+    42%,54%{transform:translateY(-3px) scaleX(-1);}
+    72%{transform:translateY(-3px) scaleX(1);}
+    84%,100%{transform:translateY(0) scaleX(1);}
+  }
+  .icon-badge.tile-security svg{width:29px;height:29px;overflow:visible;}
+  /* portal: a dot passes from client to contractor, then a check confirms the handoff */
+  .icon-anim-handoff-dot{animation:handoffDot 4.6s ease-in-out infinite;}
+  @keyframes handoffDot{
+    0%,8%{transform:translateX(0);opacity:0;}
+    12%{transform:translateX(0);opacity:1;}
+    38%{transform:translateX(6px);opacity:1;}
+    44%,100%{transform:translateX(6px);opacity:0;}
+  }
+  .icon-anim-handoff-check{
+    transform-box:fill-box;transform-origin:center;
+    animation:handoffCheck 4.6s ease-in-out infinite;
+  }
+  @keyframes handoffCheck{
+    0%,40%{transform:scale(0);opacity:0;}
+    50%{transform:scale(1.2);opacity:1;}
+    56%,86%{transform:scale(1);opacity:1;}
+    95%,100%{transform:scale(.6);opacity:0;}
+  }
+  .icon-anim-spin-slow{transform-origin:center;animation:spinSlow 7s linear infinite;}
+  @keyframes spinSlow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){
+    .icon-anim-spark, .icon-anim-spark-sm, .icon-anim-bracket-l, .icon-anim-bracket-r,
+    .icon-anim-person-a, .icon-anim-person-b, .icon-anim-lock-shackle, .icon-anim-handoff-dot, .icon-anim-handoff-check, .icon-anim-spin-slow{
+      animation:none;
+    }
+  }
   .feature-title{font-size:16.5px;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
   .live-chip{
     font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.04em;
@@ -591,8 +676,11 @@
   /* ===== FINAL CTA BAND ===== */
   .cta-band{
     text-align:center;padding:52px 72px;border-radius:24px;
-    background:linear-gradient(135deg, rgba(26,86,219,0.22), rgba(10,15,30,0.45));
-    border:1px solid rgba(59,124,255,0.35);
+    background:
+      radial-gradient(circle at 85% 0%, rgba(59,124,255,0.28) 0%, rgba(59,124,255,0) 55%),
+      linear-gradient(135deg, #070B18 0%, #0A0F1E 45%, #10224F 100%);
+    border:1px solid rgba(59,124,255,0.4);
+    box-shadow:0 20px 50px rgba(26,86,219,0.25);
   }
   .cta-band h2{font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;margin-bottom:12px;}
   .cta-band p{font-size:16px;color:var(--text-dim);max-width:640px;margin:0 auto 26px;}
@@ -618,17 +706,17 @@
     .process-rail{grid-template-columns:repeat(2, 1fr);}
     .trust-grid{grid-template-columns:1fr;}
   }
-  @media (max-width:560px){
+  @media (max-width:640px){
     .feature-grid{grid-template-columns:1fr;}
     .process-rail{grid-template-columns:1fr;}
   }
 
   /* ===== MOBILE: wider cards (less side gutter, less height), left-aligned text ===== */
   @media (max-width:640px){
-    .mrk-home .section{padding-top:64px;padding-bottom:64px;padding-left:16px;padding-right:16px;}
+    .mrk-home .section{padding-top:64px;padding-bottom:64px;padding-left:14px;padding-right:14px;}
     .feature-card, .mrk-home .card-body, .mrk-home .price-card, .trust-item, .process-step{
-      padding-top:22px !important;padding-bottom:22px !important;
-      padding-left:20px !important;padding-right:20px !important;
+      padding-top:18px !important;padding-bottom:18px !important;
+      padding-left:18px !important;padding-right:18px !important;
     }
   }
   .feature-card, .feature-title, .feature-text,
@@ -696,6 +784,67 @@
   .mrk-home .team-photo{background:rgba(255,255,255,0.05);}
   .mrk-home .empty-state{border-color:var(--line);color:var(--text-dim);}
   .mrk-home .empty-state h3{color:#fff;}
+  /* ============================================================
+     LIGHT ZONE — everything from Services through the final CTA.
+     Hero stays dark (matches the nav bar); footer stays dark too
+     (bookend, like the nav) — this band in between goes light,
+     matching the client/contractor/CEO dashboard convention.
+     ============================================================ */
+  .light-zone{
+    background:#FFFFFF;
+    --line:#E4E7EF;
+    --text-dim:#5B6478;
+    --mono:'JetBrains Mono', monospace;
+  }
+  .light-zone .section{color:#0A0F1E;background:#FFFFFF !important;}
+  .light-zone .section:nth-of-type(even){background:#F6F8FC !important;}
+  .light-zone .section-title, .light-zone .feature-title, .light-zone .card-title,
+  .light-zone h1, .light-zone h2, .light-zone h3, .light-zone h4{color:#0A0F1E !important;}
+  .light-zone .section-sub, .light-zone .card-text, .light-zone .feature-text,
+  .light-zone p{color:#5B6478;}
+  .light-zone .eyebrow-sm{color:var(--blue-bright);}
+
+  .light-zone .card, .light-zone .feature-card, .light-zone .price-card,
+  .light-zone .trust-item, .light-zone .faq-item, .light-zone .process-step{
+    background:#FFFFFF !important;
+    border:1px solid #E4E7EF !important;
+    box-shadow:0 1px 3px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04) !important;
+    backdrop-filter:none !important;
+  }
+  .light-zone .feature-card:hover, .light-zone .card:hover{
+    box-shadow:0 8px 20px rgba(16,24,40,0.08) !important;
+  }
+  .light-zone .feature-card.live{background:#F0FBF5 !important;border-color:#BBEFD0 !important;}
+  .light-zone .price-list li{color:#3D4459;}
+  .light-zone .price-meta{color:#7C8598;}
+  .light-zone .btn-outline{border:1px solid #D7DCE8;color:#0A0F1E;}
+  .light-zone .btn-outline:hover{border-color:var(--blue-bright);background:rgba(59,124,255,0.06);}
+  .light-zone .faq-item summary{color:#0A0F1E;}
+  .light-zone .faq-item summary::after{color:var(--blue-bright);}
+  .light-zone .live-chip{background:rgba(61,220,132,0.14);border-color:rgba(61,220,132,0.45);}
+  .light-zone .price-tier{color:var(--blue);}
+  .light-zone .price-amount{color:#0A0F1E !important;}
+  .light-zone .trust-item svg{stroke:var(--blue-bright);}
+  .light-zone .process-num{background:rgba(59,124,255,0.08);border-color:rgba(59,124,255,0.3);}
+  .light-zone .services-diagram text{fill:#0A0F1E;}
+  .light-zone .services-diagram .sd-dim{fill:#8891A5;}
+
+  /* Final CTA stays a dark accent block — deliberate contrast anchor, not a leftover */
+  .light-zone .cta-band, .light-zone .cta-band *{color:#fff;}
+  .light-zone .cta-band h2{color:#FFFFFF !important;}
+  .light-zone .cta-band h2 .cta-white{color:#FFFFFF !important;}
+  .light-zone .cta-band h2 .cta-blue{color:var(--blue-bright) !important;}
+  .light-zone .cta-band p{color:#FFFFFF !important;}
+  .light-zone .cta-band .card-title{color:#fff !important;}
+
+  .light-zone .section-glow::before{opacity:.5;}
+  .light-zone .section-glow::after{opacity:.5;}
+  .light-zone .btn-ghost{color:#0A0F1E !important;}
+  .light-zone .btn-ghost:hover{border-color:var(--blue-bright);background:rgba(59,124,255,0.06);}
+  .light-zone .sd-node{fill:#EEF3FC !important;}
+  .light-zone .sd-hub{fill:var(--blue) !important;}
+  .light-zone .sd-hub-label{fill:#fff !important;}
+  .light-zone .card-tag{color:var(--blue) !important;}
 </style>
 </head>
 <body class="mrk-home">
@@ -756,6 +905,7 @@
   </div>
 </section>
 
+<div class="light-zone">
 <!-- ===== SERVICES ===== -->
 <section class="section veil-light" id="services">
   <div class="container">
@@ -822,32 +972,32 @@
     </div>
     <div class="feature-grid">
       <div class="feature-card live">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4Z"/><path d="M8 14h8a4 4 0 0 1 4 4v2H4v-2a4 4 0 0 1 4-4Z"/></svg></div>
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path class="icon-spark-big" d="m12 3 1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8L12 3Z"/><path class="icon-spark-small" d="M19 15.5 19.9 17.6 22 18.5 19.9 19.4 19 21.5 18.1 19.4 16 18.5 18.1 17.6 19 15.5Z"/></svg></div>
         <div class="feature-title">AI Integration <span class="live-chip">Live now</span></div>
         <p class="feature-text">MRK AI is built in-house and already answers client questions on this site right now — not a future promise.</p>
       </div>
       <div class="feature-card">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div>
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path class="icon-anim-bracket-l" d="m6 8-4 4 4 4"/><path class="icon-anim-bracket-r" d="m18 16 4-4-4-4"/><path d="M14.5 4l-5 16"/></svg></div>
         <div class="feature-title">Web &amp; Software Development</div>
         <p class="feature-text">Custom web platforms, software builds, and API/backend engineering — built to spec, not assembled from templates.</p>
       </div>
       <div class="feature-card">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+        <div class="icon-badge tile-portal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g class="icon-anim-person-a"><circle cx="6" cy="10" r="3"/><path d="M1.5 21a4.5 4.5 0 0 1 9 0"/></g><g class="icon-anim-person-b"><circle cx="18" cy="10" r="3"/><path d="M13.5 21a4.5 4.5 0 0 1 9 0"/></g><circle class="icon-anim-handoff-dot" cx="9" cy="14.5" r="1.15" fill="#fff" stroke="none"/><g class="icon-anim-handoff-check"><circle cx="12" cy="5.4" r="3" fill="#fff" stroke="none"/><path d="M10.5 5.5l1.1 1.1 2-2.1" stroke="#2C8EF6" stroke-width="1.5"/></g></svg></div>
         <div class="feature-title">Client &amp; Contractor Portals</div>
         <p class="feature-text">Dedicated dashboards for clients and contractors with a structured review-and-approval workflow — full visibility into every project, at every stage.</p>
       </div>
       <div class="feature-card">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/></svg></div>
+        <div class="icon-badge tile-security"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="11" rx="2.5"/><circle cx="12" cy="15.6" r="1.5"/><path d="M12 17.2v2.2"/><path class="icon-anim-lock-shackle" d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"/></svg></div>
         <div class="feature-title">Security &amp; Access Control</div>
         <p class="feature-text">Role-based access, audit-logged actions, and controlled data handling built into every client and contractor account.</p>
       </div>
       <div class="feature-card">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+        <div class="icon-badge tile-unlimited"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g class="icon-anim-spin-slow"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></g></svg></div>
         <div class="feature-title">No Revision Limits</div>
         <p class="feature-text">Every package ships with unlimited revisions — no line-item surprises, no scope-creep invoices.</p>
       </div>
       <div class="feature-card">
-        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 6 4 9s-1.5 6.5-4 9c-2.5-2.5-4-6-4-9s1.5-6.5 4-9Z"/></svg></div>
+        <div class="icon-badge tile-global"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><g class="icon-anim-spin-slow"><path d="M3 12h18M12 3c2.5 2.5 4 6 4 9s-1.5 6.5-4 9c-2.5-2.5-4-6-4-9s1.5-6.5 4-9Z"/></g></svg></div>
         <div class="feature-title">Global Remote Delivery</div>
         <p class="feature-text">A distributed team means direct communication over WhatsApp and a portal — no waiting on office hours in one time zone.</p>
       </div>
@@ -990,11 +1140,19 @@
         'Diamond': '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M8 3l4 6-4 12M16 3l-4 6 4 12"/>',
         'Custom Executive': '<rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M2 12h20"/>'
       } %}
+      {% set tier_colors = {
+        'Bronze': '#D08A4E',
+        'Consular': '#3B7CFF',
+        'Gold': '#E8B923',
+        'Diamond': '#B9E6FF',
+        'Custom Executive': '#C9CEDA'
+      } %}
       {% for t in tiers %}
+      {% set tcolor = tier_colors[t.name] if t.name in tier_colors else '#3B7CFF' %}
       <div class="price-card {% if t.featured %}featured{% endif %}">
         <div class="price-card-accent"></div>
-        <div class="price-card-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{{ (tier_icons[t.name] if t.name in tier_icons else '<path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z"/>') | safe }}</svg>
+        <div class="price-card-icon" style="background:radial-gradient(circle, {{ tcolor }}33 0%, {{ tcolor }}14 70%); box-shadow:0 0 18px {{ tcolor }}26;">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="stroke:{{ tcolor }};">{{ (tier_icons[t.name] if t.name in tier_icons else '<path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z"/>') | safe }}</svg>
         </div>
         <span class="price-tier">{{ t.name }}</span>
         <div class="price-amount">${{ t.price }}</div>
@@ -1075,8 +1233,9 @@
 <section class="section veil-heavy section-glow" id="final-cta">
   <div class="container">
     <div class="cta-band">
-      <h2>Let's build something powerful.</h2>
-      <p>Tell us your vision. MRK will turn it into reality.</p>
+      <div class="eyebrow" style="margin:0 auto 22px;justify-content:center;"><span class="pulse-dot"></span>Currently accepting new projects</div>
+      <h2><span class="cta-white">Stop planning.</span> <span class="cta-blue">Start building.</span></h2>
+      <p>Tell MRK your vision and it will turn it into reality.</p>
       <div class="cta-band-btns">
         <a href="/register" class="btn-primary">Start a project →</a>
         <a href="https://wa.me/923184467807" target="_blank" rel="noopener" class="btn-whatsapp">
@@ -1087,6 +1246,7 @@
     </div>
   </div>
 </section>
+</div>
 
 {% include 'footer.html' %}
 
