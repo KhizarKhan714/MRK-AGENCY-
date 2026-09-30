@@ -384,7 +384,7 @@
   }
 
   /* ===== MRK AI WIDGET ===== */
-  #mrk-ai-bubble{
+   #mrk-ai-bubble{
     position:fixed;bottom:24px;right:24px;z-index:999;
     display:flex;align-items:center;gap:10px;
     background:var(--blue);color:#fff;
@@ -558,6 +558,14 @@
   .icon-badge.tile-security{background:linear-gradient(135deg, #34D399, #0E9F6E);box-shadow:0 6px 16px rgba(14,159,110,0.35);}
   .icon-badge.tile-unlimited{background:linear-gradient(135deg, #FBBF24, #F59E0B);box-shadow:0 6px 16px rgba(245,158,11,0.35);}
   .icon-badge.tile-global{background:linear-gradient(135deg, #38BDF8, #0EA5E9);box-shadow:0 6px 16px rgba(14,165,233,0.35);}
+  /* service-card tiles: own colour each */
+  .icon-badge.tile-eng{background:linear-gradient(135deg, #7C8DA6, #3B4A63);box-shadow:0 6px 16px rgba(59,74,99,0.35);}
+  .icon-badge.tile-uiux{background:linear-gradient(135deg, #F472B6, #DB2777);box-shadow:0 6px 16px rgba(219,39,119,0.32);}
+  .icon-badge.tile-webdesign{background:linear-gradient(135deg, #FB923C, #EA580C);box-shadow:0 6px 16px rgba(234,88,12,0.32);}
+  .icon-badge.tile-graphic{background:linear-gradient(135deg, #C084FC, #9333EA);box-shadow:0 6px 16px rgba(147,51,234,0.32);}
+  .icon-badge.tile-seo{background:linear-gradient(135deg, #A3E635, #4D9A0E);box-shadow:0 6px 16px rgba(77,154,14,0.32);}
+  /* same 3D tilt on the service cards as on the capability cards */
+  .mrk-home .card:hover .icon-badge{transform:perspective(500px) rotateY(22deg) rotateX(-8deg) scale(1.08);}
   .feature-card.live .icon-badge{background:linear-gradient(135deg, #8B7CF6, #5B5FEF);}
   .feature-card.live .icon-badge svg{stroke:#fff;}
 
@@ -589,6 +597,25 @@
     84%,100%{transform:translateY(0) scaleX(1);}
   }
   .icon-badge.tile-security svg{width:29px;height:29px;overflow:visible;}
+  /* services: UI/UX panel divider slides like a resizable layout */
+  .icon-anim-divider{animation:dividerSlide 3.2s ease-in-out infinite;}
+  @keyframes dividerSlide{0%,100%{transform:translateX(0);}50%{transform:translateX(4px);}}
+  /* services: web design palette dots light up one after another */
+  .icon-anim-dot{transform-box:fill-box;transform-origin:center;animation:dotPulse 2.4s ease-in-out infinite;}
+  @keyframes dotPulse{0%,100%{transform:scale(.8);opacity:.6;}50%{transform:scale(1.7);opacity:1;}}
+  /* services: graphic design sun bobs, the landscape line draws itself */
+  .icon-anim-sun{transform-box:fill-box;transform-origin:center;animation:sunBob 2.8s ease-in-out infinite;}
+  @keyframes sunBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-1.6px);}}
+  .icon-anim-draw{stroke-dasharray:24;animation:lineDraw 3.6s ease-in-out infinite;}
+  @keyframes lineDraw{0%{stroke-dashoffset:24;}40%,80%{stroke-dashoffset:0;}100%{stroke-dashoffset:24;}}
+  /* services: SEO magnifier sweeps around as if searching */
+  .icon-anim-scan{animation:scanMove 3.4s ease-in-out infinite;}
+  @keyframes scanMove{
+    0%,100%{transform:translate(0,0);}
+    25%{transform:translate(1.8px,-1.2px);}
+    50%{transform:translate(0,1.6px);}
+    75%{transform:translate(-1.8px,-0.6px);}
+  }
   /* portal: a dot passes from client to contractor, then a check confirms the handoff */
   .icon-anim-handoff-dot{animation:handoffDot 4.6s ease-in-out infinite;}
   @keyframes handoffDot{
@@ -611,7 +638,7 @@
   @keyframes spinSlow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
   @media (prefers-reduced-motion: reduce){
     .icon-anim-spark, .icon-anim-spark-sm, .icon-anim-bracket-l, .icon-anim-bracket-r,
-    .icon-anim-person-a, .icon-anim-person-b, .icon-anim-lock-shackle, .icon-anim-handoff-dot, .icon-anim-handoff-check, .icon-anim-spin-slow{
+    .icon-anim-person-a, .icon-anim-person-b, .icon-anim-lock-shackle, .icon-anim-handoff-dot, .icon-anim-handoff-check, .icon-anim-divider, .icon-anim-dot, .icon-anim-sun, .icon-anim-draw, .icon-anim-scan, .icon-anim-eyelid, .icon-anim-approve-stamp, .icon-anim-clockhand, .icon-anim-ring, .icon-anim-spin-slow{
       animation:none;
     }
   }
@@ -650,7 +677,25 @@
     background:rgba(255,255,255,0.04);border:1px solid var(--line);
     border-radius:12px;padding:18px 20px;
   }
-  .trust-item svg{width:36px;height:36px;stroke:var(--blue-bright);flex-shrink:0;margin-top:2px;}
+  .trust-item .icon-badge{margin-bottom:0;flex-shrink:0;width:52px;height:52px;}
+  .trust-item .icon-badge svg{width:26px;height:26px;stroke:#fff;}
+  .icon-badge.tile-visibility{background:linear-gradient(135deg, #60A5FA, #2563EB);box-shadow:0 6px 16px rgba(37,99,235,0.32);}
+  .icon-badge.tile-approvals{background:linear-gradient(135deg, #34D399, #0E9F6E);box-shadow:0 6px 16px rgba(14,159,110,0.32);}
+  .icon-badge.tile-comms{background:linear-gradient(135deg, #38BDF8, #0EA5E9);box-shadow:0 6px 16px rgba(14,165,233,0.32);}
+  .icon-badge.tile-revisions{background:linear-gradient(135deg, #FBBF24, #F59E0B);box-shadow:0 6px 16px rgba(245,158,11,0.32);}
+  .trust-item:hover .icon-badge{transform:perspective(500px) rotateY(22deg) rotateX(-8deg) scale(1.08);}
+  /* visibility: eye blinks */
+  .icon-anim-eyelid{stroke:inherit;opacity:0;animation:eyeBlink 3.4s ease-in-out infinite;}
+  @keyframes eyeBlink{0%,92%,100%{opacity:0;}94%,97%{opacity:1;}}
+  /* approvals: check stamp pops in after the page has been "read" */
+  .icon-anim-approve-stamp{transform-box:fill-box;transform-origin:center;animation:stampIn 3.6s ease-in-out infinite;}
+  @keyframes stampIn{0%,45%{transform:scale(0);opacity:0;}58%{transform:scale(1.25);opacity:1;}70%,88%{transform:scale(1);opacity:1;}98%,100%{transform:scale(0);opacity:0;}}
+  /* comms: clock hand ticks, phone-style ring pulses */
+  .icon-anim-clockhand{transform-box:fill-box;transform-origin:9.5px 12px;animation:clockTick 4s steps(8) infinite;}
+  @keyframes clockTick{to{transform:rotate(360deg);}}
+  .icon-anim-ring{animation:ringBuzz 2.6s ease-in-out infinite;}
+  @keyframes ringBuzz{0%,60%,100%{opacity:.5;}65%,70%,75%,80%{opacity:1;}}
+
   .trust-item h4{font-size:14.5px;font-weight:700;color:#fff;margin-bottom:4px;}
   .trust-item p{font-size:13px;line-height:1.55;color:var(--text-dim);}
 
@@ -769,7 +814,7 @@
   .mrk-home .btn-outline{border-color:var(--line);color:#fff;}
   .mrk-home .btn-outline:hover{border-color:var(--blue-bright);color:var(--blue-bright);background:rgba(59,124,255,0.08);}
 
-  .mrk-home .services-diagram{max-width:760px;margin:0 auto 52px;opacity:0.95;}
+  .mrk-home .services-diagram{max-width:1120px;width:100%;margin:0 auto 52px;opacity:1;}
   .mrk-home .sd-node{fill:rgba(19,34,72,0.55);stroke:#3B7CFF;stroke-width:1.5;}
   .mrk-home .sd-node-ai{stroke:#3DDC84;}
   .mrk-home .sd-hub{fill:#1A56DB;stroke:#3B7CFF;}
@@ -906,6 +951,7 @@
 </section>
 
 <div class="light-zone">
+     
 <!-- ===== SERVICES ===== -->
 <section class="section veil-light" id="services">
   <div class="container">
@@ -939,17 +985,23 @@
 
     <div class="grid grid-3">
       {% set services = [
-        ('Web Development', 'Custom-built sites and web apps — not templates, not page builders.', '<path d="M8 9l-4 3 4 3"/><path d="M16 9l4 3-4 3"/><path d="M13 6l-2 12"/>'),
-        ('Software Engineering', 'Backend systems, integrations, and tools built to your spec.', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>'),
-        ('UI/UX Design', 'Interfaces designed around how people actually use them.', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>'),
-        ('Web Design', 'Visual design that matches the brand you are trying to build.', '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18 4.5 4.5 0 0 0 0-9 2.5 2.5 0 0 1 0-5 9 9 0 0 0 0-4Z"/>'),
-        ('Graphic Design', 'Brand assets, marketing visuals, and everything in between.', '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 21"/>'),
-        ('SEO', 'Technical and on-page SEO built into the site from day one.', '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>')
+        ('Web Development', 'Custom-built sites and web apps — not templates, not page builders.', '',
+         '<path class="icon-anim-bracket-l" d="M8 9l-4 3 4 3"/><path class="icon-anim-bracket-r" d="M16 9l4 3-4 3"/><path d="M13 6l-2 12"/>'),
+        ('Software Engineering', 'Backend systems, integrations, and tools built to your spec.', 'tile-eng',
+         '<g class="icon-anim-spin-slow"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/><path d="M19.5 12H22M2 12h2.5M12 19.5V22M12 2v2.5M17.3 17.3l1.8 1.8M4.9 4.9l1.8 1.8M6.7 17.3l-1.8 1.8M19.1 4.9l-1.8 1.8"/></g>'),
+        ('UI/UX Design', 'Interfaces designed around how people actually use them.', 'tile-uiux',
+         '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path class="icon-anim-divider" d="M9 9v11"/>'),
+        ('Web Design', 'Visual design that matches the brand you are trying to build.', 'tile-webdesign',
+         '<path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z"/><circle class="icon-anim-dot" style="animation-delay:0s" cx="13.5" cy="6.5" r="1.1" fill="#fff" stroke="none"/><circle class="icon-anim-dot" style="animation-delay:.6s" cx="17.5" cy="10.5" r="1.1" fill="#fff" stroke="none"/><circle class="icon-anim-dot" style="animation-delay:1.2s" cx="6.5" cy="12.5" r="1.1" fill="#fff" stroke="none"/><circle class="icon-anim-dot" style="animation-delay:1.8s" cx="8.5" cy="7.5" r="1.1" fill="#fff" stroke="none"/>'),
+        ('Graphic Design', 'Brand assets, marketing visuals, and everything in between.', 'tile-graphic',
+         '<rect x="3" y="3" width="18" height="18" rx="2"/><circle class="icon-anim-sun" cx="8.5" cy="9.5" r="1.5"/><path class="icon-anim-draw" d="m21 15-5-5L5 21"/>'),
+        ('SEO', 'Technical and on-page SEO built into the site from day one.', 'tile-seo',
+         '<g class="icon-anim-scan"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></g>')
       ] %}
-      {% for name, desc, icon in services %}
+      {% for name, desc, tile, icon in services %}
       <div class="card">
         <div class="card-body">
-          <div class="icon-badge">
+          <div class="icon-badge {{ tile }}">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{{ icon | safe }}</svg>
           </div>
           <span class="card-tag">0{{ loop.index }}</span>
@@ -1138,7 +1190,7 @@
         'Consular': '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/><circle cx="15.5" cy="17.5" r="1"/>',
         'Gold': '<path d="m12 2 2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16l-5.6 3.1 1.4-6.3-4.8-4.3 6.4-.6Z"/>',
         'Diamond': '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M8 3l4 6-4 12M16 3l-4 6 4 12"/>',
-        'Custom Executive': '<rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M2 12h20"/>'
+        'Custom Executive': '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/>'
       } %}
       {% set tier_colors = {
         'Bronze': '#D08A4E',
@@ -1178,19 +1230,19 @@
     </div>
     <div class="trust-grid">
       <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        <div class="icon-badge tile-visibility"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/><path class="icon-anim-eyelid" d="M1.5 12S5 5 12 5s10.5 7 10.5 7"/></svg></div>
         <div><h4>Full project visibility</h4><p>Track every milestone through your own portal — not a status-update email chain.</p></div>
       </div>
       <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/></svg>
+        <div class="icon-badge tile-approvals"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/><g class="icon-anim-approve-stamp"><circle cx="17" cy="17" r="4.2" fill="#fff" stroke="none"/><path d="M15.3 17.1l1.1 1.1 2-2.2" stroke="#0E9F6E" stroke-width="1.6"/></g></svg></div>
         <div><h4>Structured approvals</h4><p>Every deliverable is reviewed against your requirements before it reaches you — nothing skipped.</p></div>
       </div>
       <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <div class="icon-badge tile-comms"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="12" r="7"/><g class="icon-anim-clockhand"><path d="M9.5 8v4l2.6 1.5"/></g><path d="M18 5.3a3.3 3.3 0 0 1 4 4l-.9 1c-1.6-.3-3.8-2.1-4.1-4.1z" class="icon-anim-ring"/></svg></div>
         <div><h4>Fast, direct communication</h4><p>Reach the team on WhatsApp — no ticket queue, no "we'll get back to you in 3 business days."</p></div>
       </div>
       <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <div class="icon-badge tile-revisions"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g class="icon-anim-spin-slow"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></g></svg></div>
         <div><h4>Unlimited revisions</h4><p>We iterate until it's right, on every tier — that's built into the price, not billed as an extra.</p></div>
       </div>
     </div>
@@ -1460,4 +1512,4 @@
   }
 </script>
 </body>
-</html>
+</html>             
