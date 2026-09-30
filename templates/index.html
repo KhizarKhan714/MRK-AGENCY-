@@ -384,7 +384,7 @@
   }
 
   /* ===== MRK AI WIDGET ===== */
-   #mrk-ai-bubble{
+  #mrk-ai-bubble{
     position:fixed;bottom:24px;right:24px;z-index:999;
     display:flex;align-items:center;gap:10px;
     background:var(--blue);color:#fff;
@@ -450,8 +450,8 @@
     font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue-bright);
     text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:block;
   }
-  .mrk-home .section-title{color:#fff;}
-  .mrk-home .section-sub{color:var(--text-dim);}
+  .mrk-home .section-title{color:#fff;margin-bottom:14px;display:block;}
+  .mrk-home .section-sub{color:var(--text-dim);margin-top:0;display:block;}
   .mrk-home .section{padding:96px 32px;}
   .mrk-home .container{max-width:1240px;margin:0 auto;}
   .mrk-home .section-head{margin-bottom:44px;max-width:640px;}
@@ -638,7 +638,7 @@
   @keyframes spinSlow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
   @media (prefers-reduced-motion: reduce){
     .icon-anim-spark, .icon-anim-spark-sm, .icon-anim-bracket-l, .icon-anim-bracket-r,
-    .icon-anim-person-a, .icon-anim-person-b, .icon-anim-lock-shackle, .icon-anim-handoff-dot, .icon-anim-handoff-check, .icon-anim-divider, .icon-anim-dot, .icon-anim-sun, .icon-anim-draw, .icon-anim-scan, .icon-anim-eyelid, .icon-anim-approve-stamp, .icon-anim-clockhand, .icon-anim-ring, .icon-anim-spin-slow{
+    .icon-anim-person-a, .icon-anim-person-b, .icon-anim-lock-shackle, .icon-anim-handoff-dot, .icon-anim-handoff-check, .icon-anim-divider, .icon-anim-dot, .icon-anim-sun, .icon-anim-draw, .icon-anim-scan,  .icon-anim-approve-stamp, .icon-anim-clockhand, .icon-anim-phone, .icon-anim-wave, .icon-anim-blink, .icon-anim-spin-slow{
       animation:none;
     }
   }
@@ -685,16 +685,29 @@
   .icon-badge.tile-revisions{background:linear-gradient(135deg, #FBBF24, #F59E0B);box-shadow:0 6px 16px rgba(245,158,11,0.32);}
   .trust-item:hover .icon-badge{transform:perspective(500px) rotateY(22deg) rotateX(-8deg) scale(1.08);}
   /* visibility: eye blinks */
-  .icon-anim-eyelid{stroke:inherit;opacity:0;animation:eyeBlink 3.4s ease-in-out infinite;}
-  @keyframes eyeBlink{0%,92%,100%{opacity:0;}94%,97%{opacity:1;}}
+  .icon-anim-blink{transform-box:fill-box;transform-origin:center;animation:eyeBlink 3.6s ease-in-out infinite;}
+  @keyframes eyeBlink{0%,90%,100%{transform:scaleY(1);}94%,96%{transform:scaleY(.08);}}
   /* approvals: check stamp pops in after the page has been "read" */
   .icon-anim-approve-stamp{transform-box:fill-box;transform-origin:center;animation:stampIn 3.6s ease-in-out infinite;}
   @keyframes stampIn{0%,45%{transform:scale(0);opacity:0;}58%{transform:scale(1.25);opacity:1;}70%,88%{transform:scale(1);opacity:1;}98%,100%{transform:scale(0);opacity:0;}}
   /* comms: clock hand ticks, phone-style ring pulses */
-  .icon-anim-clockhand{transform-box:fill-box;transform-origin:9.5px 12px;animation:clockTick 4s steps(8) infinite;}
+  .icon-anim-clockhand{transform-box:view-box;transform-origin:12px 12px;animation:clockTick 4s steps(8) infinite;}
   @keyframes clockTick{to{transform:rotate(360deg);}}
-  .icon-anim-ring{animation:ringBuzz 2.6s ease-in-out infinite;}
-  @keyframes ringBuzz{0%,60%,100%{opacity:.5;}65%,70%,75%,80%{opacity:1;}}
+  /* phone: hidden most of the time, appears with two small ringing waves, like an incoming call */
+  .icon-anim-phone{transform-box:fill-box;transform-origin:center;opacity:0;animation:phoneRing 4.8s ease-in-out infinite;}
+  @keyframes phoneRing{
+    0%,55%{opacity:0;transform:scale(.7);}
+    60%{opacity:1;transform:scale(1.05);}
+    64%,74%{opacity:1;transform:scale(1);}
+    82%,100%{opacity:0;transform:scale(.8);}
+  }
+  .icon-anim-wave{opacity:0;animation:waveOut 4.8s ease-in-out infinite;}
+  .icon-anim-wave.w2{animation-delay:.15s;}
+  @keyframes waveOut{
+    0%,58%{opacity:0;}
+    64%,74%{opacity:1;}
+    82%,100%{opacity:0;}
+  }
 
   .trust-item h4{font-size:14.5px;font-weight:700;color:#fff;margin-bottom:4px;}
   .trust-item p{font-size:13px;line-height:1.55;color:var(--text-dim);}
@@ -869,7 +882,7 @@
   .light-zone .live-chip{background:rgba(61,220,132,0.14);border-color:rgba(61,220,132,0.45);}
   .light-zone .price-tier{color:var(--blue);}
   .light-zone .price-amount{color:#0A0F1E !important;}
-  .light-zone .trust-item svg{stroke:var(--blue-bright);}
+  .light-zone .trust-item .icon-badge svg{stroke:#fff !important;}
   .light-zone .process-num{background:rgba(59,124,255,0.08);border-color:rgba(59,124,255,0.3);}
   .light-zone .services-diagram text{fill:#0A0F1E;}
   .light-zone .services-diagram .sd-dim{fill:#8891A5;}
@@ -951,7 +964,6 @@
 </section>
 
 <div class="light-zone">
-     
 <!-- ===== SERVICES ===== -->
 <section class="section veil-light" id="services">
   <div class="container">
@@ -1230,7 +1242,7 @@
     </div>
     <div class="trust-grid">
       <div class="trust-item">
-        <div class="icon-badge tile-visibility"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/><path class="icon-anim-eyelid" d="M1.5 12S5 5 12 5s10.5 7 10.5 7"/></svg></div>
+        <div class="icon-badge tile-visibility"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><g class="icon-anim-blink"><ellipse cx="8.6" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g><g class="icon-anim-blink" style="animation-delay:.06s"><ellipse cx="15.4" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g></svg></div>
         <div><h4>Full project visibility</h4><p>Track every milestone through your own portal — not a status-update email chain.</p></div>
       </div>
       <div class="trust-item">
@@ -1238,7 +1250,7 @@
         <div><h4>Structured approvals</h4><p>Every deliverable is reviewed against your requirements before it reaches you — nothing skipped.</p></div>
       </div>
       <div class="trust-item">
-        <div class="icon-badge tile-comms"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="12" r="7"/><g class="icon-anim-clockhand"><path d="M9.5 8v4l2.6 1.5"/></g><path d="M18 5.3a3.3 3.3 0 0 1 4 4l-.9 1c-1.6-.3-3.8-2.1-4.1-4.1z" class="icon-anim-ring"/></svg></div>
+        <div class="icon-badge tile-comms"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="overflow:visible;"><circle cx="12" cy="12" r="9"/><g class="icon-anim-clockhand"><path d="M12 12V6.8M12 12l4 2.3"/></g><circle cx="12" cy="12" r="1" fill="var(--blue-bright,#3B7CFF)" stroke="none"/><g class="icon-anim-phone"><circle cx="21.5" cy="21.5" r="4.2" fill="#fff" stroke="none"/><g transform="translate(17.85,17.85) scale(0.365)"><path fill="#2C8EF6" stroke="none" d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></g></g></svg></div>
         <div><h4>Fast, direct communication</h4><p>Reach the team on WhatsApp — no ticket queue, no "we'll get back to you in 3 business days."</p></div>
       </div>
       <div class="trust-item">
@@ -1511,5 +1523,6 @@
     }
   }
 </script>
+
 </body>
-</html>             
+     </html>             
