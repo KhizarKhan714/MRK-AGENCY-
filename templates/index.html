@@ -207,6 +207,9 @@
     overflow:hidden;
     padding:128px 32px 0;
     }
+  @media (max-width:640px){
+    .hero{padding-left:14px;padding-right:14px;}
+  }
   #net-canvas{
     position:absolute;inset:0;
     width:100%;height:100%;
@@ -238,6 +241,7 @@
     background:radial-gradient(circle at 35% 30%, #7dffb8, #3DDC84 60%, #1fae63);
     box-shadow:0 0 6px rgba(61,220,132,0.7);
   }
+  .eyebrow{overflow:hidden;}
   .pulse-dot::before, .pulse-dot::after{
     content:'';position:absolute;inset:0;border-radius:50%;
     border:1px solid rgba(61,220,132,0.7);
@@ -246,7 +250,7 @@
   .pulse-dot::after{animation-delay:1.2s;}
   @keyframes pulseRing{
     0%{transform:scale(1);opacity:.9;}
-    100%{transform:scale(5.5);opacity:0;}
+    100%{transform:scale(2.4);opacity:0;}
   }
   @keyframes pulse{
     0%{box-shadow:0 0 0 0 rgba(61,220,132,0.55);}
@@ -454,7 +458,8 @@
   .mrk-home .section-sub{color:var(--text-dim);margin-top:0;display:block;}
   .mrk-home .section{padding:96px 32px;}
   .mrk-home .container{max-width:1240px;margin:0 auto;}
-  .mrk-home .section-head{margin-bottom:44px;max-width:640px;}
+  .mrk-home .section-head{margin-bottom:44px;max-width:640px;text-align:left !important;}
+  .mrk-home .section-head *{text-align:left !important;}
   .mrk-home .services-diagram{margin-bottom:44px;}
 
   .mrk-home .card{
@@ -1242,7 +1247,7 @@
     </div>
     <div class="trust-grid">
       <div class="trust-item">
-        <div class="icon-badge tile-visibility"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><g class="icon-anim-blink"><ellipse cx="8.6" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g><g class="icon-anim-blink" style="animation-delay:.06s"><ellipse cx="15.4" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g></svg></div>
+        <div class="icon-badge tile-visibility"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><g class="icon-anim-blink"><ellipse cx="8.6" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g><g class="icon-anim-blink"><ellipse cx="15.4" cy="12.5" rx="1.5" ry="1.9" fill="#fff" stroke="none"/></g></svg></div>
         <div><h4>Full project visibility</h4><p>Track every milestone through your own portal — not a status-update email chain.</p></div>
       </div>
       <div class="trust-item">
