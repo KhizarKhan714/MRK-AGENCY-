@@ -145,9 +145,10 @@
   .logo{
     font-family:var(--sans);
     font-weight:800;
-    font-size:19px;
+    font-size:16.5px;
     letter-spacing:0.01em;
   }
+  .nav-cta .btn-primary{padding:8px 16px;font-size:13.5px;}
   .logo span:first-child{color:#fff;}
   .logo span:last-child{color:var(--blue-bright);}
   nav ul{
@@ -264,11 +265,14 @@
   /* positioning kicker — "Pakistan's Premier Hybrid Digital Agency" */
   .hero-kicker-top{
     font-family:var(--mono);
-    font-size:12px;font-weight:600;
-    letter-spacing:0.18em;
+    font-size:11.5px;font-weight:700;
+    letter-spacing:0.05em;
     text-transform:uppercase;
     color:var(--blue-bright);
     margin-bottom:10px;
+  }
+  @media (max-width:380px){
+    .hero-kicker-top{font-size:10px;letter-spacing:0.03em;}
   }
 
   /* big brand lockup — mirrors the reference banner */
@@ -457,7 +461,7 @@
   .mrk-home .section-title{color:#fff;margin-bottom:14px;display:block;}
   .mrk-home .section-sub{color:var(--text-dim);margin-top:0;display:block;}
   .mrk-home .section{padding:96px 32px;}
-  .mrk-home .container{max-width:1240px;margin:0 auto;}
+  .mrk-home .container{max-width:1240px;margin:0 auto;padding:0 !important;}
   .mrk-home .section-head{margin-bottom:44px;max-width:640px;text-align:left !important;}
   .mrk-home .section-head *{text-align:left !important;}
   .mrk-home .services-diagram{margin-bottom:44px;}
@@ -1530,4 +1534,4 @@
 </script>
 
 </body>
-     </html>             
+     </html>
